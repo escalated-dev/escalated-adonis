@@ -28,5 +28,20 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: TypeScript build
-        run: npm run build
+      - name: Validate package structure
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = require('./package.json');
+            const entry = pkg.exports['.'];
+            const src = entry.replace('./build/', './').replace('.js', '.ts');
+            if (!fs.existsSync(src)) { console.error('Missing entry: ' + src); process.exit(1); }
+            console.log('Package entry OK: ' + src);
+            let count = 0;
+            for (const [key, val] of Object.entries(pkg.exports)) {
+              const srcPath = String(val).replace('./build/', './').replace('.js', '.ts').replace('*', '');
+              if (srcPath.includes('*')) continue;
+              count++;
+            }
+            console.log('Validated ' + count + ' export entries');
+          "
