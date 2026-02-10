@@ -427,6 +427,17 @@ This package serves only the backend API via Inertia.js. The shared Vue 3 fronte
 npm install @escalated-dev/escalated
 ```
 
+## Also Available For
+
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer package
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Django reusable app
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6 package (you are here)
+- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3 admin panel plugin
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UI components
+
+Same architecture, same Vue UI, same three hosting modes — for every major backend framework.
+
 ## License
 
 MIT
