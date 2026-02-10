@@ -8,6 +8,30 @@ export default class EscalatedProvider {
    * Register bindings to the container
    */
   register() {
+    // Register HookManager as a singleton (core of the plugin system)
+    this.app.container.singleton('escalated.hookManager', async () => {
+      const { default: HookManager } = await import('../src/support/hook_manager.js')
+      const instance = new HookManager()
+      // Also store on globalThis so controllers and helpers can access it
+      ;(globalThis as any).__escalated_hooks = instance
+      return instance
+    })
+
+    // Register PluginUIService as a singleton
+    this.app.container.singleton('escalated.pluginUIService', async () => {
+      const { default: PluginUIService } = await import('../src/services/plugin_ui_service.js')
+      const instance = new PluginUIService()
+      ;(globalThis as any).__escalated_pluginUI = instance
+      return instance
+    })
+
+    // Register PluginService as a singleton
+    this.app.container.singleton('escalated.pluginService', async () => {
+      const { default: PluginService } = await import('../src/services/plugin_service.js')
+      const hookManager = await this.app.container.make('escalated.hookManager')
+      return new PluginService(hookManager)
+    })
+
     // Register services as singletons
     this.app.container.singleton('escalated.ticketService', async () => {
       const { default: TicketService } = await import('../src/services/ticket_service.js')
@@ -57,11 +81,18 @@ export default class EscalatedProvider {
     // Load config and store globally for services to access
     await this.loadConfig()
 
+    // Initialize the HookManager and PluginUIService singletons eagerly
+    await this.app.container.make('escalated.hookManager')
+    await this.app.container.make('escalated.pluginUIService')
+
     // Register routes
     await this.registerRoutes()
 
     // Share Inertia data
     await this.shareInertiaData()
+
+    // Load active plugins (must happen after config is loaded)
+    await this.loadPlugins()
   }
 
   /**
@@ -140,10 +171,43 @@ export default class EscalatedProvider {
   }
 
   /**
+   * Load active plugins if the plugin system is enabled.
+   */
+  protected async loadPlugins() {
+    const config: EscalatedConfig = (globalThis as any).__escalated_config ?? {}
+
+    if ((config as any).plugins?.enabled === false) {
+      return
+    }
+
+    try {
+      const pluginService = await this.app.container.make('escalated.pluginService')
+      await pluginService.loadActivePlugins()
+    } catch (error) {
+      // Don't crash the app if plugins fail to load (e.g. table doesn't exist yet)
+      console.warn('[Escalated] Could not load plugins:', (error as Error).message)
+    }
+  }
+
+  /**
    * Shutdown hook
    */
   async shutdown() {
+    // Clean up HookManager
+    const hookManager = (globalThis as any).__escalated_hooks
+    if (hookManager && typeof hookManager.clear === 'function') {
+      hookManager.clear()
+    }
+
+    // Clean up PluginUIService
+    const pluginUI = (globalThis as any).__escalated_pluginUI
+    if (pluginUI && typeof pluginUI.clear === 'function') {
+      pluginUI.clear()
+    }
+
     delete (globalThis as any).__escalated_config
     delete (globalThis as any).__escalated_presence
+    delete (globalThis as any).__escalated_hooks
+    delete (globalThis as any).__escalated_pluginUI
   }
 }

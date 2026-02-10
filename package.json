@@ -12,6 +12,7 @@
     "./models/*": "./build/src/models/*.js",
     "./middleware/*": "./build/src/middleware/*.js",
     "./controllers/*": "./build/src/controllers/*.js",
+    "./support/*": "./build/src/support/*.js",
     "./events": "./build/src/events/index.js",
     "./types": "./build/src/types.js",
     "./providers/*": "./build/providers/*.js",
@@ -37,7 +38,8 @@
     "tickets",
     "helpdesk",
     "customer-support",
-    "inertia"
+    "inertia",
+    "plugins"
   ],
   "peerDependencies": {
     "@adonisjs/core": "^6.0.0",

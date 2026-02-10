@@ -197,6 +197,11 @@ export interface EscalatedConfig {
     isAdmin: (user: any) => boolean | Promise<boolean>
   }
 
+  plugins: {
+    enabled: boolean
+    path: string
+  }
+
   activityLog: {
     retentionDays: number
   }
@@ -316,3 +321,43 @@ export const ALLOWED_SORT_COLUMNS = [
   'subject', 'reference', 'assigned_to', 'department_id',
   'resolved_at', 'closed_at',
 ]
+
+// ---- Plugin Types ----
+
+/**
+ * Plugin manifest (plugin.json)
+ */
+export interface PluginManifest {
+  name: string
+  description?: string
+  version?: string
+  author?: string
+  author_url?: string
+  requires?: string
+  main_file?: string
+}
+
+/**
+ * Plugin info returned by PluginService.getAllPlugins()
+ */
+export interface PluginInfo {
+  slug: string
+  name: string
+  description: string
+  version: string
+  author: string
+  authorUrl: string
+  requires: string
+  mainFile: string
+  isActive: boolean
+  activatedAt: string | null
+  path: string
+}
+
+/**
+ * Plugin configuration section of EscalatedConfig
+ */
+export interface PluginConfig {
+  enabled: boolean
+  path: string
+}

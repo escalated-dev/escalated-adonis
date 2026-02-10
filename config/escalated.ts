@@ -156,6 +156,20 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | Plugins
+  |--------------------------------------------------------------------------
+  |
+  | Enable the WordPress-style plugin/extension system. Plugins are
+  | discovered from the configured path relative to the app root.
+  |
+  */
+  plugins: {
+    enabled: !!env.get('ESCALATED_PLUGINS_ENABLED', true),
+    path: 'plugins/escalated',
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Activity Log
   |--------------------------------------------------------------------------
   */
