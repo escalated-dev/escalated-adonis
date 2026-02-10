@@ -1,0 +1,66 @@
+{
+  "name": "@escalated-dev/escalated-adonis",
+  "description": "An embeddable support ticket system for AdonisJS v6 applications",
+  "version": "0.4.0",
+  "type": "module",
+  "license": "MIT",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": "./build/index.js",
+    "./services/*": "./build/src/services/*.js",
+    "./models/*": "./build/src/models/*.js",
+    "./middleware/*": "./build/src/middleware/*.js",
+    "./controllers/*": "./build/src/controllers/*.js",
+    "./events": "./build/src/events/index.js",
+    "./types": "./build/src/types.js",
+    "./providers/*": "./build/providers/*.js",
+    "./configure": "./build/configure.js"
+  },
+  "files": [
+    "build",
+    "configure.ts",
+    "stubs",
+    "database",
+    "config",
+    "start"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf build",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "adonisjs",
+    "support",
+    "tickets",
+    "helpdesk",
+    "customer-support",
+    "inertia"
+  ],
+  "peerDependencies": {
+    "@adonisjs/core": "^6.0.0",
+    "@adonisjs/lucid": "^21.0.0",
+    "@adonisjs/auth": "^9.0.0",
+    "@adonisjs/inertia": "^1.0.0",
+    "@adonisjs/drive": "^3.0.0",
+    "@adonisjs/cache": "^1.0.0",
+    "@adonisjs/mail": "^9.0.0"
+  },
+  "devDependencies": {
+    "@adonisjs/core": "^6.14.0",
+    "@adonisjs/lucid": "^21.3.0",
+    "@adonisjs/auth": "^9.2.0",
+    "@adonisjs/inertia": "^1.2.0",
+    "@adonisjs/drive": "^3.0.0",
+    "@adonisjs/cache": "^1.0.0",
+    "@adonisjs/mail": "^9.0.0",
+    "@japa/runner": "^3.0.0",
+    "typescript": "^5.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/escalated-dev/escalated-adonis"
+  }
+}

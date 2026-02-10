@@ -1,0 +1,200 @@
+{{{
+  exports({
+    to: app.configPath('escalated.ts')
+  })
+}}}
+/*
+|--------------------------------------------------------------------------
+| Escalated Configuration
+|--------------------------------------------------------------------------
+|
+| Configuration for the Escalated support ticket system.
+| See https://escalated.dev/docs/adonis for full documentation.
+|
+*/
+
+import { EscalatedConfig } from '@escalated-dev/escalated-adonis/src/types'
+
+const escalatedConfig: EscalatedConfig = {
+  /*
+  |--------------------------------------------------------------------------
+  | Hosting Mode
+  |--------------------------------------------------------------------------
+  |
+  | Determines how ticket data is stored and synced.
+  | - "self-hosted": All data in local DB. No external calls.
+  | - "synced": Local DB + events synced to cloud.escalated.dev
+  | - "cloud": All CRUD proxied to cloud.escalated.dev
+  |
+  */
+  mode: 'self-hosted',
+
+  /*
+  |--------------------------------------------------------------------------
+  | User Model
+  |--------------------------------------------------------------------------
+  */
+  userModel: '#models/user',
+
+  /*
+  |--------------------------------------------------------------------------
+  | Hosted / Cloud Configuration
+  |--------------------------------------------------------------------------
+  */
+  hosted: {
+    apiUrl: 'https://cloud.escalated.dev/api/v1',
+    apiKey: undefined,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Routes
+  |--------------------------------------------------------------------------
+  */
+  routes: {
+    enabled: true,
+    prefix: 'support',
+    middleware: ['auth'],
+    adminMiddleware: ['auth'],
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Table Prefix
+  |--------------------------------------------------------------------------
+  */
+  tablePrefix: 'escalated_',
+
+  /*
+  |--------------------------------------------------------------------------
+  | Tickets
+  |--------------------------------------------------------------------------
+  */
+  tickets: {
+    allowCustomerClose: true,
+    autoCloseResolvedAfterDays: 7,
+    maxAttachmentsPerReply: 5,
+    maxAttachmentSizeKb: 10240,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Priorities
+  |--------------------------------------------------------------------------
+  */
+  priorities: ['low', 'medium', 'high', 'urgent', 'critical'],
+  defaultPriority: 'medium',
+
+  /*
+  |--------------------------------------------------------------------------
+  | Statuses
+  |--------------------------------------------------------------------------
+  */
+  statuses: [
+    'open', 'in_progress', 'waiting_on_customer', 'waiting_on_agent',
+    'escalated', 'resolved', 'closed', 'reopened',
+  ],
+
+  /*
+  |--------------------------------------------------------------------------
+  | SLA
+  |--------------------------------------------------------------------------
+  */
+  sla: {
+    enabled: true,
+    businessHoursOnly: false,
+    businessHours: {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'UTC',
+      days: [1, 2, 3, 4, 5],
+    },
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Notifications
+  |--------------------------------------------------------------------------
+  */
+  notifications: {
+    channels: ['mail', 'database'],
+    webhookUrl: undefined,
+    webhookSecret: undefined,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Storage (Attachments)
+  |--------------------------------------------------------------------------
+  */
+  storage: {
+    disk: 'public',
+    path: 'escalated/attachments',
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Authorization
+  |--------------------------------------------------------------------------
+  |
+  | Define callback functions that determine whether a user is an agent
+  | or admin. Override these to match your application's auth model.
+  |
+  */
+  authorization: {
+    isAgent: (user: any) => {
+      return typeof user.escalatedAgent === 'function'
+        ? user.escalatedAgent()
+        : typeof user.isEscalatedAgent === 'boolean'
+          ? user.isEscalatedAgent
+          : false
+    },
+    isAdmin: (user: any) => {
+      return typeof user.escalatedAdmin === 'function'
+        ? user.escalatedAdmin()
+        : typeof user.isEscalatedAdmin === 'boolean'
+          ? user.isEscalatedAdmin
+          : false
+    },
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Activity Log
+  |--------------------------------------------------------------------------
+  */
+  activityLog: {
+    retentionDays: 90,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Inbound Email
+  |--------------------------------------------------------------------------
+  */
+  inboundEmail: {
+    enabled: false,
+    adapter: 'mailgun',
+    address: 'support@example.com',
+    mailgun: {
+      signingKey: undefined,
+    },
+    postmark: {
+      token: undefined,
+    },
+    ses: {
+      region: 'us-east-1',
+      topicArn: undefined,
+    },
+    imap: {
+      host: undefined,
+      port: 993,
+      encryption: 'ssl',
+      username: undefined,
+      password: undefined,
+      mailbox: 'INBOX',
+    },
+  },
+}
+
+export default escalatedConfig
