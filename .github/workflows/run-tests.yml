@@ -45,3 +45,6 @@ jobs:
             }
             console.log('Validated ' + count + ' export entries');
           "
+
+      - name: Run tests
+        run: npm test
