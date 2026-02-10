@@ -197,6 +197,13 @@ export interface EscalatedConfig {
     isAdmin: (user: any) => boolean | Promise<boolean>
   }
 
+  api?: {
+    enabled: boolean
+    rateLimit: number
+    tokenExpiryDays: number | null
+    prefix: string
+  }
+
   activityLog: {
     retentionDays: number
   }

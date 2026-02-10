@@ -165,6 +165,22 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | REST API
+  |--------------------------------------------------------------------------
+  |
+  | Enable the REST API to allow external integrations and automation.
+  | Tokens are managed via the admin panel.
+  |
+  */
+  api: {
+    enabled: !!env.get('ESCALATED_API_ENABLED', false),
+    rateLimit: Number(env.get('ESCALATED_API_RATE_LIMIT', '60')),
+    tokenExpiryDays: null as number | null,
+    prefix: 'support/api/v1',
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Inbound Email
   |--------------------------------------------------------------------------
   */

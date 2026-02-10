@@ -28,11 +28,20 @@ const BulkActionsController = () => import('../src/controllers/bulk_actions_cont
 const SatisfactionRatingController = () => import('../src/controllers/satisfaction_rating_controller.js')
 const GuestTicketsController = () => import('../src/controllers/guest_tickets_controller.js')
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
+const AdminApiTokensController = () => import('../src/controllers/admin_api_tokens_controller.js')
+
+// API controllers
+const ApiAuthController = () => import('../src/controllers/api/api_auth_controller.js')
+const ApiDashboardController = () => import('../src/controllers/api/api_dashboard_controller.js')
+const ApiTicketController = () => import('../src/controllers/api/api_ticket_controller.js')
+const ApiResourceController = () => import('../src/controllers/api/api_resource_controller.js')
 
 // Middleware imports
 const EnsureIsAgent = () => import('../src/middleware/ensure_is_agent.js')
 const EnsureIsAdmin = () => import('../src/middleware/ensure_is_admin.js')
 const ResolveTicket = () => import('../src/middleware/resolve_ticket.js')
+const AuthenticateApiToken = () => import('../src/middleware/authenticate_api_token.js')
+const ApiRateLimit = () => import('../src/middleware/api_rate_limit.js')
 
 export function registerRoutes() {
   const config = getConfig()
@@ -161,6 +170,12 @@ export function registerRoutes() {
       router.post('/macros', [AdminMacrosController, 'store']).as('escalated.admin.macros.store')
       router.put('/macros/:macro', [AdminMacrosController, 'update']).as('escalated.admin.macros.update')
       router.delete('/macros/:macro', [AdminMacrosController, 'destroy']).as('escalated.admin.macros.destroy')
+
+      // API Tokens CRUD
+      router.get('/api-tokens', [AdminApiTokensController, 'index']).as('escalated.admin.api-tokens.index')
+      router.post('/api-tokens', [AdminApiTokensController, 'store']).as('escalated.admin.api-tokens.store')
+      router.put('/api-tokens/:id', [AdminApiTokensController, 'update']).as('escalated.admin.api-tokens.update')
+      router.delete('/api-tokens/:id', [AdminApiTokensController, 'destroy']).as('escalated.admin.api-tokens.destroy')
     })
     .prefix(`${prefix}/admin`)
     .use([...adminMiddleware, EnsureIsAdmin])
@@ -188,4 +203,57 @@ export function registerRoutes() {
       })
       .prefix(`${prefix}/inbound`)
   }
+
+  // ---- API Routes ----
+  if ((config as any).api?.enabled) {
+    registerApiRoutes(config)
+  }
+}
+
+/**
+ * Register REST API routes for the Escalated support ticket system.
+ * These routes use Bearer token authentication and rate limiting.
+ */
+export function registerApiRoutes(config: any) {
+  const apiPrefix = config.api?.prefix ?? 'support/api/v1'
+
+  router
+    .group(() => {
+      // Auth
+      router.post('/auth/validate', [ApiAuthController, 'validate']).as('escalated.api.auth.validate')
+
+      // Dashboard
+      router.get('/dashboard', [ApiDashboardController, 'handle']).as('escalated.api.dashboard')
+
+      // Tickets — collection
+      router.get('/tickets', [ApiTicketController, 'index']).as('escalated.api.tickets.index')
+      router.post('/tickets', [ApiTicketController, 'store']).as('escalated.api.tickets.store')
+
+      // Tickets — single (with ticket resolution by reference)
+      router
+        .group(() => {
+          router.get('/tickets/:ticket', [ApiTicketController, 'show']).as('escalated.api.tickets.show')
+          router.post('/tickets/:ticket/reply', [ApiTicketController, 'reply']).as('escalated.api.tickets.reply')
+          router.patch('/tickets/:ticket/status', [ApiTicketController, 'status']).as('escalated.api.tickets.status')
+          router.patch('/tickets/:ticket/priority', [ApiTicketController, 'priority']).as('escalated.api.tickets.priority')
+          router.post('/tickets/:ticket/assign', [ApiTicketController, 'assign']).as('escalated.api.tickets.assign')
+          router.post('/tickets/:ticket/follow', [ApiTicketController, 'follow']).as('escalated.api.tickets.follow')
+          router.post('/tickets/:ticket/macro', [ApiTicketController, 'applyMacro']).as('escalated.api.tickets.macro')
+          router.post('/tickets/:ticket/tags', [ApiTicketController, 'tags']).as('escalated.api.tickets.tags')
+          router.delete('/tickets/:ticket', [ApiTicketController, 'destroy']).as('escalated.api.tickets.destroy')
+        })
+        .use([ResolveTicket])
+
+      // Resources
+      router.get('/agents', [ApiResourceController, 'agents']).as('escalated.api.agents')
+      router.get('/departments', [ApiResourceController, 'departments']).as('escalated.api.departments')
+      router.get('/tags', [ApiResourceController, 'tags']).as('escalated.api.tags')
+      router.get('/canned-responses', [ApiResourceController, 'cannedResponses']).as('escalated.api.canned-responses')
+      router.get('/macros', [ApiResourceController, 'macros']).as('escalated.api.macros')
+
+      // Realtime
+      router.get('/realtime/config', [ApiResourceController, 'realtimeConfig']).as('escalated.api.realtime')
+    })
+    .prefix(apiPrefix)
+    .use([AuthenticateApiToken, ApiRateLimit])
 }
