@@ -101,6 +101,14 @@ export default class AdminPluginsController {
   async destroy(ctx: HttpContext) {
     const slug = ctx.params.slug
 
+    // Check if plugin is npm-sourced before attempting delete
+    const allPlugins = await this.getPluginService().getAllPlugins()
+    const pluginData = allPlugins.find((p: any) => p.slug === ctx.params.slug)
+    if (pluginData && pluginData.source === 'composer') {
+      ctx.session.flash('error', 'npm plugins cannot be deleted. Remove the package via npm instead.')
+      return ctx.response.redirect().back()
+    }
+
     try {
       const pluginService = this.getPluginService()
       const deleted = await pluginService.deletePlugin(slug)

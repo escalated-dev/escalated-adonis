@@ -165,7 +165,7 @@ const escalatedConfig: EscalatedConfig = {
   */
   plugins: {
     enabled: !!env.get('ESCALATED_PLUGINS_ENABLED', true),
-    path: 'plugins/escalated',
+    path: 'app/plugins/escalated',
   },
 
   /*

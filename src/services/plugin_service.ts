@@ -24,7 +24,7 @@ export default class PluginService {
     this.hookManager = hookManager
 
     const config = getConfig()
-    const configuredPath = (config as any).plugins?.path ?? 'plugins/escalated'
+    const configuredPath = (config as any).plugins?.path ?? 'app/plugins/escalated'
     this.pluginsPath = resolve(process.cwd(), configuredPath)
 
     // Ensure the plugins directory exists
@@ -34,10 +34,19 @@ export default class PluginService {
   }
 
   /**
-   * Scan the plugins directory and merge with DB activation state.
+   * Merge local and npm-sourced plugins.
    * Returns metadata for every installed plugin.
    */
   async getAllPlugins(): Promise<PluginInfo[]> {
+    const local = await this.getLocalPlugins()
+    const npm = await this.getNpmPlugins()
+    return [...local, ...npm]
+  }
+
+  /**
+   * Scan the local plugins directory and merge with DB activation state.
+   */
+  private async getLocalPlugins(): Promise<PluginInfo[]> {
     const plugins: PluginInfo[] = []
 
     let directories: string[]
@@ -76,11 +85,83 @@ export default class PluginService {
           isActive: dbPlugin?.isActive ?? false,
           activatedAt: dbPlugin?.activatedAt?.toISO() ?? null,
           path: join(this.pluginsPath, dirName),
+          source: 'local',
         })
       } catch {
         // Skip plugins with invalid manifests
         continue
       }
+    }
+
+    return plugins
+  }
+
+  /**
+   * Discover plugins installed via npm (node_modules), including scoped packages.
+   */
+  private async getNpmPlugins(): Promise<PluginInfo[]> {
+    const plugins: PluginInfo[] = []
+    const nodeModulesPath = join(process.cwd(), 'node_modules')
+
+    try {
+      if (!existsSync(nodeModulesPath)) return plugins
+
+      // Scan node_modules for packages with plugin.json (including scoped packages)
+      const entries = readdirSync(nodeModulesPath)
+      const dirsToCheck: string[] = []
+
+      for (const entry of entries) {
+        const entryPath = join(nodeModulesPath, entry)
+        if (entry.startsWith('@') && existsSync(entryPath)) {
+          // Scoped package — check subdirectories
+          const scopedEntries = readdirSync(entryPath)
+          for (const sub of scopedEntries) {
+            dirsToCheck.push(join(entryPath, sub))
+          }
+        } else if (entry !== '.package-lock.json' && !entry.startsWith('.')) {
+          dirsToCheck.push(entryPath)
+        }
+      }
+
+      for (const dir of dirsToCheck) {
+        const manifestPath = join(dir, 'plugin.json')
+        if (!existsSync(manifestPath)) continue
+
+        try {
+          const raw = readFileSync(manifestPath, 'utf-8')
+          const manifest = JSON.parse(raw)
+          if (!manifest) continue
+
+          // Derive slug from package directory name
+          const parts = dir.replace(/\\/g, '/').split('/')
+          const lastTwo = parts.slice(-2)
+          const slug = lastTwo[0].startsWith('@') ? lastTwo.join('--') : parts[parts.length - 1]
+
+          let dbPlugin = null
+          try {
+            dbPlugin = await Plugin.query().where('slug', slug).first()
+          } catch {}
+
+          plugins.push({
+            slug,
+            name: manifest.name || slug,
+            description: manifest.description || '',
+            version: manifest.version || '1.0.0',
+            author: manifest.author || 'Unknown',
+            authorUrl: manifest.author_url || '',
+            requires: manifest.requires || '1.0.0',
+            mainFile: manifest.main_file || 'Plugin.js',
+            isActive: dbPlugin?.isActive || false,
+            activatedAt: dbPlugin?.activatedAt?.toISO() || null,
+            path: dir,
+            source: 'composer',  // Use 'composer' for frontend consistency
+          })
+        } catch {
+          // Skip invalid manifests
+        }
+      }
+    } catch (error) {
+      // node_modules scan failed, non-fatal
     }
 
     return plugins
@@ -106,9 +187,9 @@ export default class PluginService {
    * Activate a plugin: create/update DB record, load the plugin, fire hooks.
    */
   async activatePlugin(slug: string): Promise<boolean> {
-    // Verify plugin directory and manifest exist
-    const manifestPath = join(this.pluginsPath, slug, 'plugin.json')
-    if (!existsSync(manifestPath)) {
+    // Verify plugin directory and manifest exist (check both local and npm sources)
+    const pluginPath = await this.resolvePluginPath(slug)
+    if (!pluginPath || !existsSync(join(pluginPath, 'plugin.json'))) {
       throw new Error(`Plugin "${slug}" not found or missing plugin.json`)
     }
 
@@ -162,6 +243,12 @@ export default class PluginService {
    * and delete the plugin directory from disk.
    */
   async deletePlugin(slug: string): Promise<boolean> {
+    const allPlugins = await this.getAllPlugins()
+    const pluginData = allPlugins.find((p) => p.slug === slug)
+    if (pluginData && pluginData.source === 'composer') {
+      throw new Error('npm plugins cannot be deleted. Remove the package via npm instead.')
+    }
+
     const pluginPath = join(this.pluginsPath, slug)
 
     if (!existsSync(pluginPath)) {
@@ -282,16 +369,46 @@ export default class PluginService {
   }
 
   /**
+   * Resolve the filesystem path for a plugin slug, checking local and npm sources.
+   */
+  private async resolvePluginPath(slug: string): Promise<string | null> {
+    // Check local plugins first
+    const localPath = join(this.pluginsPath, slug)
+    if (existsSync(join(localPath, 'plugin.json'))) {
+      return localPath
+    }
+
+    // Check npm plugins
+    const nodeModulesPath = join(process.cwd(), 'node_modules')
+    // Direct package
+    const directPath = join(nodeModulesPath, slug)
+    if (existsSync(join(directPath, 'plugin.json'))) {
+      return directPath
+    }
+    // Scoped package (slug uses -- separator)
+    if (slug.includes('--')) {
+      const scopedPath = join(nodeModulesPath, slug.replace('--', '/'))
+      if (existsSync(join(scopedPath, 'plugin.json'))) {
+        return scopedPath
+      }
+    }
+
+    return null
+  }
+
+  /**
    * Load a specific plugin by dynamically importing its main file.
    * The plugin's main file should export a default function or class
    * that receives the HookManager as its first argument.
    */
   async loadPlugin(slug: string): Promise<void> {
-    const manifestPath = join(this.pluginsPath, slug, 'plugin.json')
+    const pluginPath = await this.resolvePluginPath(slug)
 
-    if (!existsSync(manifestPath)) {
+    if (!pluginPath) {
       return
     }
+
+    const manifestPath = join(pluginPath, 'plugin.json')
 
     let manifest: PluginManifest
     try {
@@ -302,7 +419,7 @@ export default class PluginService {
     }
 
     const mainFile = manifest.main_file ?? 'Plugin.ts'
-    const pluginFile = join(this.pluginsPath, slug, mainFile)
+    const pluginFile = join(pluginPath, mainFile)
 
     if (!existsSync(pluginFile)) {
       // Try .js extension as fallback

@@ -352,6 +352,7 @@ export interface PluginInfo {
   isActive: boolean
   activatedAt: string | null
   path: string
+  source: string
 }
 
 /**
