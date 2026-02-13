@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
 import SatisfactionRating from '../models/satisfaction_rating.js'
+import { t } from '../support/i18n.js'
 
 export default class SatisfactionRatingController {
   /**
@@ -12,13 +13,13 @@ export default class SatisfactionRatingController {
     const { rating, comment } = ctx.request.only(['rating', 'comment'])
 
     if (!['resolved', 'closed'].includes(ticket.status)) {
-      ctx.session.flash('error', 'You can only rate resolved or closed tickets.')
+      ctx.session.flash('error', t('rating.only_resolved_closed'))
       return ctx.response.redirect().back()
     }
 
     const existing = await SatisfactionRating.query().where('ticket_id', ticket.id).first()
     if (existing) {
-      ctx.session.flash('error', 'This ticket has already been rated.')
+      ctx.session.flash('error', t('rating.already_rated'))
       return ctx.response.redirect().back()
     }
 
@@ -30,7 +31,7 @@ export default class SatisfactionRatingController {
       ratedById: user.id,
     })
 
-    ctx.session.flash('success', 'Thank you for your feedback!')
+    ctx.session.flash('success', t('rating.thank_you'))
     return ctx.response.redirect().back()
   }
 
@@ -45,13 +46,13 @@ export default class SatisfactionRatingController {
     const { rating, comment } = request.only(['rating', 'comment'])
 
     if (!['resolved', 'closed'].includes(ticket.status)) {
-      session.flash('error', 'You can only rate resolved or closed tickets.')
+      session.flash('error', t('rating.only_resolved_closed'))
       return response.redirect().back()
     }
 
     const existing = await SatisfactionRating.query().where('ticket_id', ticket.id).first()
     if (existing) {
-      session.flash('error', 'This ticket has already been rated.')
+      session.flash('error', t('rating.already_rated'))
       return response.redirect().back()
     }
 
@@ -63,7 +64,7 @@ export default class SatisfactionRatingController {
       ratedById: null,
     })
 
-    session.flash('success', 'Thank you for your feedback!')
+    session.flash('success', t('rating.thank_you'))
     return response.redirect().back()
   }
 }

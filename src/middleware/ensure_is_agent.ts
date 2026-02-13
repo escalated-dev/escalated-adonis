@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
+import { t } from '../support/i18n.js'
 
 /**
  * Middleware to ensure the current user is an Escalated support agent.
@@ -10,7 +11,7 @@ export default class EnsureIsAgent {
     const user = ctx.auth?.user
 
     if (!user) {
-      return ctx.response.forbidden({ error: 'You are not authorized as a support agent.' })
+      return ctx.response.forbidden({ error: t('middleware.not_agent') })
     }
 
     const isAgent = config?.authorization?.isAgent
@@ -23,7 +24,7 @@ export default class EnsureIsAgent {
       : false
 
     if (!isAgent && !isAdmin) {
-      return ctx.response.forbidden({ error: 'You are not authorized as a support agent.' })
+      return ctx.response.forbidden({ error: t('middleware.not_agent') })
     }
 
     return next()

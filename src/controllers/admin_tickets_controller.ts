@@ -9,6 +9,7 @@ import TicketService from '../services/ticket_service.js'
 import AssignmentService from '../services/assignment_service.js'
 import MacroService from '../services/macro_service.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
+import { t } from '../support/i18n.js'
 
 export default class AdminTicketsController {
   protected ticketService = new TicketService()
@@ -99,7 +100,7 @@ export default class AdminTicketsController {
     const { body } = ctx.request.only(['body'])
     const attachments = ctx.request.files('attachments')
     await this.ticketService.reply(ticket, user as any, body, attachments)
-    ctx.session.flash('success', 'Reply sent.')
+    ctx.session.flash('success', t('ticket.reply_sent'))
     return ctx.response.redirect().back()
   }
 
@@ -109,7 +110,7 @@ export default class AdminTicketsController {
     const { body } = ctx.request.only(['body'])
     const attachments = ctx.request.files('attachments')
     await this.ticketService.addNote(ticket, user as any, body, attachments)
-    ctx.session.flash('success', 'Note added.')
+    ctx.session.flash('success', t('ticket.note_added'))
     return ctx.response.redirect().back()
   }
 
@@ -118,7 +119,7 @@ export default class AdminTicketsController {
     const user = ctx.auth.user!
     const { agent_id } = ctx.request.only(['agent_id'])
     await this.assignmentService.assign(ticket, Number(agent_id), user as any)
-    ctx.session.flash('success', 'Ticket assigned.')
+    ctx.session.flash('success', t('ticket.assigned'))
     return ctx.response.redirect().back()
   }
 
@@ -127,7 +128,7 @@ export default class AdminTicketsController {
     const user = ctx.auth.user!
     const { status } = ctx.request.only(['status'])
     await this.ticketService.changeStatus(ticket, status as TicketStatus, user as any)
-    ctx.session.flash('success', 'Status updated.')
+    ctx.session.flash('success', t('ticket.status_updated'))
     return ctx.response.redirect().back()
   }
 
@@ -136,7 +137,7 @@ export default class AdminTicketsController {
     const user = ctx.auth.user!
     const { priority } = ctx.request.only(['priority'])
     await this.ticketService.changePriority(ticket, priority as TicketPriority, user as any)
-    ctx.session.flash('success', 'Priority updated.')
+    ctx.session.flash('success', t('ticket.priority_updated'))
     return ctx.response.redirect().back()
   }
 
@@ -152,7 +153,7 @@ export default class AdminTicketsController {
     const toRemove = currentTagIds.filter((id: number) => !newTagIds.includes(id))
     if (toAdd.length) await this.ticketService.addTags(ticket, toAdd, user as any)
     if (toRemove.length) await this.ticketService.removeTags(ticket, toRemove, user as any)
-    ctx.session.flash('success', 'Tags updated.')
+    ctx.session.flash('success', t('ticket.tags_updated'))
     return ctx.response.redirect().back()
   }
 
@@ -161,7 +162,7 @@ export default class AdminTicketsController {
     const user = ctx.auth.user!
     const { department_id } = ctx.request.only(['department_id'])
     await this.ticketService.changeDepartment(ticket, Number(department_id), user as any)
-    ctx.session.flash('success', 'Department updated.')
+    ctx.session.flash('success', t('ticket.department_updated'))
     return ctx.response.redirect().back()
   }
 
@@ -175,7 +176,7 @@ export default class AdminTicketsController {
       .firstOrFail()
     const macroService = new MacroService()
     await macroService.apply(macro, ticket, user as any)
-    ctx.session.flash('success', `Macro "${macro.name}" applied.`)
+    ctx.session.flash('success', t('ticket.macro_applied', { name: macro.name }))
     return ctx.response.redirect().back()
   }
 
@@ -184,10 +185,10 @@ export default class AdminTicketsController {
     const userId = ctx.auth.user!.id
     if (await ticket.isFollowedBy(userId)) {
       await ticket.unfollow(userId)
-      ctx.session.flash('success', 'Unfollowed ticket.')
+      ctx.session.flash('success', t('ticket.unfollowed'))
     } else {
       await ticket.follow(userId)
-      ctx.session.flash('success', 'Following ticket.')
+      ctx.session.flash('success', t('ticket.following'))
     }
     return ctx.response.redirect().back()
   }
@@ -217,12 +218,12 @@ export default class AdminTicketsController {
     const replyId = ctx.params.reply || ctx.params.replyId
     const reply = await Reply.findOrFail(replyId)
     if (!reply.isInternalNote) {
-      ctx.session.flash('error', 'Only internal notes can be pinned.')
+      ctx.session.flash('error', t('ticket.pin_notes_only'))
       return ctx.response.redirect().back()
     }
     reply.isPinned = !reply.isPinned
     await reply.save()
-    ctx.session.flash('success', reply.isPinned ? 'Note pinned.' : 'Note unpinned.')
+    ctx.session.flash('success', reply.isPinned ? t('ticket.note_pinned') : t('ticket.note_unpinned'))
     return ctx.response.redirect().back()
   }
 

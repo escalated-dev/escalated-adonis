@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import EscalationRule from '../models/escalation_rule.js'
+import { t } from '../support/i18n.js'
 
 export default class AdminEscalationRulesController {
   async index({ inertia }: HttpContext) {
@@ -27,7 +28,7 @@ export default class AdminEscalationRulesController {
       isActive: data.is_active !== false,
     })
 
-    session.flash('success', 'Rule created.')
+    session.flash('success', t('admin.rule_created'))
     return response.redirect().toRoute('escalated.admin.escalation-rules.index')
   }
 
@@ -54,14 +55,14 @@ export default class AdminEscalationRulesController {
     })
     await rule.save()
 
-    session.flash('success', 'Rule updated.')
+    session.flash('success', t('admin.rule_updated'))
     return response.redirect().toRoute('escalated.admin.escalation-rules.index')
   }
 
   async destroy({ params, response, session }: HttpContext) {
     const rule = await EscalationRule.findOrFail(params.id)
     await rule.delete()
-    session.flash('success', 'Rule deleted.')
+    session.flash('success', t('admin.rule_deleted'))
     return response.redirect().toRoute('escalated.admin.escalation-rules.index')
   }
 }

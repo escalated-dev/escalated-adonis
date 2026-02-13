@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import CannedResponse from '../models/canned_response.js'
+import { t } from '../support/i18n.js'
 
 export default class AdminCannedResponsesController {
   async index({ inertia }: HttpContext) {
@@ -18,7 +19,7 @@ export default class AdminCannedResponsesController {
       createdBy: auth.user!.id,
     })
 
-    session.flash('success', 'Canned response created.')
+    session.flash('success', t('admin.canned_response_created'))
     return response.redirect().back()
   }
 
@@ -34,14 +35,14 @@ export default class AdminCannedResponsesController {
     })
     await cannedResponse.save()
 
-    session.flash('success', 'Canned response updated.')
+    session.flash('success', t('admin.canned_response_updated'))
     return response.redirect().back()
   }
 
   async destroy({ params, response, session }: HttpContext) {
     const cannedResponse = await CannedResponse.findOrFail(params.cannedResponse || params.id)
     await cannedResponse.delete()
-    session.flash('success', 'Canned response deleted.')
+    session.flash('success', t('admin.canned_response_deleted'))
     return response.redirect().back()
   }
 }

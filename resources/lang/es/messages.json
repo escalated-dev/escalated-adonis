@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Respuesta enviada.",
+    "note_added": "Nota agregada.",
+    "assigned": "Ticket asignado.",
+    "status_updated": "Estado actualizado.",
+    "priority_updated": "Prioridad actualizada.",
+    "tags_updated": "Etiquetas actualizadas.",
+    "department_updated": "Departamento actualizado.",
+    "macro_applied": "Macro \":name\" aplicada.",
+    "unfollowed": "Dejaste de seguir el ticket.",
+    "following": "Siguiendo el ticket.",
+    "note_pinned": "Nota fijada.",
+    "note_unpinned": "Nota desfijada.",
+    "pin_notes_only": "Solo las notas internas pueden ser fijadas.",
+    "updated": "Ticket actualizado.",
+    "created": "Ticket creado exitosamente.",
+    "closed": "Ticket cerrado.",
+    "reopened": "Ticket reabierto.",
+    "customer_close_forbidden": "Los clientes no pueden cerrar tickets."
+  },
+  "guest": {
+    "created": "Ticket creado. Guarde este enlace para consultar el estado de su ticket.",
+    "reply_sent": "Respuesta enviada.",
+    "ticket_closed": "Este ticket est\u00e1 cerrado."
+  },
+  "bulk": {
+    "updated": ":count ticket(s) actualizado(s)."
+  },
+  "rating": {
+    "thank_you": "\u00a1Gracias por sus comentarios!",
+    "only_resolved_closed": "Solo puede calificar tickets resueltos o cerrados.",
+    "already_rated": "Este ticket ya ha sido calificado."
+  },
+  "admin": {
+    "department_created": "Departamento creado.",
+    "department_updated": "Departamento actualizado.",
+    "department_deleted": "Departamento eliminado.",
+    "sla_policy_created": "Pol\u00edtica SLA creada.",
+    "sla_policy_updated": "Pol\u00edtica SLA actualizada.",
+    "sla_policy_deleted": "Pol\u00edtica SLA eliminada.",
+    "rule_created": "Regla creada.",
+    "rule_updated": "Regla actualizada.",
+    "rule_deleted": "Regla eliminada.",
+    "canned_response_created": "Respuesta predefinida creada.",
+    "canned_response_updated": "Respuesta predefinida actualizada.",
+    "canned_response_deleted": "Respuesta predefinida eliminada.",
+    "macro_created": "Macro creada.",
+    "macro_updated": "Macro actualizada.",
+    "macro_deleted": "Macro eliminada.",
+    "tag_created": "Etiqueta creada.",
+    "tag_updated": "Etiqueta actualizada.",
+    "tag_deleted": "Etiqueta eliminada.",
+    "settings_updated": "Configuraci\u00f3n actualizada."
+  },
+  "middleware": {
+    "not_admin": "No est\u00e1 autorizado como administrador de soporte.",
+    "not_agent": "No est\u00e1 autorizado como agente de soporte."
+  },
+  "inbound": {
+    "disabled": "El correo entrante est\u00e1 deshabilitado.",
+    "invalid_signature": "Firma inv\u00e1lida.",
+    "processing_failed": "El procesamiento fall\u00f3."
+  },
+  "labels": {
+    "status": {
+      "open": "Abierto",
+      "in_progress": "En Progreso",
+      "waiting_on_customer": "Esperando al Cliente",
+      "waiting_on_agent": "Esperando al Agente",
+      "escalated": "Escalado",
+      "resolved": "Resuelto",
+      "closed": "Cerrado",
+      "reopened": "Reabierto"
+    },
+    "priority": {
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta",
+      "urgent": "Urgente",
+      "critical": "Cr\u00edtica"
+    }
+  }
+}

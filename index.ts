@@ -38,3 +38,5 @@ export {
   escalated_addPageComponent,
   escalated_getPageComponents,
 } from './src/support/helpers.js'
+// Re-export i18n support
+export { t, setLocale, getLocale } from './src/support/i18n.js'

@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "R\u00e9ponse envoy\u00e9e.",
+    "note_added": "Note ajout\u00e9e.",
+    "assigned": "Ticket assign\u00e9.",
+    "status_updated": "Statut mis \u00e0 jour.",
+    "priority_updated": "Priorit\u00e9 mise \u00e0 jour.",
+    "tags_updated": "\u00c9tiquettes mises \u00e0 jour.",
+    "department_updated": "D\u00e9partement mis \u00e0 jour.",
+    "macro_applied": "Macro \u00ab :name \u00bb appliqu\u00e9e.",
+    "unfollowed": "Ticket d\u00e9sabonn\u00e9.",
+    "following": "Ticket suivi.",
+    "note_pinned": "Note \u00e9pingl\u00e9e.",
+    "note_unpinned": "Note d\u00e9s\u00e9pingl\u00e9e.",
+    "pin_notes_only": "Seules les notes internes peuvent \u00eatre \u00e9pingl\u00e9es.",
+    "updated": "Ticket mis \u00e0 jour.",
+    "created": "Ticket cr\u00e9\u00e9 avec succ\u00e8s.",
+    "closed": "Ticket ferm\u00e9.",
+    "reopened": "Ticket rouvert.",
+    "customer_close_forbidden": "Les clients ne peuvent pas fermer les tickets."
+  },
+  "guest": {
+    "created": "Ticket cr\u00e9\u00e9. Enregistrez ce lien pour suivre l'\u00e9tat de votre ticket.",
+    "reply_sent": "R\u00e9ponse envoy\u00e9e.",
+    "ticket_closed": "Ce ticket est ferm\u00e9."
+  },
+  "bulk": {
+    "updated": ":count ticket(s) mis \u00e0 jour."
+  },
+  "rating": {
+    "thank_you": "Merci pour votre retour !",
+    "only_resolved_closed": "Vous ne pouvez \u00e9valuer que les tickets r\u00e9solus ou ferm\u00e9s.",
+    "already_rated": "Ce ticket a d\u00e9j\u00e0 \u00e9t\u00e9 \u00e9valu\u00e9."
+  },
+  "admin": {
+    "department_created": "D\u00e9partement cr\u00e9\u00e9.",
+    "department_updated": "D\u00e9partement mis \u00e0 jour.",
+    "department_deleted": "D\u00e9partement supprim\u00e9.",
+    "sla_policy_created": "Politique SLA cr\u00e9\u00e9e.",
+    "sla_policy_updated": "Politique SLA mise \u00e0 jour.",
+    "sla_policy_deleted": "Politique SLA supprim\u00e9e.",
+    "rule_created": "R\u00e8gle cr\u00e9\u00e9e.",
+    "rule_updated": "R\u00e8gle mise \u00e0 jour.",
+    "rule_deleted": "R\u00e8gle supprim\u00e9e.",
+    "canned_response_created": "R\u00e9ponse pr\u00e9d\u00e9finie cr\u00e9\u00e9e.",
+    "canned_response_updated": "R\u00e9ponse pr\u00e9d\u00e9finie mise \u00e0 jour.",
+    "canned_response_deleted": "R\u00e9ponse pr\u00e9d\u00e9finie supprim\u00e9e.",
+    "macro_created": "Macro cr\u00e9\u00e9e.",
+    "macro_updated": "Macro mise \u00e0 jour.",
+    "macro_deleted": "Macro supprim\u00e9e.",
+    "tag_created": "\u00c9tiquette cr\u00e9\u00e9e.",
+    "tag_updated": "\u00c9tiquette mise \u00e0 jour.",
+    "tag_deleted": "\u00c9tiquette supprim\u00e9e.",
+    "settings_updated": "Param\u00e8tres mis \u00e0 jour."
+  },
+  "middleware": {
+    "not_admin": "Vous n'\u00eates pas autoris\u00e9 en tant qu'administrateur du support.",
+    "not_agent": "Vous n'\u00eates pas autoris\u00e9 en tant qu'agent de support."
+  },
+  "inbound": {
+    "disabled": "L'e-mail entrant est d\u00e9sactiv\u00e9.",
+    "invalid_signature": "Signature invalide.",
+    "processing_failed": "Le traitement a \u00e9chou\u00e9."
+  },
+  "labels": {
+    "status": {
+      "open": "Ouvert",
+      "in_progress": "En cours",
+      "waiting_on_customer": "En attente du client",
+      "waiting_on_agent": "En attente de l'agent",
+      "escalated": "Escalad\u00e9",
+      "resolved": "R\u00e9solu",
+      "closed": "Ferm\u00e9",
+      "reopened": "Rouvert"
+    },
+    "priority": {
+      "low": "Basse",
+      "medium": "Moyenne",
+      "high": "\u00c9lev\u00e9e",
+      "urgent": "Urgente",
+      "critical": "Critique"
+    }
+  }
+}

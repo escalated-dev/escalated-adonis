@@ -9,6 +9,7 @@ import AttachmentService from '../services/attachment_service.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import { getConfig } from '../helpers/config.js'
 import type { TicketPriority } from '../types.js'
+import { t } from '../support/i18n.js'
 
 export default class GuestTicketsController {
   protected attachmentService = new AttachmentService()
@@ -70,7 +71,7 @@ export default class GuestTicketsController {
 
     await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
 
-    session.flash('success', 'Ticket created. Save this link to check your ticket status.')
+    session.flash('success', t('guest.created'))
     return response.redirect().toRoute('escalated.guest.tickets.show', { token: ticket.guestToken })
   }
 
@@ -104,7 +105,7 @@ export default class GuestTicketsController {
       .firstOrFail()
 
     if (ticket.status === 'closed') {
-      session.flash('error', 'This ticket is closed.')
+      session.flash('error', t('guest.ticket_closed'))
       return response.redirect().back()
     }
 
@@ -127,7 +128,7 @@ export default class GuestTicketsController {
 
     await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply })
 
-    session.flash('success', 'Reply sent.')
+    session.flash('success', t('guest.reply_sent'))
     return response.redirect().back()
   }
 }
