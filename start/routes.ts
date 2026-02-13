@@ -24,6 +24,7 @@ const AdminCannedResponsesController = () => import('../src/controllers/admin_ca
 const AdminMacrosController = () => import('../src/controllers/admin_macros_controller.js')
 const AdminReportsController = () => import('../src/controllers/admin_reports_controller.js')
 const AdminSettingsController = () => import('../src/controllers/admin_settings_controller.js')
+const AdminPluginsController = () => import('../src/controllers/admin_plugins_controller.js')
 const BulkActionsController = () => import('../src/controllers/bulk_actions_controller.js')
 const SatisfactionRatingController = () => import('../src/controllers/satisfaction_rating_controller.js')
 const GuestTicketsController = () => import('../src/controllers/guest_tickets_controller.js')
@@ -161,6 +162,13 @@ export function registerRoutes() {
       router.post('/macros', [AdminMacrosController, 'store']).as('escalated.admin.macros.store')
       router.put('/macros/:macro', [AdminMacrosController, 'update']).as('escalated.admin.macros.update')
       router.delete('/macros/:macro', [AdminMacrosController, 'destroy']).as('escalated.admin.macros.destroy')
+
+      // Plugins
+      router.get('/plugins', [AdminPluginsController, 'index']).as('escalated.admin.plugins.index')
+      router.post('/plugins/upload', [AdminPluginsController, 'upload']).as('escalated.admin.plugins.upload')
+      router.post('/plugins/:slug/activate', [AdminPluginsController, 'activate']).as('escalated.admin.plugins.activate')
+      router.post('/plugins/:slug/deactivate', [AdminPluginsController, 'deactivate']).as('escalated.admin.plugins.deactivate')
+      router.delete('/plugins/:slug', [AdminPluginsController, 'destroy']).as('escalated.admin.plugins.destroy')
     })
     .prefix(`${prefix}/admin`)
     .use([...adminMiddleware, EnsureIsAdmin])
