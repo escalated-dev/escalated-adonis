@@ -1,5 +1,6 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 import type { EscalatedConfig } from '../src/types.js'
+import { setLocale } from '../src/support/i18n.js'
 
 export default class EscalatedProvider {
   constructor(protected app: ApplicationService) {}
@@ -74,6 +75,11 @@ export default class EscalatedProvider {
 
       // Store config globally for services that cannot inject the container
       ;(globalThis as any).__escalated_config = config
+
+      // Set locale from config if available
+      if (config.locale) {
+        setLocale(config.locale)
+      }
     } catch {
       // Config may not be available yet during testing
       ;(globalThis as any).__escalated_config = {}

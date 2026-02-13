@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import EscalatedSetting from '../models/escalated_setting.js'
 import { getConfig } from '../helpers/config.js'
+import { t } from '../support/i18n.js'
 
 export default class AdminSettingsController {
   async index({ inertia }: HttpContext) {
@@ -33,7 +34,7 @@ export default class AdminSettingsController {
       await EscalatedSetting.set(key, strValue)
     }
 
-    session.flash('success', 'Settings updated.')
+    session.flash('success', t('admin.settings_updated'))
     return response.redirect().back()
   }
 

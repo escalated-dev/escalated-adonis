@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Antwort gesendet.",
+    "note_added": "Notiz hinzugef\u00fcgt.",
+    "assigned": "Ticket zugewiesen.",
+    "status_updated": "Status aktualisiert.",
+    "priority_updated": "Priorit\u00e4t aktualisiert.",
+    "tags_updated": "Tags aktualisiert.",
+    "department_updated": "Abteilung aktualisiert.",
+    "macro_applied": "Makro \":name\" angewendet.",
+    "unfollowed": "Ticket nicht mehr verfolgt.",
+    "following": "Ticket wird verfolgt.",
+    "note_pinned": "Notiz angepinnt.",
+    "note_unpinned": "Notiz losgel\u00f6st.",
+    "pin_notes_only": "Nur interne Notizen k\u00f6nnen angepinnt werden.",
+    "updated": "Ticket aktualisiert.",
+    "created": "Ticket erfolgreich erstellt.",
+    "closed": "Ticket geschlossen.",
+    "reopened": "Ticket wieder ge\u00f6ffnet.",
+    "customer_close_forbidden": "Kunden k\u00f6nnen Tickets nicht schlie\u00dfen."
+  },
+  "guest": {
+    "created": "Ticket erstellt. Speichern Sie diesen Link, um den Status Ihres Tickets zu \u00fcberpr\u00fcfen.",
+    "reply_sent": "Antwort gesendet.",
+    "ticket_closed": "Dieses Ticket ist geschlossen."
+  },
+  "bulk": {
+    "updated": ":count Ticket(s) aktualisiert."
+  },
+  "rating": {
+    "thank_you": "Vielen Dank f\u00fcr Ihr Feedback!",
+    "only_resolved_closed": "Sie k\u00f6nnen nur gel\u00f6ste oder geschlossene Tickets bewerten.",
+    "already_rated": "Dieses Ticket wurde bereits bewertet."
+  },
+  "admin": {
+    "department_created": "Abteilung erstellt.",
+    "department_updated": "Abteilung aktualisiert.",
+    "department_deleted": "Abteilung gel\u00f6scht.",
+    "sla_policy_created": "SLA-Richtlinie erstellt.",
+    "sla_policy_updated": "SLA-Richtlinie aktualisiert.",
+    "sla_policy_deleted": "SLA-Richtlinie gel\u00f6scht.",
+    "rule_created": "Regel erstellt.",
+    "rule_updated": "Regel aktualisiert.",
+    "rule_deleted": "Regel gel\u00f6scht.",
+    "canned_response_created": "Vorgefertigte Antwort erstellt.",
+    "canned_response_updated": "Vorgefertigte Antwort aktualisiert.",
+    "canned_response_deleted": "Vorgefertigte Antwort gel\u00f6scht.",
+    "macro_created": "Makro erstellt.",
+    "macro_updated": "Makro aktualisiert.",
+    "macro_deleted": "Makro gel\u00f6scht.",
+    "tag_created": "Tag erstellt.",
+    "tag_updated": "Tag aktualisiert.",
+    "tag_deleted": "Tag gel\u00f6scht.",
+    "settings_updated": "Einstellungen aktualisiert."
+  },
+  "middleware": {
+    "not_admin": "Sie sind nicht als Support-Administrator autorisiert.",
+    "not_agent": "Sie sind nicht als Support-Agent autorisiert."
+  },
+  "inbound": {
+    "disabled": "Eingehende E-Mail ist deaktiviert.",
+    "invalid_signature": "Ung\u00fcltige Signatur.",
+    "processing_failed": "Verarbeitung fehlgeschlagen."
+  },
+  "labels": {
+    "status": {
+      "open": "Offen",
+      "in_progress": "In Bearbeitung",
+      "waiting_on_customer": "Warten auf Kunde",
+      "waiting_on_agent": "Warten auf Agent",
+      "escalated": "Eskaliert",
+      "resolved": "Gel\u00f6st",
+      "closed": "Geschlossen",
+      "reopened": "Wieder ge\u00f6ffnet"
+    },
+    "priority": {
+      "low": "Niedrig",
+      "medium": "Mittel",
+      "high": "Hoch",
+      "urgent": "Dringend",
+      "critical": "Kritisch"
+    }
+  }
+}

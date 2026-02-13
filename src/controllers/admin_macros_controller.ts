@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Macro from '../models/macro.js'
+import { t } from '../support/i18n.js'
 
 export default class AdminMacrosController {
   async index({ inertia }: HttpContext) {
@@ -19,7 +20,7 @@ export default class AdminMacrosController {
       createdBy: auth.user!.id,
     })
 
-    session.flash('success', 'Macro created.')
+    session.flash('success', t('admin.macro_created'))
     return response.redirect().back()
   }
 
@@ -36,14 +37,14 @@ export default class AdminMacrosController {
     })
     await macro.save()
 
-    session.flash('success', 'Macro updated.')
+    session.flash('success', t('admin.macro_updated'))
     return response.redirect().back()
   }
 
   async destroy({ params, response, session }: HttpContext) {
     const macro = await Macro.findOrFail(params.macro || params.id)
     await macro.delete()
-    session.flash('success', 'Macro deleted.')
+    session.flash('success', t('admin.macro_deleted'))
     return response.redirect().back()
   }
 }
