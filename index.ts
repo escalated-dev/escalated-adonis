@@ -15,3 +15,6 @@ export * from './src/types.js'
 
 // Re-export events
 export * from './src/events/index.js'
+
+// Re-export i18n support
+export { t, setLocale, getLocale } from './src/support/i18n.js'

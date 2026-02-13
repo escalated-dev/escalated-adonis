@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Reply sent.",
+    "note_added": "Note added.",
+    "assigned": "Ticket assigned.",
+    "status_updated": "Status updated.",
+    "priority_updated": "Priority updated.",
+    "tags_updated": "Tags updated.",
+    "department_updated": "Department updated.",
+    "macro_applied": "Macro \":name\" applied.",
+    "unfollowed": "Unfollowed ticket.",
+    "following": "Following ticket.",
+    "note_pinned": "Note pinned.",
+    "note_unpinned": "Note unpinned.",
+    "pin_notes_only": "Only internal notes can be pinned.",
+    "updated": "Ticket updated.",
+    "created": "Ticket created successfully.",
+    "closed": "Ticket closed.",
+    "reopened": "Ticket reopened.",
+    "customer_close_forbidden": "Customers cannot close tickets."
+  },
+  "guest": {
+    "created": "Ticket created. Save this link to check your ticket status.",
+    "reply_sent": "Reply sent.",
+    "ticket_closed": "This ticket is closed."
+  },
+  "bulk": {
+    "updated": ":count ticket(s) updated."
+  },
+  "rating": {
+    "thank_you": "Thank you for your feedback!",
+    "only_resolved_closed": "You can only rate resolved or closed tickets.",
+    "already_rated": "This ticket has already been rated."
+  },
+  "admin": {
+    "department_created": "Department created.",
+    "department_updated": "Department updated.",
+    "department_deleted": "Department deleted.",
+    "sla_policy_created": "SLA Policy created.",
+    "sla_policy_updated": "SLA Policy updated.",
+    "sla_policy_deleted": "SLA Policy deleted.",
+    "rule_created": "Rule created.",
+    "rule_updated": "Rule updated.",
+    "rule_deleted": "Rule deleted.",
+    "canned_response_created": "Canned response created.",
+    "canned_response_updated": "Canned response updated.",
+    "canned_response_deleted": "Canned response deleted.",
+    "macro_created": "Macro created.",
+    "macro_updated": "Macro updated.",
+    "macro_deleted": "Macro deleted.",
+    "tag_created": "Tag created.",
+    "tag_updated": "Tag updated.",
+    "tag_deleted": "Tag deleted.",
+    "settings_updated": "Settings updated."
+  },
+  "middleware": {
+    "not_admin": "You are not authorized as a support administrator.",
+    "not_agent": "You are not authorized as a support agent."
+  },
+  "inbound": {
+    "disabled": "Inbound email is disabled.",
+    "invalid_signature": "Invalid signature.",
+    "processing_failed": "Processing failed."
+  },
+  "labels": {
+    "status": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "waiting_on_customer": "Waiting on Customer",
+      "waiting_on_agent": "Waiting on Agent",
+      "escalated": "Escalated",
+      "resolved": "Resolved",
+      "closed": "Closed",
+      "reopened": "Reopened"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent",
+      "critical": "Critical"
+    }
+  }
+}

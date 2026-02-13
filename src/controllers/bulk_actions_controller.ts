@@ -3,6 +3,7 @@ import Ticket from '../models/ticket.js'
 import TicketService from '../services/ticket_service.js'
 import AssignmentService from '../services/assignment_service.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
+import { t } from '../support/i18n.js'
 
 export default class BulkActionsController {
   protected ticketService = new TicketService()
@@ -46,7 +47,7 @@ export default class BulkActionsController {
       }
     }
 
-    session.flash('success', `${successCount} ticket(s) updated.`)
+    session.flash('success', t('bulk.updated', { count: successCount }))
     return response.redirect().back()
   }
 }

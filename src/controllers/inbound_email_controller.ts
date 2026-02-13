@@ -3,6 +3,7 @@ import EscalatedSetting from '../models/escalated_setting.js'
 import InboundEmailService from '../services/inbound_email_service.js'
 import { getConfig } from '../helpers/config.js'
 import type { InboundMessage } from '../types.js'
+import { t } from '../support/i18n.js'
 
 export default class InboundEmailController {
   protected service = new InboundEmailService()
@@ -19,14 +20,14 @@ export default class InboundEmailController {
       config.inboundEmail?.enabled ?? false
     )
     if (!enabled) {
-      return response.notFound({ error: 'Inbound email is disabled.' })
+      return response.notFound({ error: t('inbound.disabled') })
     }
 
     const adapter = params.adapter as string
 
     // Verify the request based on adapter
     if (!this.verifyRequest(adapter, request)) {
-      return response.forbidden({ error: 'Invalid signature.' })
+      return response.forbidden({ error: t('inbound.invalid_signature') })
     }
 
     try {
@@ -38,7 +39,7 @@ export default class InboundEmailController {
         id: inboundEmail.id,
       })
     } catch (error: any) {
-      return response.internalServerError({ error: 'Processing failed.' })
+      return response.internalServerError({ error: t('inbound.processing_failed') })
     }
   }
 

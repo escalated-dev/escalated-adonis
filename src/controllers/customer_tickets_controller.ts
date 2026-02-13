@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Department from '../models/department.js'
 import TicketService from '../services/ticket_service.js'
 import { getConfig } from '../helpers/config.js'
+import { t } from '../support/i18n.js'
 
 export default class CustomerTicketsController {
   protected ticketService = new TicketService()
@@ -53,7 +54,7 @@ export default class CustomerTicketsController {
       attachments,
     })
 
-    session.flash('success', 'Ticket created successfully.')
+    session.flash('success', t('ticket.created'))
     return response.redirect().toRoute('escalated.customer.tickets.show', { ticket: ticket.reference })
   }
 
@@ -93,7 +94,7 @@ export default class CustomerTicketsController {
 
     await this.ticketService.reply(ticket, user as any, body, attachments)
 
-    ctx.session.flash('success', 'Reply sent.')
+    ctx.session.flash('success', t('ticket.reply_sent'))
     return ctx.response.redirect().back()
   }
 
@@ -108,12 +109,12 @@ export default class CustomerTicketsController {
     this.authorizeCustomer(ticket, user)
 
     if (!config.tickets.allowCustomerClose) {
-      return ctx.response.forbidden({ error: 'Customers cannot close tickets.' })
+      return ctx.response.forbidden({ error: t('ticket.customer_close_forbidden') })
     }
 
     await this.ticketService.close(ticket, user as any)
 
-    ctx.session.flash('success', 'Ticket closed.')
+    ctx.session.flash('success', t('ticket.closed'))
     return ctx.response.redirect().back()
   }
 
@@ -128,7 +129,7 @@ export default class CustomerTicketsController {
 
     await this.ticketService.reopen(ticket, user as any)
 
-    ctx.session.flash('success', 'Ticket reopened.')
+    ctx.session.flash('success', t('ticket.reopened'))
     return ctx.response.redirect().back()
   }
 
