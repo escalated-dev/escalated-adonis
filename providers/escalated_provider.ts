@@ -119,6 +119,8 @@ export default class EscalatedProvider {
 
   /**
    * Register routes if enabled.
+   * API routes are conditionally loaded within registerRoutes() when
+   * the `api.enabled` config flag is true.
    */
   protected async registerRoutes() {
     const config: EscalatedConfig = (globalThis as any).__escalated_config ?? {}

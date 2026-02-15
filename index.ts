@@ -16,6 +16,10 @@ export * from './src/types.js'
 // Re-export events
 export * from './src/events/index.js'
 
+// Re-export API model and middleware
+export { default as ApiToken } from './src/models/api_token.js'
+export { default as AuthenticateApiToken } from './src/middleware/authenticate_api_token.js'
+export { default as ApiRateLimit } from './src/middleware/api_rate_limit.js'
 // Plugin system
 export { default as HookManager } from './src/support/hook_manager.js'
 export { default as HookRegistry } from './src/services/hook_registry.js'
