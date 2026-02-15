@@ -20,3 +20,27 @@ export * from './src/events/index.js'
 export { default as ApiToken } from './src/models/api_token.js'
 export { default as AuthenticateApiToken } from './src/middleware/authenticate_api_token.js'
 export { default as ApiRateLimit } from './src/middleware/api_rate_limit.js'
+// Plugin system
+export { default as HookManager } from './src/support/hook_manager.js'
+export { default as HookRegistry } from './src/services/hook_registry.js'
+export { default as PluginService } from './src/services/plugin_service.js'
+export { default as PluginUIService } from './src/services/plugin_ui_service.js'
+export { default as PluginModel } from './src/models/plugin.js'
+
+// Global helper functions (prefixed with escalated_ to avoid conflicts)
+export {
+  escalated_addAction,
+  escalated_doAction,
+  escalated_hasAction,
+  escalated_removeAction,
+  escalated_addFilter,
+  escalated_applyFilters,
+  escalated_hasFilter,
+  escalated_removeFilter,
+  escalated_registerMenuItem,
+  escalated_registerDashboardWidget,
+  escalated_addPageComponent,
+  escalated_getPageComponents,
+} from './src/support/helpers.js'
+// Re-export i18n support
+export { t, setLocale, getLocale } from './src/support/i18n.js'

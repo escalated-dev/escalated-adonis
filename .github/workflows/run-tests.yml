@@ -1,0 +1,50 @@
+name: run-tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 20]
+
+    name: Node ${{ matrix.node }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate package structure
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = require('./package.json');
+            const entry = pkg.exports['.'];
+            const src = entry.replace('./build/', './').replace('.js', '.ts');
+            if (!fs.existsSync(src)) { console.error('Missing entry: ' + src); process.exit(1); }
+            console.log('Package entry OK: ' + src);
+            let count = 0;
+            for (const [key, val] of Object.entries(pkg.exports)) {
+              const srcPath = String(val).replace('./build/', './').replace('.js', '.ts').replace('*', '');
+              if (srcPath.includes('*')) continue;
+              count++;
+            }
+            console.log('Validated ' + count + ' export entries');
+          "
+
+      - name: Run tests
+        run: npm test

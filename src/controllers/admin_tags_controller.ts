@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Tag from '../models/tag.js'
+import { t } from '../support/i18n.js'
 
 export default class AdminTagsController {
   async index({ inertia }: HttpContext) {
@@ -14,7 +15,7 @@ export default class AdminTagsController {
       slug: data.slug || undefined,
       color: data.color || '#6B7280',
     })
-    session.flash('success', 'Tag created.')
+    session.flash('success', t('admin.tag_created'))
     return response.redirect().back()
   }
 
@@ -27,14 +28,14 @@ export default class AdminTagsController {
       ...(data.color && { color: data.color }),
     })
     await tag.save()
-    session.flash('success', 'Tag updated.')
+    session.flash('success', t('admin.tag_updated'))
     return response.redirect().back()
   }
 
   async destroy({ params, response, session }: HttpContext) {
     const tag = await Tag.findOrFail(params.tag || params.id)
     await tag.delete()
-    session.flash('success', 'Tag deleted.')
+    session.flash('success', t('admin.tag_deleted'))
     return response.redirect().back()
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@escalated-dev/escalated-adonis",
   "description": "An embeddable support ticket system for AdonisJS v6 applications",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "license": "MIT",
   "main": "build/index.js",
@@ -12,6 +12,7 @@
     "./models/*": "./build/src/models/*.js",
     "./middleware/*": "./build/src/middleware/*.js",
     "./controllers/*": "./build/src/controllers/*.js",
+    "./support/*": "./build/src/support/*.js",
     "./events": "./build/src/events/index.js",
     "./types": "./build/src/types.js",
     "./providers/*": "./build/providers/*.js",
@@ -29,6 +30,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf build",
+    "test": "node --test tests/*.test.js",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -37,7 +39,8 @@
     "tickets",
     "helpdesk",
     "customer-support",
-    "inertia"
+    "inertia",
+    "plugins"
   ],
   "peerDependencies": {
     "@adonisjs/core": "^6.0.0",

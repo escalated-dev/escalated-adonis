@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import SlaPolicy from '../models/sla_policy.js'
 import { getConfig } from '../helpers/config.js'
+import { t } from '../support/i18n.js'
 
 export default class AdminSlaPoliciesController {
   async index({ inertia }: HttpContext) {
@@ -32,7 +33,7 @@ export default class AdminSlaPoliciesController {
       isActive: data.is_active !== false,
     })
 
-    session.flash('success', 'SLA Policy created.')
+    session.flash('success', t('admin.sla_policy_created'))
     return response.redirect().toRoute('escalated.admin.sla-policies.index')
   }
 
@@ -64,14 +65,14 @@ export default class AdminSlaPoliciesController {
     })
     await policy.save()
 
-    session.flash('success', 'SLA Policy updated.')
+    session.flash('success', t('admin.sla_policy_updated'))
     return response.redirect().toRoute('escalated.admin.sla-policies.index')
   }
 
   async destroy({ params, response, session }: HttpContext) {
     const policy = await SlaPolicy.findOrFail(params.id)
     await policy.delete()
-    session.flash('success', 'SLA Policy deleted.')
+    session.flash('success', t('admin.sla_policy_deleted'))
     return response.redirect().toRoute('escalated.admin.sla-policies.index')
   }
 }

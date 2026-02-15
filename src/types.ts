@@ -4,6 +4,8 @@
 |--------------------------------------------------------------------------
 */
 
+import { t } from './support/i18n.js'
+
 /**
  * Ticket statuses
  */
@@ -61,7 +63,23 @@ export const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
 }
 
 /**
- * Status labels
+ * Status labels (localized via i18n)
+ */
+export function getStatusLabels(): Record<TicketStatus, string> {
+  return {
+    open: t('labels.status.open'),
+    in_progress: t('labels.status.in_progress'),
+    waiting_on_customer: t('labels.status.waiting_on_customer'),
+    waiting_on_agent: t('labels.status.waiting_on_agent'),
+    escalated: t('labels.status.escalated'),
+    resolved: t('labels.status.resolved'),
+    closed: t('labels.status.closed'),
+    reopened: t('labels.status.reopened'),
+  }
+}
+
+/**
+ * Status labels (backward-compatible constant, English defaults)
  */
 export const STATUS_LABELS: Record<TicketStatus, string> = {
   open: 'Open',
@@ -89,7 +107,20 @@ export const STATUS_COLORS: Record<TicketStatus, string> = {
 }
 
 /**
- * Priority labels
+ * Priority labels (localized via i18n)
+ */
+export function getPriorityLabels(): Record<TicketPriority, string> {
+  return {
+    low: t('labels.priority.low'),
+    medium: t('labels.priority.medium'),
+    high: t('labels.priority.high'),
+    urgent: t('labels.priority.urgent'),
+    critical: t('labels.priority.critical'),
+  }
+}
+
+/**
+ * Priority labels (backward-compatible constant, English defaults)
  */
 export const PRIORITY_LABELS: Record<TicketPriority, string> = {
   low: 'Low',
@@ -141,6 +172,8 @@ export function isOpenStatus(status: TicketStatus): boolean {
  */
 export interface EscalatedConfig {
   mode: 'self-hosted' | 'synced' | 'cloud'
+
+  locale?: string
 
   userModel: string
 
@@ -202,6 +235,11 @@ export interface EscalatedConfig {
     rateLimit: number
     tokenExpiryDays: number | null
     prefix: string
+  }
+  
+  plugins: {
+    enabled: boolean
+    path: string
   }
 
   activityLog: {
@@ -323,3 +361,44 @@ export const ALLOWED_SORT_COLUMNS = [
   'subject', 'reference', 'assigned_to', 'department_id',
   'resolved_at', 'closed_at',
 ]
+
+// ---- Plugin Types ----
+
+/**
+ * Plugin manifest (plugin.json)
+ */
+export interface PluginManifest {
+  name: string
+  description?: string
+  version?: string
+  author?: string
+  author_url?: string
+  requires?: string
+  main_file?: string
+}
+
+/**
+ * Plugin info returned by PluginService.getAllPlugins()
+ */
+export interface PluginInfo {
+  slug: string
+  name: string
+  description: string
+  version: string
+  author: string
+  authorUrl: string
+  requires: string
+  mainFile: string
+  isActive: boolean
+  activatedAt: string | null
+  path: string
+  source: string
+}
+
+/**
+ * Plugin configuration section of EscalatedConfig
+ */
+export interface PluginConfig {
+  enabled: boolean
+  path: string
+}
