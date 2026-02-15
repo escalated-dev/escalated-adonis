@@ -52,28 +52,87 @@ export default class InboundEmailController {
     switch (adapter) {
       case 'mailgun': {
         const signingKey = config.inboundEmail?.mailgun?.signingKey
-        if (!signingKey) return true // No key configured, skip verification
+        if (!signingKey) {
+          console.warn('[Escalated] Mailgun signing key not configured — rejecting inbound webhook.')
+          return false
+        }
 
-        // Mailgun signature verification
         const timestamp = request.input('timestamp')
         const token = request.input('token')
         const signature = request.input('signature')
         if (!timestamp || !token || !signature) return false
 
-        const { createHmac } = require('node:crypto')
+        // Reject timestamps older than 5 minutes (replay protection)
+        const now = Math.floor(Date.now() / 1000)
+        if (Math.abs(now - Number(timestamp)) > 300) {
+          console.warn('[Escalated] Mailgun webhook timestamp too old — possible replay attack.')
+          return false
+        }
+
+        const { createHmac, timingSafeEqual } = require('node:crypto')
         const expected = createHmac('sha256', signingKey)
           .update(`${timestamp}${token}`)
           .digest('hex')
-        return expected === signature
+
+        try {
+          return timingSafeEqual(Buffer.from(expected, 'utf8'), Buffer.from(signature, 'utf8'))
+        } catch {
+          return false
+        }
       }
 
       case 'postmark': {
-        // Postmark uses a token-based approach
-        return true
+        const postmarkToken = config.inboundEmail?.postmark?.token
+        if (!postmarkToken) {
+          console.warn('[Escalated] Postmark inbound token not configured — rejecting inbound webhook.')
+          return false
+        }
+
+        // Check basic auth header for the configured token
+        const authHeader = request.header('authorization') || ''
+        const basicMatch = authHeader.match(/^Basic\s+(.+)$/i)
+        if (basicMatch) {
+          const decoded = Buffer.from(basicMatch[1], 'base64').toString()
+          const [, password] = decoded.split(':')
+          if (password === postmarkToken) return true
+        }
+
+        return false
       }
 
       case 'ses': {
-        // AWS SES uses SNS subscription confirmation
+        const topicArn = config.inboundEmail?.ses?.topicArn
+        if (!topicArn) {
+          console.warn('[Escalated] SES Topic ARN not configured — rejecting inbound webhook.')
+          return false
+        }
+
+        const body = request.body()
+        if (!body || typeof body !== 'object') return false
+
+        // Verify TopicArn matches
+        if (body.TopicArn !== topicArn) return false
+
+        // Validate SNS message type
+        const messageType = body.Type
+        if (!['SubscriptionConfirmation', 'Notification', 'UnsubscribeConfirmation'].includes(messageType)) {
+          return false
+        }
+
+        // Validate SigningCertURL is from a legitimate AWS SNS endpoint
+        const certUrl = body.SigningCertURL || body.SigningCertUrl
+        if (certUrl) {
+          try {
+            const url = new URL(certUrl)
+            if (url.protocol !== 'https:' || !/^sns\.[a-z0-9-]+\.amazonaws\.com$/.test(url.hostname)) {
+              console.warn('[Escalated] SES webhook has invalid SigningCertURL — rejecting.')
+              return false
+            }
+          } catch {
+            return false
+          }
+        }
+
         return true
       }
 
