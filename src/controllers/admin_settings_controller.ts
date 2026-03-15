@@ -20,6 +20,7 @@ export default class AdminSettingsController {
       'ses_region', 'ses_topic_arn',
       'imap_host', 'imap_port', 'imap_encryption',
       'imap_username', 'imap_password', 'imap_mailbox',
+      'show_powered_by',
     ])
 
     const sensitiveKeys = ['mailgun_signing_key', 'postmark_inbound_token', 'imap_password']
@@ -48,6 +49,7 @@ export default class AdminSettingsController {
       max_attachments_per_reply: await EscalatedSetting.getInt('max_attachments_per_reply', 5),
       max_attachment_size_kb: await EscalatedSetting.getInt('max_attachment_size_kb', 10240),
       ticket_reference_prefix: await EscalatedSetting.get('ticket_reference_prefix', 'ESC'),
+      show_powered_by: await EscalatedSetting.getBool('show_powered_by', true),
       inbound_email_enabled: await EscalatedSetting.getBool('inbound_email_enabled', config.inboundEmail?.enabled ?? false),
       inbound_email_adapter: await EscalatedSetting.get('inbound_email_adapter', config.inboundEmail?.adapter ?? 'mailgun'),
       inbound_email_address: await EscalatedSetting.get('inbound_email_address', config.inboundEmail?.address ?? ''),

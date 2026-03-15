@@ -165,6 +165,7 @@ export default class EscalatedProvider {
             try {
               const { default: EscalatedSetting } = await import('../src/models/escalated_setting.js')
               data.guest_tickets_enabled = await EscalatedSetting.guestTicketsEnabled()
+              data.show_powered_by = await EscalatedSetting.getBool('show_powered_by', true)
             } catch {
               // Settings table may not exist yet
             }
