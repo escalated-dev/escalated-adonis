@@ -16,6 +16,8 @@
     "./events": "./build/src/events/index.js",
     "./types": "./build/src/types.js",
     "./providers/*": "./build/providers/*.js",
+    "./commands/*": "./build/src/commands/*.js",
+    "./contracts/*": "./build/src/contracts/*.js",
     "./configure": "./build/configure.js"
   },
   "files": [

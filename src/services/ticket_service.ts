@@ -13,6 +13,7 @@ import {
   type ActivityType,
 } from '../types.js'
 import AttachmentService from './attachment_service.js'
+import ImportContext from '../support/import_context.js'
 
 export default class TicketService {
   constructor(protected attachmentService: AttachmentService = new AttachmentService()) {}
@@ -67,7 +68,9 @@ export default class TicketService {
       new_status: 'open',
     })
 
-    await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
+    }
 
     return ticket.refresh()
   }
@@ -86,7 +89,9 @@ export default class TicketService {
     })
     await ticket.save()
 
-    await emitter.emit(ESCALATED_EVENTS.TICKET_UPDATED, { ticket })
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_UPDATED, { ticket })
+    }
 
     return ticket.refresh()
   }
@@ -123,21 +128,23 @@ export default class TicketService {
       new_status: newStatus,
     })
 
-    await emitter.emit(ESCALATED_EVENTS.TICKET_STATUS_CHANGED, {
-      ticket,
-      oldStatus,
-      newStatus,
-      causer,
-    })
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_STATUS_CHANGED, {
+        ticket,
+        oldStatus,
+        newStatus,
+        causer,
+      })
 
-    if (newStatus === 'resolved') {
-      await emitter.emit(ESCALATED_EVENTS.TICKET_RESOLVED, { ticket, causer })
-    } else if (newStatus === 'closed') {
-      await emitter.emit(ESCALATED_EVENTS.TICKET_CLOSED, { ticket, causer })
-    } else if (newStatus === 'reopened') {
-      await emitter.emit(ESCALATED_EVENTS.TICKET_REOPENED, { ticket, causer })
-    } else if (newStatus === 'escalated') {
-      await emitter.emit(ESCALATED_EVENTS.TICKET_ESCALATED, { ticket })
+      if (newStatus === 'resolved') {
+        await emitter.emit(ESCALATED_EVENTS.TICKET_RESOLVED, { ticket, causer })
+      } else if (newStatus === 'closed') {
+        await emitter.emit(ESCALATED_EVENTS.TICKET_CLOSED, { ticket, causer })
+      } else if (newStatus === 'reopened') {
+        await emitter.emit(ESCALATED_EVENTS.TICKET_REOPENED, { ticket, causer })
+      } else if (newStatus === 'escalated') {
+        await emitter.emit(ESCALATED_EVENTS.TICKET_ESCALATED, { ticket })
+      }
     }
 
     return ticket.refresh()
@@ -168,7 +175,9 @@ export default class TicketService {
 
     await this.logActivity(ticket, 'replied', author)
 
-    await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply })
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply })
+    }
 
     return reply.refresh()
   }
@@ -198,7 +207,9 @@ export default class TicketService {
 
     await this.logActivity(ticket, 'note_added', author)
 
-    await emitter.emit(ESCALATED_EVENTS.INTERNAL_NOTE_ADDED, { reply })
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.INTERNAL_NOTE_ADDED, { reply })
+    }
 
     return reply.refresh()
   }
@@ -220,12 +231,14 @@ export default class TicketService {
       new_priority: priority,
     })
 
-    await emitter.emit(ESCALATED_EVENTS.TICKET_PRIORITY_CHANGED, {
-      ticket,
-      oldPriority,
-      newPriority: priority,
-      causer,
-    })
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_PRIORITY_CHANGED, {
+        ticket,
+        oldPriority,
+        newPriority: priority,
+        causer,
+      })
+    }
 
     return ticket.refresh()
   }
@@ -244,7 +257,7 @@ export default class TicketService {
       await this.logActivity(ticket, 'tag_added', causer, { tag_id: tagId })
 
       const tag = await Tag.find(tagId)
-      if (tag) {
+      if (tag && !ImportContext.isImporting()) {
         await emitter.emit(ESCALATED_EVENTS.TAG_ADDED, { ticket, tag })
       }
     }
@@ -266,7 +279,7 @@ export default class TicketService {
       await this.logActivity(ticket, 'tag_removed', causer, { tag_id: tagId })
 
       const tag = await Tag.find(tagId)
-      if (tag) {
+      if (tag && !ImportContext.isImporting()) {
         await emitter.emit(ESCALATED_EVENTS.TAG_REMOVED, { ticket, tag })
       }
     }
@@ -291,12 +304,14 @@ export default class TicketService {
       new_department_id: departmentId,
     })
 
-    await emitter.emit(ESCALATED_EVENTS.DEPARTMENT_CHANGED, {
-      ticket,
-      oldDepartmentId,
-      newDepartmentId: departmentId,
-      causer,
-    })
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.DEPARTMENT_CHANGED, {
+        ticket,
+        oldDepartmentId,
+        newDepartmentId: departmentId,
+        causer,
+      })
+    }
 
     return ticket.refresh()
   }

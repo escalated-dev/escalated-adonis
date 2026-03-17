@@ -30,6 +30,7 @@ const SatisfactionRatingController = () => import('../src/controllers/satisfacti
 const GuestTicketsController = () => import('../src/controllers/guest_tickets_controller.js')
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
 const AdminApiTokensController = () => import('../src/controllers/admin_api_tokens_controller.js')
+const AdminImportController = () => import('../src/controllers/admin_import_controller.js')
 
 // API controllers
 const ApiAuthController = () => import('../src/controllers/api/api_auth_controller.js')
@@ -177,6 +178,17 @@ export function registerRoutes() {
       router.post('/api-tokens', [AdminApiTokensController, 'store']).as('escalated.admin.api-tokens.store')
       router.put('/api-tokens/:id', [AdminApiTokensController, 'update']).as('escalated.admin.api-tokens.update')
       router.delete('/api-tokens/:id', [AdminApiTokensController, 'destroy']).as('escalated.admin.api-tokens.destroy')
+
+      // Import
+      router.get('/import', [AdminImportController, 'index']).as('escalated.admin.import.index')
+      router.get('/import/create', [AdminImportController, 'create']).as('escalated.admin.import.create')
+      router.post('/import', [AdminImportController, 'store']).as('escalated.admin.import.store')
+      router.get('/import/:id', [AdminImportController, 'show']).as('escalated.admin.import.show')
+      router.get('/import/:id/mapping', [AdminImportController, 'mapping']).as('escalated.admin.import.mapping')
+      router.post('/import/:id/mapping', [AdminImportController, 'saveMapping']).as('escalated.admin.import.saveMapping')
+      router.post('/import/:id/start', [AdminImportController, 'start']).as('escalated.admin.import.start')
+      router.post('/import/:id/pause', [AdminImportController, 'pause']).as('escalated.admin.import.pause')
+      router.delete('/import/:id', [AdminImportController, 'destroy']).as('escalated.admin.import.destroy')
 
       // Plugins
       router.get('/plugins', [AdminPluginsController, 'index']).as('escalated.admin.plugins.index')

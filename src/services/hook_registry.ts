@@ -147,6 +147,15 @@ export default class HookRegistry {
         parameters: ['user: any'],
         example: `escalated_addAction('dashboard_viewed', async (user) => { /* ... */ })`,
       },
+
+      // ========================================
+      // IMPORT HOOKS
+      // ========================================
+      'import.completed': {
+        description: 'Fired when a full import job completes successfully',
+        parameters: ['job: ImportJob'],
+        example: `escalated_addAction('import.completed', async (job) => { /* reindex, rebuild caches */ })`,
+      },
     }
   }
 
@@ -233,6 +242,15 @@ export default class HookRegistry {
         description: 'Modify notification channels for a ticket event',
         parameters: ['channels: string[]', 'event: string', 'ticket: Ticket'],
         example: `escalated_addFilter('notification_channels', async (channels, event, ticket) => { channels.push('slack'); return channels })`,
+      },
+
+      // ========================================
+      // IMPORT FILTERS
+      // ========================================
+      'import.adapters': {
+        description: 'Register import adapter implementations',
+        parameters: ['adapters: ImportAdapter[]'],
+        example: `escalated_addFilter('import.adapters', (adapters) => { adapters.push(new MyAdapter()); return adapters })`,
       },
     }
   }

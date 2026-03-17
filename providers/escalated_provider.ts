@@ -73,6 +73,11 @@ export default class EscalatedProvider {
       const { default: InboundEmailService } = await import('../src/services/inbound_email_service.js')
       return new InboundEmailService()
     })
+
+    this.app.container.singleton('escalated.importService', async () => {
+      const { default: ImportService } = await import('../src/services/import_service.js')
+      return new ImportService()
+    })
   }
 
   /**

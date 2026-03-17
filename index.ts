@@ -44,3 +44,12 @@ export {
 } from './src/support/helpers.js'
 // Re-export i18n support
 export { t, setLocale, getLocale } from './src/support/i18n.js'
+
+// Import framework
+export { default as ImportJob } from './src/models/import_job.js'
+export { default as ImportSourceMap } from './src/models/import_source_map.js'
+export { default as ImportService } from './src/services/import_service.js'
+export { default as ImportContext } from './src/support/import_context.js'
+export { ExtractResult } from './src/contracts/import_adapter.js'
+export type { ImportAdapter, CredentialField } from './src/contracts/import_adapter.js'
+export type { ImportJobStatus, EntityProgress, ErrorLogEntry } from './src/models/import_job.js'
