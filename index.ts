@@ -27,6 +27,13 @@ export { default as PluginService } from './src/services/plugin_service.js'
 export { default as PluginUIService } from './src/services/plugin_ui_service.js'
 export { default as PluginModel } from './src/models/plugin.js'
 
+// SDK plugin bridge (in-process)
+export { default as PluginBridge } from './src/bridge/plugin_bridge.js'
+export { default as Dispatcher } from './src/bridge/dispatcher.js'
+export { default as NativeContext } from './src/bridge/native_context.js'
+export { default as RouteRegistrar } from './src/bridge/route_registrar.js'
+export { default as PluginStoreRecord } from './src/models/plugin_store_record.js'
+
 // Global helper functions (prefixed with escalated_ to avoid conflicts)
 export {
   escalated_addAction,
