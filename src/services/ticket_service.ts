@@ -27,6 +27,7 @@ export default class TicketService {
       subject: string
       description: string
       priority?: string
+      ticketType?: string
       channel?: string
       departmentId?: number | null
       metadata?: Record<string, any>
@@ -45,6 +46,7 @@ export default class TicketService {
       description: data.description,
       status: 'open' as TicketStatus,
       priority: (data.priority || config.defaultPriority) as TicketPriority,
+      ticketType: Ticket.TYPES.includes(data.ticketType as any) ? data.ticketType! : 'question',
       channel: data.channel || 'web',
       departmentId: data.departmentId ?? null,
       metadata: data.metadata ?? null,
@@ -361,6 +363,10 @@ export default class TicketService {
 
     if (filters.priority) {
       query.where('priority', filters.priority)
+    }
+
+    if (filters.ticket_type) {
+      query.where('ticket_type', filters.ticket_type)
     }
 
     if (filters.assigned_to) {

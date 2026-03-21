@@ -31,6 +31,8 @@ export default class Ticket extends BaseModel {
 
   static selfAssignPrimaryKey = true
 
+  static TYPES = ['question', 'problem', 'incident', 'task'] as const
+
   @column({ isPrimary: true })
   declare id: number
 
@@ -57,6 +59,9 @@ export default class Ticket extends BaseModel {
 
   @column()
   declare priority: TicketPriority
+
+  @column()
+  declare ticketType: string
 
   @column()
   declare channel: string

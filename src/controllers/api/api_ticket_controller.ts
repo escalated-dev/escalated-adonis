@@ -17,7 +17,7 @@ export default class ApiTicketController {
    */
   async index(ctx: HttpContext) {
     const filters = ctx.request.only([
-      'status', 'priority', 'assigned_to', 'unassigned', 'department_id',
+      'status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id',
       'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following',
     ])
 
