@@ -31,6 +31,7 @@ const GuestTicketsController = () => import('../src/controllers/guest_tickets_co
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
 const AdminApiTokensController = () => import('../src/controllers/admin_api_tokens_controller.js')
 const AdminImportController = () => import('../src/controllers/admin_import_controller.js')
+const AdminAutomationsController = () => import('../src/controllers/admin_automations_controller.js')
 
 // API controllers
 const ApiAuthController = () => import('../src/controllers/api/api_auth_controller.js')
@@ -189,6 +190,14 @@ export function registerRoutes() {
       router.post('/import/:id/start', [AdminImportController, 'start']).as('escalated.admin.import.start')
       router.post('/import/:id/pause', [AdminImportController, 'pause']).as('escalated.admin.import.pause')
       router.delete('/import/:id', [AdminImportController, 'destroy']).as('escalated.admin.import.destroy')
+
+      // Automations CRUD
+      router.get('/automations', [AdminAutomationsController, 'index']).as('escalated.admin.automations.index')
+      router.get('/automations/create', [AdminAutomationsController, 'create']).as('escalated.admin.automations.create')
+      router.post('/automations', [AdminAutomationsController, 'store']).as('escalated.admin.automations.store')
+      router.get('/automations/:id/edit', [AdminAutomationsController, 'edit']).as('escalated.admin.automations.edit')
+      router.put('/automations/:id', [AdminAutomationsController, 'update']).as('escalated.admin.automations.update')
+      router.delete('/automations/:id', [AdminAutomationsController, 'destroy']).as('escalated.admin.automations.destroy')
 
       // Plugins
       router.get('/plugins', [AdminPluginsController, 'index']).as('escalated.admin.plugins.index')
