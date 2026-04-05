@@ -2,9 +2,11 @@ import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
 import SatisfactionRating from '../models/satisfaction_rating.js'
+import { getRenderer } from '../rendering/renderer.js'
 
 export default class AdminReportsController {
-  async handle({ request, inertia }: HttpContext) {
+  async handle(ctx: HttpContext) {
+    const { request } = ctx
     const days = Number(request.input('days', 30))
     const since = DateTime.now().minus({ days }).toSQL()!
 
@@ -59,7 +61,7 @@ export default class AdminReportsController {
       byPriorityMap[row.priority] = Number(row.count)
     }
 
-    return inertia.render('Escalated/Admin/Reports', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Reports', {
       period_days: days,
       total_tickets: Number((totalTickets as any)?.$extras?.total ?? 0),
       resolved_tickets: Number((resolvedTickets as any)?.$extras?.total ?? 0),

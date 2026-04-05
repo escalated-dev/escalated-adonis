@@ -22,6 +22,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import ImportJob from '../models/import_job.js'
 import ImportService from '../services/import_service.js'
+import { getRenderer } from '../rendering/renderer.js'
 
 export default class AdminImportController {
   protected importService = new ImportService()
@@ -33,10 +34,10 @@ export default class AdminImportController {
   /**
    * GET /admin/import — list all import jobs
    */
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const jobs = await ImportJob.query().orderBy('created_at', 'desc')
 
-    return inertia.render('Escalated/Admin/Import/Index', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Index', {
       jobs: jobs.map((j) => this.serializeJob(j)),
     })
   }
@@ -48,10 +49,10 @@ export default class AdminImportController {
   /**
    * GET /admin/import/create — render the "choose platform" page
    */
-  async create({ inertia }: HttpContext) {
+  async create(ctx: HttpContext) {
     const adapters = await this.importService.availableAdapters()
 
-    return inertia.render('Escalated/Admin/Import/Create', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Create', {
       adapters: adapters.map((a) => ({
         name: a.name(),
         displayName: a.displayName(),
@@ -142,7 +143,7 @@ export default class AdminImportController {
       defaultMappings[entityType] = adapter.defaultFieldMappings(entityType)
     }
 
-    return ctx.inertia.render('Escalated/Admin/Import/Mapping', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Mapping', {
       job: this.serializeJob(job),
       entityTypes,
       sourceFields,
@@ -178,7 +179,7 @@ export default class AdminImportController {
     const job = await this.findJobOrFail(ctx)
     if (!job) return
 
-    return ctx.inertia.render('Escalated/Admin/Import/Show', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Show', {
       job: this.serializeJob(job),
     })
   }

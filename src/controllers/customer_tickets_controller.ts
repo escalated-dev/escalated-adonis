@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Department from '../models/department.js'
 import TicketService from '../services/ticket_service.js'
 import { getConfig } from '../helpers/config.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class CustomerTicketsController {
@@ -10,28 +11,28 @@ export default class CustomerTicketsController {
   /**
    * GET /support — List customer's tickets
    */
-  async index({ request, auth, inertia }: HttpContext) {
-    const user = auth.user!
-    const filters = request.only(['status', 'search', 'sort_by', 'sort_dir'])
+  async index(ctx: HttpContext) {
+    const user = ctx.auth.user!
+    const filters = ctx.request.only(['status', 'search', 'sort_by', 'sort_dir'])
 
     const tickets = await this.ticketService.list(filters, user as any)
 
-    return inertia.render('Escalated/Customer/Index', {
+    return getRenderer().render(ctx, 'Escalated/Customer/Index', {
       tickets,
-      filters: request.only(['status', 'search']),
+      filters: ctx.request.only(['status', 'search']),
     })
   }
 
   /**
    * GET /support/create — Show create ticket form
    */
-  async create({ inertia }: HttpContext) {
+  async create(ctx: HttpContext) {
     const config = getConfig()
     const departments = await Department.query()
       .withScopes((scopes) => scopes.active())
       .select('id', 'name')
 
-    return inertia.render('Escalated/Customer/Create', {
+    return getRenderer().render(ctx, 'Escalated/Customer/Create', {
       departments,
       priorities: config.priorities,
     })
@@ -75,7 +76,7 @@ export default class CustomerTicketsController {
       })
     })
 
-    return ctx.inertia.render('Escalated/Customer/Show', {
+    return getRenderer().render(ctx, 'Escalated/Customer/Show', {
       ticket,
     })
   }

@@ -8,6 +8,7 @@ import Macro from '../models/macro.js'
 import TicketService from '../services/ticket_service.js'
 import AssignmentService from '../services/assignment_service.js'
 import MacroService from '../services/macro_service.js'
+import { getRenderer } from '../rendering/renderer.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
 
@@ -18,15 +19,15 @@ export default class AdminTicketsController {
   /**
    * GET /support/admin/tickets — List all tickets (admin view)
    */
-  async index({ request, auth, inertia }: HttpContext) {
-    const filters = request.only([
+  async index(ctx: HttpContext) {
+    const filters = ctx.request.only([
       'status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id',
       'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following',
     ])
 
     const tickets = await this.ticketService.list(
       filters,
-      filters.following ? (auth.user as any) : null,
+      filters.following ? (ctx.auth.user as any) : null,
     )
 
     const departments = await Department.query()
@@ -36,9 +37,9 @@ export default class AdminTicketsController {
     const tags = await Tag.query().select('id', 'name', 'color')
     const agents = await this.getAgents()
 
-    return inertia.render('Escalated/Admin/Tickets/Index', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Tickets/Index', {
       tickets,
-      filters: request.all(),
+      filters: ctx.request.all(),
       departments,
       tags,
       agents,
@@ -82,7 +83,7 @@ export default class AdminTicketsController {
     const isFollowing = await ticket.isFollowedBy(userId)
     const followersCount = await ticket.followersCount()
 
-    return ctx.inertia.render('Escalated/Admin/Tickets/Show', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Tickets/Show', {
       ticket,
       departments,
       tags,

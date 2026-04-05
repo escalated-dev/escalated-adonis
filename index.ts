@@ -34,6 +34,16 @@ export { default as NativeContext } from './src/bridge/native_context.js'
 export { default as RouteRegistrar } from './src/bridge/route_registrar.js'
 export { default as PluginStoreRecord } from './src/models/plugin_store_record.js'
 
+// Renderer abstraction (UI-optional support)
+export {
+  getRenderer,
+  isUiEnabled,
+  resetRenderer,
+  InertiaRenderer,
+  JsonRenderer,
+} from './src/rendering/renderer.js'
+export type { RendererContract } from './src/rendering/renderer.js'
+
 // Global helper functions (prefixed with escalated_ to avoid conflicts)
 export {
   escalated_addAction,

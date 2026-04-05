@@ -1,11 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import CannedResponse from '../models/canned_response.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminCannedResponsesController {
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const responses = await CannedResponse.query()
-    return inertia.render('Escalated/Admin/CannedResponses/Index', { responses })
+    return getRenderer().render(ctx, 'Escalated/Admin/CannedResponses/Index', { responses })
   }
 
   async store({ request, auth, response, session }: HttpContext) {

@@ -1,11 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import EscalatedSetting from '../models/escalated_setting.js'
 import { getConfig } from '../helpers/config.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminSettingsController {
-  async index({ inertia }: HttpContext) {
-    return inertia.render('Escalated/Admin/Settings', {
+  async index(ctx: HttpContext) {
+    return getRenderer().render(ctx, 'Escalated/Admin/Settings', {
       settings: await this.getSettings(),
     })
   }

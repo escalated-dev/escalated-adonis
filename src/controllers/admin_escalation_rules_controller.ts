@@ -1,15 +1,16 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import EscalationRule from '../models/escalation_rule.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminEscalationRulesController {
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const rules = await EscalationRule.query().orderBy('order')
-    return inertia.render('Escalated/Admin/EscalationRules/Index', { rules })
+    return getRenderer().render(ctx, 'Escalated/Admin/EscalationRules/Index', { rules })
   }
 
-  async create({ inertia }: HttpContext) {
-    return inertia.render('Escalated/Admin/EscalationRules/Form')
+  async create(ctx: HttpContext) {
+    return getRenderer().render(ctx, 'Escalated/Admin/EscalationRules/Form')
   }
 
   async store({ request, response, session }: HttpContext) {
@@ -32,9 +33,9 @@ export default class AdminEscalationRulesController {
     return response.redirect().toRoute('escalated.admin.escalation-rules.index')
   }
 
-  async edit({ params, inertia }: HttpContext) {
-    const rule = await EscalationRule.findOrFail(params.id)
-    return inertia.render('Escalated/Admin/EscalationRules/Form', { rule })
+  async edit(ctx: HttpContext) {
+    const rule = await EscalationRule.findOrFail(ctx.params.id)
+    return getRenderer().render(ctx, 'Escalated/Admin/EscalationRules/Form', { rule })
   }
 
   async update({ params, request, response, session }: HttpContext) {

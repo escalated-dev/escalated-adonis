@@ -1,6 +1,7 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 import type { EscalatedConfig } from '../src/types.js'
 import { setLocale } from '../src/support/i18n.js'
+import { resetRenderer } from '../src/rendering/renderer.js'
 
 export default class EscalatedProvider {
   constructor(protected app: ApplicationService) {}
@@ -117,8 +118,14 @@ export default class EscalatedProvider {
     // Wire AdonisJS emitter events → plugin bridge action hooks
     await this.wireEventsToBridge()
 
-    // Share Inertia data
-    await this.shareInertiaData()
+    // Reset the cached renderer so it picks up the freshly-loaded config
+    resetRenderer()
+
+    // Share Inertia data (only when UI is enabled)
+    const config: EscalatedConfig = (globalThis as any).__escalated_config ?? {}
+    if ((config as any).ui?.enabled !== false) {
+      await this.shareInertiaData()
+    }
 
     // Load active plugins (must happen after config is loaded)
     await this.loadPlugins()
@@ -381,6 +388,9 @@ export default class EscalatedProvider {
     if (pluginUI && typeof pluginUI.clear === 'function') {
       pluginUI.clear()
     }
+
+    // Reset the renderer cache so the next boot picks up fresh config
+    resetRenderer()
 
     delete (globalThis as any).__escalated_config
     delete (globalThis as any).__escalated_presence
