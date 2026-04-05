@@ -1,6 +1,0 @@
-{{#var viewFileName = generators.viewFileName(entity.name)}}
-{{{
-  exports({
-    to: app.viewsPath(entity.path, viewFileName)
-  })
-}}}

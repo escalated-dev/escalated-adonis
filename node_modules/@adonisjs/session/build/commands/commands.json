@@ -1,1 +1,0 @@
-{"commands":[{"commandName":"make:session-table","description":"Create a migration for the sessions database table","help":"","namespace":"make","aliases":[],"flags":[],"args":[],"options":{},"filePath":"make_session_table.js"}],"version":1}

@@ -1,1 +1,0 @@
-{"version":3,"sources":["../src/debug.ts"],"sourcesContent":["/**\n * @boringnode/bus\n *\n * @license MIT\n * @copyright BoringNode\n */\n\nimport { debuglog } from 'node:util'\n\nexport default debuglog('boringnode:bus')\n"],"mappings":";AAOA,SAAS,gBAAgB;AAEzB,IAAO,gBAAQ,SAAS,gBAAgB;","names":[]}
