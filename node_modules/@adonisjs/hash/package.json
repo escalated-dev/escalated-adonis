@@ -1,0 +1,150 @@
+{
+  "name": "@adonisjs/hash",
+  "version": "9.1.1",
+  "description": "Framework agnostic Password hashing package with support for PHC string format",
+  "main": "build/index.js",
+  "type": "module",
+  "files": [
+    "build",
+    "!build/bin",
+    "!build/coverage",
+    "!build/tests"
+  ],
+  "exports": {
+    ".": "./build/index.js",
+    "./types": "./build/src/types.js",
+    "./drivers/argon": "./build/src/drivers/argon.js",
+    "./drivers/bcrypt": "./build/src/drivers/bcrypt.js",
+    "./drivers/scrypt": "./build/src/drivers/scrypt.js",
+    "./phc_formatter": "./build/src/phc_formatter.js",
+    "./factories": "./build/factories/main.js"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "scripts": {
+    "pretest": "npm run lint",
+    "test": "cross-env NODE_DEBUG=adonisjs:hash c8 npm run quick:test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "clean": "del-cli build",
+    "precompile": "npm run lint && npm run clean",
+    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "build": "npm run compile",
+    "version": "npm run build",
+    "prepublishOnly": "npm run build",
+    "release": "release-it",
+    "quick:test": "node --import=ts-node-maintained/register/esm --enable-source-maps bin/test.ts"
+  },
+  "devDependencies": {
+    "@adonisjs/eslint-config": "^2.0.0",
+    "@adonisjs/prettier-config": "^1.4.4",
+    "@adonisjs/tsconfig": "^1.4.0",
+    "@japa/assert": "^4.0.1",
+    "@japa/expect-type": "^2.0.3",
+    "@japa/runner": "^4.2.0",
+    "@release-it/conventional-changelog": "^10.0.1",
+    "@swc/core": "1.10.7",
+    "@types/bcrypt": "^5.0.2",
+    "@types/node": "^22.15.18",
+    "argon2": "^0.43.0",
+    "bcrypt": "^6.0.0",
+    "c8": "^10.1.3",
+    "cross-env": "^7.0.3",
+    "del-cli": "^6.0.0",
+    "eslint": "^9.26.0",
+    "prettier": "^3.5.3",
+    "release-it": "^19.0.2",
+    "ts-node-maintained": "^10.9.5",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@phc/format": "^1.0.0",
+    "@poppinss/utils": "^6.9.3"
+  },
+  "peerDependencies": {
+    "argon2": "^0.31.2 || ^0.41.0 || ^0.43.0",
+    "bcrypt": "^5.1.1 || ^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "argon2": {
+      "optional": true
+    },
+    "bcrypt": {
+      "optional": true
+    }
+  },
+  "homepage": "https://github.com/adonisjs/hash#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/adonisjs/hash.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/hash/issues"
+  },
+  "keywords": [
+    "hash",
+    "bcrypt",
+    "argon2"
+  ],
+  "author": "Harminder Virk <virk@adonisjs.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "tsup": {
+    "entry": [
+      "./index.ts",
+      "./src/drivers/argon.ts",
+      "./src/drivers/bcrypt.ts",
+      "./src/drivers/scrypt.ts",
+      "./src/phc_formatter.ts",
+      "./src/types.ts",
+      "./factories/main.ts"
+    ],
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": false,
+    "sourcemap": false,
+    "target": "esnext"
+  },
+  "release-it": {
+    "git": {
+      "requireCleanWorkingDir": true,
+      "requireUpstream": true,
+      "commitMessage": "chore(release): ${version}",
+      "tagAnnotation": "v${version}",
+      "push": true,
+      "tagName": "v${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": true,
+      "skipChecks": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": {
+          "name": "angular"
+        }
+      }
+    }
+  },
+  "c8": {
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "exclude": [
+      "tests/**",
+      "src/legacy/**"
+    ]
+  },
+  "prettier": "@adonisjs/prettier-config"
+}

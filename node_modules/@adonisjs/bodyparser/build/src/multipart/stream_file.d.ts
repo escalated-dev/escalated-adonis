@@ -1,0 +1,7 @@
+import { Readable } from 'node:stream';
+/**
+ * Writes readable stream to the given location by properly cleaning up readable
+ * and writable streams in case of any errors. Also an optional data listener
+ * can listen for the `data` event.
+ */
+export declare function streamFile(readStream: Readable, location: string, dataListener?: (line: Buffer) => void): Promise<void>;

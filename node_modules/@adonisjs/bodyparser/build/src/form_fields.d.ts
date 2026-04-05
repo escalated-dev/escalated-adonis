@@ -1,0 +1,32 @@
+/**
+ * A jar of form fields to store form data by handling
+ * array gracefully
+ */
+export declare class FormFields {
+    #private;
+    constructor(config: {
+        convertEmptyStringsToNull: boolean;
+    });
+    /**
+     * Add a new key/value pair. The keys with array like
+     * expressions are handled properly.
+     *
+     * @example
+     * ```
+     * formfields.add('username', 'virk')
+     *
+     * // array
+     * formfields.add('username[]', 'virk')
+     * formfields.add('username[]', 'nikk')
+     *
+     * // Indexed keys are orderd properly
+     * formfields.add('username[1]', 'virk')
+     * formfields.add('username[0]', 'nikk')
+     * ```
+     */
+    add(key: string, value: any): void;
+    /**
+     * Returns the copy of form fields
+     */
+    get(): any;
+}

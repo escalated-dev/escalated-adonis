@@ -1,0 +1,61 @@
+{
+  "name": "case-anything",
+  "version": "3.1.2",
+  "description": "camelCase, kebab-case, PascalCase... a simple integration with nano package size. (SMALL footprint!)",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit && eslint ./src",
+    "test": "vitest run",
+    "build": "del-cli dist && tsc",
+    "release": "npm run lint && npm run build && np"
+  },
+  "devDependencies": {
+    "@cycraft/eslint": "^0.4.4",
+    "@cycraft/tsconfig": "^0.1.2",
+    "del-cli": "^6.0.0",
+    "np": "^10.2.0",
+    "vitest": "^3.0.6"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "change-case",
+    "change-casing",
+    "case-change",
+    "casing-change",
+    "camel-case",
+    "pascal-case",
+    "kebab-case",
+    "snake-case",
+    "ada-case",
+    "constant-case",
+    "train-case",
+    "cobol-case",
+    "path-case",
+    "dot-case",
+    "camel",
+    "pascal",
+    "kebab",
+    "snake",
+    "constant",
+    "path",
+    "format-string"
+  ],
+  "author": "Luca Ban - Mesqueeb (https://cycraft.co)",
+  "funding": "https://github.com/sponsors/mesqueeb",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mesqueeb/case-anything.git"
+  },
+  "homepage": "https://github.com/mesqueeb/case-anything#readme",
+  "bugs": "https://github.com/mesqueeb/case-anything/issues"
+}

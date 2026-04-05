@@ -1,0 +1,24 @@
+# Media
+**/media
+
+# Tests
+**/test
+
+# Coverage Reports
+**/.nyc_output/
+**/coverage/
+
+# ESLint
+.eslint*
+
+# CI
+.nycrc
+.travis.yml
+.codeclimate.yml
+
+# IDE Specific
+.vscode
+
+# Windows
+Thumbs.db
+Desktop.ini

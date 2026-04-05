@@ -1,0 +1,14 @@
+/**
+ * A collection of platform specific icons
+ */
+export declare const icons: {
+    tick: string;
+    cross: string;
+    bullet: string;
+    nodejs: string;
+    pointer: string;
+    info: string;
+    warning: string;
+    squareSmallFilled: string;
+    borderVertical: string;
+};

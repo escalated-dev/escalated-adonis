@@ -1,0 +1,141 @@
+{
+  "name": "@adonisjs/presets",
+  "version": "2.6.4",
+  "description": "A collection of presets to configure AdonisJS packages",
+  "type": "module",
+  "files": [
+    "build",
+    "!build/bin",
+    "!build/tests"
+  ],
+  "exports": {
+    "./lucid": "./build/src/lucid/main.js",
+    "./auth": "./build/src/auth/main.js"
+  },
+  "scripts": {
+    "pretest": "npm run lint",
+    "test": "c8 npm run quick:test",
+    "lint": "eslint",
+    "copy:templates": "copyfiles \"src/**/stubs/**/*.stub\" build",
+    "typecheck": "tsc --noEmit",
+    "precompile": "npm run lint",
+    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "postcompile": "npm run copy:templates",
+    "build": "npm run compile",
+    "release": "npx release-it",
+    "version": "npm run build",
+    "sync-labels": "github-label-sync --labels .github/labels.json adonisjs/presets",
+    "format": "prettier --write .",
+    "prepublishOnly": "npm run build",
+    "quick:test": "node --import ts-node-maintained/register/esm --enable-source-maps bin/test.ts"
+  },
+  "devDependencies": {
+    "@adonisjs/assembler": "^7.8.2",
+    "@adonisjs/core": "^6.13.0",
+    "@adonisjs/eslint-config": "^2.0.0-beta.6",
+    "@adonisjs/prettier-config": "^1.4.0",
+    "@adonisjs/tsconfig": "^1.4.0",
+    "@commitlint/cli": "^19.4.1",
+    "@commitlint/config-conventional": "^19.4.1",
+    "@japa/assert": "^3.0.0",
+    "@japa/file-system": "^2.3.0",
+    "@japa/runner": "^3.1.4",
+    "@japa/snapshot": "^2.0.5",
+    "@poppinss/cliui": "^6.4.1",
+    "@release-it/conventional-changelog": "^8.0.1",
+    "@swc/core": "^1.7.24",
+    "c8": "^10.1.2",
+    "copyfiles": "^2.4.1",
+    "dedent": "^1.5.3",
+    "eslint": "^9.10.0",
+    "github-label-sync": "^2.3.1",
+    "husky": "^9.1.5",
+    "prettier": "^3.3.3",
+    "release-it": "^17.6.0",
+    "timekeeper": "^2.3.1",
+    "ts-node-maintained": "^10.9.4",
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@poppinss/utils": "^6.7.3"
+  },
+  "peerDependencies": {
+    "@adonisjs/assembler": "^7.8.2",
+    "@adonisjs/core": "^6.13.0"
+  },
+  "peerDependenciesMeta": {
+    "@adonisjs/assembler": {
+      "optional": true
+    }
+  },
+  "author": "virk,adonisjs",
+  "license": "MIT",
+  "homepage": "https://github.com/adonisjs/presets#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/presets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/presets/issues"
+  },
+  "keywords": [
+    "adonisjs",
+    "presets"
+  ],
+  "publishConfig": {
+    "provenance": true
+  },
+  "release-it": {
+    "git": {
+      "requireCleanWorkingDir": true,
+      "requireUpstream": true,
+      "commitMessage": "chore(release): ${version}",
+      "tagAnnotation": "v${version}",
+      "push": true,
+      "tagName": "v${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": true,
+      "skipChecks": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": {
+          "name": "angular"
+        }
+      }
+    }
+  },
+  "c8": {
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "exclude": [
+      "tests/**"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "prettier": "@adonisjs/prettier-config",
+  "tsup": {
+    "entry": [
+      "index.ts",
+      "./src/auth/main.ts",
+      "./src/lucid/main.ts"
+    ],
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": false,
+    "sourcemap": true,
+    "target": "esnext"
+  }
+}

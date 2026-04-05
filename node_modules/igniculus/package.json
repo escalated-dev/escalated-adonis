@@ -1,0 +1,46 @@
+{
+  "name": "igniculus",
+  "version": "1.5.0",
+  "description": "SQL Syntax Highlighter and Logger. Unadorned and customizable.",
+  "keywords": [
+    "ansi",
+    "color",
+    "console",
+    "format",
+    "highlight",
+    "log",
+    "sql",
+    "sequel",
+    "style",
+    "syntax",
+    "terminal"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "ava test",
+    "eslint": "eslint **/*.js",
+    "coverage": "nyc --reporter=text ava test && rimraf .nyc_output",
+    "nyc": "nyc ava --fail-fast test",
+    "travis": "npm run eslint && npm run nyc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Undre4m/igniculus.git"
+  },
+  "author": "Lucas Astrada <astrada.sis@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Undre4m/igniculus/issues"
+  },
+  "homepage": "https://github.com/Undre4m/igniculus#readme",
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "devDependencies": {
+    "ava": "^0.25.0",
+    "dedent": "^0.7.0",
+    "eslint": "^4.19.1",
+    "nyc": "^11.7.3",
+    "rimraf": "^2.6.2"
+  }
+}

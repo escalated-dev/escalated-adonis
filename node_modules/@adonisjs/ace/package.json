@@ -1,0 +1,140 @@
+{
+  "name": "@adonisjs/ace",
+  "description": "A CLI framework for Node.js",
+  "version": "13.4.0",
+  "engines": {
+    "node": ">=18.16.0"
+  },
+  "main": "build/index.js",
+  "type": "module",
+  "files": [
+    "build",
+    "!build/bin",
+    "!build/examples",
+    "!build/tests"
+  ],
+  "exports": {
+    ".": "./build/index.js",
+    "./types": "./build/src/types.js"
+  },
+  "scripts": {
+    "pretest": "npm run lint",
+    "test": "cross-env NODE_DEBUG=adonisjs:ace c8 npm run quick:test",
+    "build:schema": "ts-json-schema-generator --path='src/types.ts' --type='CommandMetaData' --tsconfig='tsconfig.json' --out='schemas/command_metadata_schema.json'",
+    "copy:files": "copyfiles --up=1 schemas/*.stub schemas/*.json build && copyfiles --up=1 stubs/*.stub build",
+    "precompile": "npm run lint",
+    "typecheck": "tsc --noEmit",
+    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "postcompile": "npm run build:schema && npm run copy:files",
+    "build": "npm run compile",
+    "release": "release-it",
+    "version": "npm run build",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint",
+    "format": "prettier --write .",
+    "quick:test": "node --import=ts-node-maintained/register/esm bin/test.ts"
+  },
+  "devDependencies": {
+    "@adonisjs/eslint-config": "^2.0.0-beta.6",
+    "@adonisjs/prettier-config": "^1.4.0",
+    "@adonisjs/tsconfig": "^1.4.0",
+    "@japa/assert": "^3.0.0",
+    "@japa/expect-type": "^2.0.2",
+    "@japa/file-system": "^2.3.0",
+    "@japa/runner": "^3.1.4",
+    "@release-it/conventional-changelog": "^8.0.2",
+    "@swc/core": "^1.7.26",
+    "@types/node": "^22.7.5",
+    "@types/yargs-parser": "^21.0.3",
+    "c8": "^10.1.2",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.12.0",
+    "prettier": "^3.3.3",
+    "release-it": "^17.7.0",
+    "ts-json-schema-generator": "^2.3.0",
+    "ts-node-maintained": "^10.9.4",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@poppinss/cliui": "^6.4.1",
+    "@poppinss/hooks": "^7.2.4",
+    "@poppinss/macroable": "^1.0.3",
+    "@poppinss/prompts": "^3.1.3",
+    "@poppinss/utils": "^6.8.3",
+    "fastest-levenshtein": "^1.0.16",
+    "jsonschema": "^1.4.1",
+    "string-width": "^7.2.0",
+    "yargs-parser": "^21.1.1",
+    "youch": "^3.3.4",
+    "youch-terminal": "^2.2.3"
+  },
+  "author": "virk,adonisjs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/ace.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/ace/issues"
+  },
+  "keywords": [
+    "adonisjs",
+    "commandline",
+    "cli",
+    "commander"
+  ],
+  "publishConfig": {
+    "provenance": true,
+    "access": "public"
+  },
+  "c8": {
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "exclude": [
+      "tests/**",
+      "build/**",
+      "examples/**"
+    ]
+  },
+  "tsup": {
+    "entry": [
+      "./index.ts",
+      "./src/types.ts"
+    ],
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": false,
+    "sourcemap": true,
+    "target": "esnext"
+  },
+  "release-it": {
+    "git": {
+      "requireCleanWorkingDir": true,
+      "requireUpstream": true,
+      "commitMessage": "chore(release): ${version}",
+      "tagAnnotation": "v${version}",
+      "push": true,
+      "tagName": "v${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": true,
+      "skipChecks": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": {
+          "name": "angular"
+        }
+      }
+    }
+  },
+  "prettier": "@adonisjs/prettier-config"
+}

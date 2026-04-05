@@ -1,0 +1,37 @@
+import type { Encryption } from '@adonisjs/encryption';
+/**
+ * Cookie client exposes the API to parse/set AdonisJS cookies
+ * as a client.
+ */
+export declare class CookieClient {
+    #private;
+    constructor(encryption: Encryption);
+    /**
+     * Encrypt a key value pair to be sent in the cookie header
+     */
+    encrypt(key: string, value: any): string | null;
+    /**
+     * Sign a key value pair to be sent in the cookie header
+     */
+    sign(key: string, value: any): string | null;
+    /**
+     * Encode a key value pair to be sent in the cookie header
+     */
+    encode(_: string, value: any): string | null;
+    /**
+     * Unsign a signed cookie value
+     */
+    unsign(key: string, value: string): any;
+    /**
+     * Decrypt an encrypted cookie value
+     */
+    decrypt(key: string, value: string): any;
+    /**
+     * Decode an encoded cookie value
+     */
+    decode(_: string, value: string): any;
+    /**
+     * Parse response cookie
+     */
+    parse(key: string, value: any): any;
+}

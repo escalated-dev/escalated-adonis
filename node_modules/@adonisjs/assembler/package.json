@@ -1,0 +1,157 @@
+{
+  "name": "@adonisjs/assembler",
+  "description": "Provides utilities to run AdonisJS development server and build project for production",
+  "version": "7.8.2",
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "main": "build/index.js",
+  "type": "module",
+  "files": [
+    "build",
+    "!build/bin",
+    "!build/tests"
+  ],
+  "exports": {
+    ".": "./build/index.js",
+    "./code_transformer": "./build/src/code_transformer/main.js",
+    "./types": "./build/src/types.js"
+  },
+  "scripts": {
+    "pretest": "npm run lint",
+    "test": "c8 npm run quick:test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "clean": "del-cli build",
+    "typecheck": "tsc --noEmit",
+    "precompile": "npm run lint && npm run clean",
+    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "build": "npm run compile",
+    "release": "release-it",
+    "version": "npm run build",
+    "prepublishOnly": "npm run build",
+    "quick:test": "cross-env NODE_DEBUG=adonisjs:assembler node --enable-source-maps --import=ts-node-maintained/register/esm bin/test.ts",
+    "sync-labels": "github-label-sync --labels .github/labels.json adonisjs/assembler"
+  },
+  "devDependencies": {
+    "@adonisjs/application": "^8.3.1",
+    "@adonisjs/eslint-config": "^2.0.0-beta.6",
+    "@adonisjs/prettier-config": "^1.4.0",
+    "@adonisjs/tsconfig": "^1.4.0",
+    "@japa/assert": "^3.0.0",
+    "@japa/file-system": "^2.3.0",
+    "@japa/runner": "^3.1.4",
+    "@japa/snapshot": "^2.0.5",
+    "@release-it/conventional-changelog": "^8.0.1",
+    "@swc/core": "^1.7.23",
+    "@types/node": "^22.5.2",
+    "@types/picomatch": "^3.0.1",
+    "@types/pretty-hrtime": "^1.0.3",
+    "c8": "^10.1.2",
+    "cross-env": "^7.0.3",
+    "del-cli": "^5.1.0",
+    "eslint": "^9.9.1",
+    "github-label-sync": "^2.3.1",
+    "hot-hook": "^0.2.6",
+    "husky": "^9.1.5",
+    "p-event": "^6.0.1",
+    "prettier": "^3.3.3",
+    "release-it": "^17.6.0",
+    "ts-node-maintained": "^10.9.4",
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@adonisjs/env": "^6.1.0",
+    "@antfu/install-pkg": "^0.4.1",
+    "@poppinss/chokidar-ts": "^4.1.4",
+    "@poppinss/cliui": "^6.4.1",
+    "@poppinss/hooks": "^7.2.3",
+    "@poppinss/utils": "^6.7.3",
+    "cpy": "^11.1.0",
+    "dedent": "^1.5.3",
+    "execa": "^9.3.1",
+    "fast-glob": "^3.3.2",
+    "get-port": "^7.1.0",
+    "junk": "^4.0.1",
+    "picomatch": "^4.0.2",
+    "pretty-hrtime": "^1.0.3",
+    "slash": "^5.1.0",
+    "ts-morph": "^23.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^4.0.0 || ^5.0.0"
+  },
+  "author": "virk,adonisjs",
+  "license": "MIT",
+  "homepage": "https://github.com/adonisjs/assembler#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/adonisjs/assembler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/assembler/issues"
+  },
+  "keywords": [
+    "adonisjs",
+    "build",
+    "ts"
+  ],
+  "publishConfig": {
+    "provenance": true
+  },
+  "tsup": {
+    "entry": [
+      "./index.ts",
+      "./src/types.ts",
+      "./src/code_transformer/main.ts"
+    ],
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": false,
+    "sourcemap": true,
+    "target": "esnext"
+  },
+  "release-it": {
+    "git": {
+      "requireCleanWorkingDir": true,
+      "requireUpstream": true,
+      "commitMessage": "chore(release): ${version}",
+      "tagAnnotation": "v${version}",
+      "push": true,
+      "tagName": "v${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": true,
+      "skipChecks": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": {
+          "name": "angular"
+        }
+      }
+    }
+  },
+  "c8": {
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "exclude": [
+      "tests/**",
+      "build/**",
+      "bin/**",
+      "tmp/**",
+      "examples/**",
+      "src/dev_server.ts",
+      "src/test_runner.ts",
+      "src/assets_dev_server.ts"
+    ]
+  },
+  "prettier": "@adonisjs/prettier-config"
+}

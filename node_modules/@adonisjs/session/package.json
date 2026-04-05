@@ -1,0 +1,199 @@
+{
+  "name": "@adonisjs/session",
+  "description": "Session provider for AdonisJS",
+  "version": "7.7.1",
+  "engines": {
+    "node": ">=18.16.0"
+  },
+  "main": "build/index.js",
+  "type": "module",
+  "files": [
+    "build",
+    "!build/bin",
+    "!build/tests",
+    "!build/tests_helpers"
+  ],
+  "exports": {
+    ".": "./build/index.js",
+    "./factories": "./build/factories/main.js",
+    "./session_provider": "./build/providers/session_provider.js",
+    "./session_middleware": "./build/src/session_middleware.js",
+    "./plugins/edge": "./build/src/plugins/edge.js",
+    "./plugins/api_client": "./build/src/plugins/japa/api_client.js",
+    "./plugins/browser_client": "./build/src/plugins/japa/browser_client.js",
+    "./client": "./build/src/client.js",
+    "./types": "./build/src/types.js",
+    "./commands": "./build/commands/main.js"
+  },
+  "scripts": {
+    "pretest": "npm run lint",
+    "test": "cross-env NODE_DEBUG=adonisjs:session c8 npm run quick:test",
+    "lint": "eslint",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "copy:templates": "copyfiles \"stubs/**/*.stub\" --up=\"1\" build",
+    "precompile": "npm run lint",
+    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "postcompile": "npm run copy:templates && npm run index:commands",
+    "index:commands": "adonis-kit index build/commands",
+    "build": "npm run compile",
+    "version": "npm run build",
+    "prepublishOnly": "npm run build",
+    "release": "release-it",
+    "quick:test": "node --import=ts-node-maintained/register/esm --enable-source-maps bin/test.ts"
+  },
+  "devDependencies": {
+    "@adonisjs/assembler": "^7.8.2",
+    "@adonisjs/core": "^6.19.1",
+    "@adonisjs/eslint-config": "^2.1.2",
+    "@adonisjs/i18n": "^2.2.3",
+    "@adonisjs/lucid": "^21.8.1",
+    "@adonisjs/prettier-config": "^1.4.5",
+    "@adonisjs/redis": "^9.2.0",
+    "@adonisjs/tsconfig": "^1.4.1",
+    "@aws-sdk/client-dynamodb": "^3.956.0",
+    "@aws-sdk/util-dynamodb": "^3.956.0",
+    "@japa/api-client": "^3.1.1",
+    "@japa/assert": "^4.2.0",
+    "@japa/browser-client": "^2.2.0",
+    "@japa/file-system": "^3.0.0",
+    "@japa/plugin-adonisjs": "^4.0.0",
+    "@japa/runner": "^4.4.0",
+    "@japa/snapshot": "^2.0.10",
+    "@release-it/conventional-changelog": "^10.0.4",
+    "@swc/core": "1.10.7",
+    "@types/node": "^25.0.3",
+    "@types/set-cookie-parser": "^2.4.10",
+    "@types/supertest": "^6.0.3",
+    "@vinejs/vine": "^4.2.0",
+    "better-sqlite3": "^12.5.0",
+    "c8": "^10.1.3",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^10.1.0",
+    "edge.js": "^6.4.0",
+    "eslint": "^9.39.2",
+    "get-port": "^7.1.0",
+    "mysql2": "^3.16.0",
+    "pg": "^8.16.3",
+    "playwright": "^1.57.0",
+    "prettier": "^3.7.4",
+    "release-it": "^19.1.0",
+    "set-cookie-parser": "^2.7.2",
+    "supertest": "^7.1.4",
+    "ts-node-maintained": "^10.9.6",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@poppinss/macroable": "^1.1.0",
+    "@poppinss/utils": "^6.10.1"
+  },
+  "peerDependencies": {
+    "@adonisjs/core": "^6.6.0",
+    "@adonisjs/lucid": "^21.0.0",
+    "@adonisjs/redis": "^8.0.1 || ^9.0.0",
+    "@aws-sdk/client-dynamodb": "^3.658.0",
+    "@aws-sdk/util-dynamodb": "^3.658.0",
+    "@japa/api-client": "^2.0.3 || ^3.0.0",
+    "@japa/browser-client": "^2.0.3",
+    "edge.js": "^6.0.2"
+  },
+  "peerDependenciesMeta": {
+    "@adonisjs/lucid": {
+      "optional": true
+    },
+    "@adonisjs/redis": {
+      "optional": true
+    },
+    "edge.js": {
+      "optional": true
+    },
+    "@aws-sdk/client-dynamodb": {
+      "optional": true
+    },
+    "@aws-sdk/util-dynamodb": {
+      "optional": true
+    },
+    "@japa/api-client": {
+      "optional": true
+    },
+    "@japa/browser-client": {
+      "optional": true
+    }
+  },
+  "author": "virk,adonisjs",
+  "license": "MIT",
+  "homepage": "https://github.com/adonisjs/session#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/session.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/session/issues"
+  },
+  "keywords": [
+    "session",
+    "adonisjs"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "tsup": {
+    "entry": [
+      "./index.ts",
+      "./factories/main.ts",
+      "./providers/session_provider.ts",
+      "./src/session_middleware.ts",
+      "./src/types.ts",
+      "./src/plugins/edge.ts",
+      "./src/plugins/japa/api_client.ts",
+      "./src/plugins/japa/browser_client.ts",
+      "./src/client.ts",
+      "./commands/make_session_table.ts"
+    ],
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": false,
+    "sourcemap": true,
+    "target": "esnext"
+  },
+  "release-it": {
+    "git": {
+      "requireCleanWorkingDir": true,
+      "requireUpstream": true,
+      "commitMessage": "chore(release): ${version}",
+      "tagAnnotation": "v${version}",
+      "push": true,
+      "tagName": "v${version}"
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": true,
+      "skipChecks": true
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": {
+          "name": "angular"
+        }
+      }
+    }
+  },
+  "c8": {
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "exclude": [
+      "tests/**",
+      "stubs/**",
+      "factories/**",
+      "bin/**"
+    ]
+  },
+  "prettier": "@adonisjs/prettier-config"
+}
