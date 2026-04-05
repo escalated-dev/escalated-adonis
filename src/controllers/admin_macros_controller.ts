@@ -1,11 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Macro from '../models/macro.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminMacrosController {
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const macros = await Macro.query().orderBy('order')
-    return inertia.render('Escalated/Admin/Macros/Index', { macros })
+    return getRenderer().render(ctx, 'Escalated/Admin/Macros/Index', { macros })
   }
 
   async store({ request, auth, response, session }: HttpContext) {

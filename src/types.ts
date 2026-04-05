@@ -230,6 +230,10 @@ export interface EscalatedConfig {
     isAdmin: (user: any) => boolean | Promise<boolean>
   }
 
+  ui: {
+    enabled: boolean
+  }
+
   api?: {
     enabled: boolean
     rateLimit: number

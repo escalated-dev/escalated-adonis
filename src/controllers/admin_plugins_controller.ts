@@ -11,6 +11,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import PluginService from '../services/plugin_service.js'
 import HookManager from '../support/hook_manager.js'
+import { getRenderer } from '../rendering/renderer.js'
 
 export default class AdminPluginsController {
   protected getPluginService(): PluginService {
@@ -21,11 +22,11 @@ export default class AdminPluginsController {
   /**
    * GET /support/admin/plugins — List all installed plugins
    */
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const pluginService = this.getPluginService()
     const plugins = await pluginService.getAllPlugins()
 
-    return inertia.render('Escalated/Admin/Plugins/Index', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Plugins/Index', {
       plugins,
     })
   }

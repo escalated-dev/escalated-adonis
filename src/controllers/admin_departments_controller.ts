@@ -1,9 +1,10 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Department from '../models/department.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminDepartmentsController {
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const departments = await Department.query()
       .withCount('tickets')
 
@@ -18,11 +19,11 @@ export default class AdminDepartmentsController {
       ;(dept as any).$extras.agents_count = Number(agentCount?.total ?? 0)
     }
 
-    return inertia.render('Escalated/Admin/Departments/Index', { departments })
+    return getRenderer().render(ctx, 'Escalated/Admin/Departments/Index', { departments })
   }
 
-  async create({ inertia }: HttpContext) {
-    return inertia.render('Escalated/Admin/Departments/Form')
+  async create(ctx: HttpContext) {
+    return getRenderer().render(ctx, 'Escalated/Admin/Departments/Form')
   }
 
   async store({ request, response, session }: HttpContext) {
@@ -37,9 +38,9 @@ export default class AdminDepartmentsController {
     return response.redirect().toRoute('escalated.admin.departments.index')
   }
 
-  async edit({ params, inertia }: HttpContext) {
-    const department = await Department.findOrFail(params.id)
-    return inertia.render('Escalated/Admin/Departments/Form', { department })
+  async edit(ctx: HttpContext) {
+    const department = await Department.findOrFail(ctx.params.id)
+    return getRenderer().render(ctx, 'Escalated/Admin/Departments/Form', { department })
   }
 
   async update({ params, request, response, session }: HttpContext) {

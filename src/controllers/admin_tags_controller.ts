@@ -1,11 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Tag from '../models/tag.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminTagsController {
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const tags = await Tag.query().withCount('tickets')
-    return inertia.render('Escalated/Admin/Tags/Index', { tags })
+    return getRenderer().render(ctx, 'Escalated/Admin/Tags/Index', { tags })
   }
 
   async store({ request, response, session }: HttpContext) {

@@ -156,6 +156,21 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | UI (Inertia)
+  |--------------------------------------------------------------------------
+  |
+  | When enabled (default), the package registers Inertia-powered UI routes
+  | for customers, agents, admins, and guests. Set to false to run in
+  | headless / API-only mode — only the REST API, inbound email webhooks,
+  | and plugin endpoints will be available.
+  |
+  */
+  ui: {
+    enabled: !!env.get('ESCALATED_UI_ENABLED', true),
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Plugins
   |--------------------------------------------------------------------------
   |

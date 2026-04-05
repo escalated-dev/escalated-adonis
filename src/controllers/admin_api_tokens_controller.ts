@@ -2,12 +2,13 @@ import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 import ApiToken from '../models/api_token.js'
 import { getConfig } from '../helpers/config.js'
+import { getRenderer } from '../rendering/renderer.js'
 
 export default class AdminApiTokensController {
   /**
    * GET /support/admin/api-tokens — List all API tokens (Inertia page)
    */
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const tokens = await ApiToken.query().orderBy('created_at', 'desc')
 
     const tokenData = await Promise.all(
@@ -31,7 +32,7 @@ export default class AdminApiTokensController {
     const users = await this.getAgentUsers()
     const config = getConfig() as any
 
-    return inertia.render('Escalated/Admin/ApiTokens/Index', {
+    return getRenderer().render(ctx, 'Escalated/Admin/ApiTokens/Index', {
       tokens: tokenData,
       users,
       api_enabled: config.api?.enabled ?? false,

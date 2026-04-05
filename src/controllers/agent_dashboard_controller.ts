@@ -1,12 +1,14 @@
 import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
+import { getRenderer } from '../rendering/renderer.js'
 
 export default class AgentDashboardController {
   /**
    * GET /support/agent — Agent dashboard
    */
-  async handle({ auth, inertia }: HttpContext) {
+  async handle(ctx: HttpContext) {
+    const { auth } = ctx
     const userId = auth.user!.id
     const startOfDay = DateTime.now().startOf('day').toSQL()!
     const startOfWeek = DateTime.now().startOf('week').toSQL()!
@@ -67,7 +69,7 @@ export default class AgentDashboardController {
       .count('* as total')
       .first()
 
-    return inertia.render('Escalated/Agent/Dashboard', {
+    return getRenderer().render(ctx, 'Escalated/Agent/Dashboard', {
       stats: {
         open: Number((openCount as any)?.$extras?.total ?? 0),
         my_assigned: Number((myAssignedCount as any)?.$extras?.total ?? 0),

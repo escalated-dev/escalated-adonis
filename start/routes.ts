@@ -10,8 +10,9 @@
 
 import router from '@adonisjs/core/services/router'
 import { getConfig } from '../src/helpers/config.js'
+import { isUiEnabled } from '../src/rendering/renderer.js'
 
-// Lazy-load controllers
+// Lazy-load controllers (UI — Inertia-powered)
 const CustomerTicketsController = () => import('../src/controllers/customer_tickets_controller.js')
 const AgentDashboardController = () => import('../src/controllers/agent_dashboard_controller.js')
 const AgentTicketsController = () => import('../src/controllers/agent_tickets_controller.js')
@@ -28,10 +29,12 @@ const AdminPluginsController = () => import('../src/controllers/admin_plugins_co
 const BulkActionsController = () => import('../src/controllers/bulk_actions_controller.js')
 const SatisfactionRatingController = () => import('../src/controllers/satisfaction_rating_controller.js')
 const GuestTicketsController = () => import('../src/controllers/guest_tickets_controller.js')
-const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
 const AdminApiTokensController = () => import('../src/controllers/admin_api_tokens_controller.js')
 const AdminImportController = () => import('../src/controllers/admin_import_controller.js')
 const AdminAutomationsController = () => import('../src/controllers/admin_automations_controller.js')
+
+// Lazy-load controllers (core — non-UI)
+const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
 
 // API controllers
 const ApiAuthController = () => import('../src/controllers/api/api_auth_controller.js')
@@ -48,6 +51,46 @@ const ApiRateLimit = () => import('../src/middleware/api_rate_limit.js')
 
 export function registerRoutes() {
   const config = getConfig()
+
+  // Always register core (non-UI) routes: API, inbound webhooks, plugin endpoints
+  registerCoreRoutes(config)
+
+  // Only register Inertia UI routes when ui.enabled is true (default)
+  if (isUiEnabled()) {
+    registerUiRoutes(config)
+  }
+}
+
+/**
+ * Register core routes that do not depend on Inertia.
+ * These are always available regardless of the ui.enabled flag:
+ *   - Inbound email webhooks
+ *   - REST API routes
+ */
+function registerCoreRoutes(config: any) {
+  const prefix = config.routes?.prefix ?? 'support'
+
+  // ---- Inbound Email Webhook Routes (no auth) ----
+  if (config.inboundEmail?.enabled) {
+    router
+      .group(() => {
+        router.post('/:adapter', [InboundEmailController, 'webhook']).as('escalated.inbound.webhook')
+          .where('adapter', /^(mailgun|postmark|ses)$/)
+      })
+      .prefix(`${prefix}/inbound`)
+  }
+
+  // ---- API Routes ----
+  if ((config as any).api?.enabled) {
+    registerApiRoutes(config)
+  }
+}
+
+/**
+ * Register Inertia-powered UI routes for customers, agents, admins, and guests.
+ * These are only registered when `ui.enabled` is true.
+ */
+function registerUiRoutes(config: any) {
   const prefix = config.routes?.prefix ?? 'support'
   const authMiddleware = config.routes?.middleware ?? ['auth']
   const adminMiddleware = config.routes?.adminMiddleware ?? ['auth']
@@ -222,21 +265,6 @@ export function registerRoutes() {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/guest`)
-
-  // ---- Inbound Email Webhook Routes (no auth) ----
-  if (config.inboundEmail?.enabled) {
-    router
-      .group(() => {
-        router.post('/:adapter', [InboundEmailController, 'webhook']).as('escalated.inbound.webhook')
-          .where('adapter', /^(mailgun|postmark|ses)$/)
-      })
-      .prefix(`${prefix}/inbound`)
-  }
-
-  // ---- API Routes ----
-  if ((config as any).api?.enabled) {
-    registerApiRoutes(config)
-  }
 }
 
 /**

@@ -1,15 +1,16 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Automation from '../models/automation.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminAutomationsController {
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const automations = await Automation.query().orderBy('position')
-    return inertia.render('Escalated/Admin/Automations/Index', { automations })
+    return getRenderer().render(ctx, 'Escalated/Admin/Automations/Index', { automations })
   }
 
-  async create({ inertia }: HttpContext) {
-    return inertia.render('Escalated/Admin/Automations/Form')
+  async create(ctx: HttpContext) {
+    return getRenderer().render(ctx, 'Escalated/Admin/Automations/Form')
   }
 
   async store({ request, response, session }: HttpContext) {
@@ -30,9 +31,9 @@ export default class AdminAutomationsController {
     return response.redirect().back()
   }
 
-  async edit({ params, inertia }: HttpContext) {
-    const automation = await Automation.findOrFail(params.id)
-    return inertia.render('Escalated/Admin/Automations/Form', { automation })
+  async edit(ctx: HttpContext) {
+    const automation = await Automation.findOrFail(ctx.params.id)
+    return getRenderer().render(ctx, 'Escalated/Admin/Automations/Form', { automation })
   }
 
   async update({ params, request, response, session }: HttpContext) {

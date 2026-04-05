@@ -1,17 +1,18 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import SlaPolicy from '../models/sla_policy.js'
 import { getConfig } from '../helpers/config.js'
+import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminSlaPoliciesController {
-  async index({ inertia }: HttpContext) {
+  async index(ctx: HttpContext) {
     const policies = await SlaPolicy.query().withCount('tickets')
-    return inertia.render('Escalated/Admin/SlaPolicies/Index', { policies })
+    return getRenderer().render(ctx, 'Escalated/Admin/SlaPolicies/Index', { policies })
   }
 
-  async create({ inertia }: HttpContext) {
+  async create(ctx: HttpContext) {
     const config = getConfig()
-    return inertia.render('Escalated/Admin/SlaPolicies/Form', {
+    return getRenderer().render(ctx, 'Escalated/Admin/SlaPolicies/Form', {
       priorities: config.priorities,
     })
   }
@@ -37,10 +38,10 @@ export default class AdminSlaPoliciesController {
     return response.redirect().toRoute('escalated.admin.sla-policies.index')
   }
 
-  async edit({ params, inertia }: HttpContext) {
+  async edit(ctx: HttpContext) {
     const config = getConfig()
-    const policy = await SlaPolicy.findOrFail(params.id)
-    return inertia.render('Escalated/Admin/SlaPolicies/Form', {
+    const policy = await SlaPolicy.findOrFail(ctx.params.id)
+    return getRenderer().render(ctx, 'Escalated/Admin/SlaPolicies/Form', {
       policy,
       priorities: config.priorities,
     })

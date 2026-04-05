@@ -8,6 +8,7 @@ import EscalatedSetting from '../models/escalated_setting.js'
 import AttachmentService from '../services/attachment_service.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import { getConfig } from '../helpers/config.js'
+import { getRenderer } from '../rendering/renderer.js'
 import type { TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
 
@@ -17,9 +18,9 @@ export default class GuestTicketsController {
   /**
    * GET /support/guest/create — Guest create ticket form
    */
-  async create({ inertia, response }: HttpContext) {
+  async create(ctx: HttpContext) {
     if (!(await EscalatedSetting.guestTicketsEnabled())) {
-      return response.notFound()
+      return ctx.response.notFound()
     }
 
     const config = getConfig()
@@ -27,7 +28,7 @@ export default class GuestTicketsController {
       .withScopes((scopes) => scopes.active())
       .select('id', 'name')
 
-    return inertia.render('Escalated/Guest/Create', {
+    return getRenderer().render(ctx, 'Escalated/Guest/Create', {
       departments,
       priorities: config.priorities,
     })
@@ -78,9 +79,9 @@ export default class GuestTicketsController {
   /**
    * GET /support/guest/:token — Show guest ticket
    */
-  async show({ params, inertia }: HttpContext) {
+  async show(ctx: HttpContext) {
     const ticket = await Ticket.query()
-      .where('guest_token', params.token)
+      .where('guest_token', ctx.params.token)
       .firstOrFail()
 
     await ticket.load('department')
@@ -90,9 +91,9 @@ export default class GuestTicketsController {
       })
     })
 
-    return inertia.render('Escalated/Guest/Show', {
+    return getRenderer().render(ctx, 'Escalated/Guest/Show', {
       ticket,
-      token: params.token,
+      token: ctx.params.token,
     })
   }
 
