@@ -1,5 +1,8 @@
 # @escalated-dev/escalated-adonis
 
+[![Tests](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml/badge.svg)](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml)
+[![AdonisJS](https://img.shields.io/badge/adonisjs-v6-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
+
 An embeddable support ticket system for AdonisJS v6 applications. Drop-in customer support with tickets, SLA management, departments, escalation rules, canned responses, macros, inbound email processing, satisfaction ratings, and a full admin panel -- all rendered via Inertia.js with Vue 3.
 
 ## Requirements
