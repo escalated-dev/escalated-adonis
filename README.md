@@ -90,40 +90,33 @@ authorization: {
 
 ## Features
 
-### v0.1.x - Core Ticket System
 - **Tickets:** Create, view, update, close, reopen tickets with status machine
-- **Replies:** Threaded conversations with rich text
+- **Replies:** Threaded conversations with rich text and pinned notes
 - **Departments:** Organize tickets by team with agent assignments
 - **Tags:** Label and categorize tickets
 - **SLA Policies:** First response and resolution time tracking with breach detection
 - **Escalation Rules:** Automated ticket escalation based on configurable conditions
 - **Canned Responses:** Pre-written reply templates (shared or per-agent)
 - **Activity Log:** Full audit trail of all ticket changes
-
-### v0.2.x - Enhanced Features
 - **Attachments:** File uploads on replies with configurable storage
 - **Notifications:** Webhook-based notifications with HMAC signing
 - **Admin Settings:** Runtime-configurable settings stored in the database
 - **Guest Tickets:** Anonymous ticket creation with 64-character token access
-
-### v0.3.x - Inbound Email
-- **Mailgun Adapter:** Receive emails via Mailgun webhooks
-- **Postmark Adapter:** Receive emails via Postmark inbound
-- **SES Adapter:** Receive emails via Amazon SES
-- **Auto-threading:** Emails matched to existing tickets via subject patterns and In-Reply-To headers
-- **Attachment Processing:** Inbound email attachments with blocked extension filtering
-- **Spam Detection:** Mark emails as spam
-
-### v0.4.0 - Full Feature Parity
+- **Inbound Email:** Mailgun, Postmark, and SES adapters with auto-threading and attachment processing
 - **Three Role Types:** Customer, Agent, Admin with separate dashboards
 - **Bulk Actions:** Batch status/priority/assignment/tag/department changes
 - **Macros:** Multi-step automated actions (status + priority + reply in one click)
 - **Followers:** Subscribe to ticket updates
 - **CSAT Ratings:** Post-resolution satisfaction surveys (1-5 scale)
-- **Pinned Notes:** Pin important replies for quick reference
 - **Quick Filters:** Pre-built filter shortcuts (My Tickets, Unassigned, Breached SLA, etc.)
 - **Presence Indicators:** See who is viewing a ticket in real time
-- **Enhanced Dashboard:** Agent dashboard with workload stats and quick filters
+- **SSO:** SAML and JWT-based single sign-on
+- **RBAC:** Role-based access control with granular permissions
+- **Automation:** Configurable automation rules with conditions and actions
+- **i18n:** Multi-language support (EN, ES, FR, DE)
+- **Plugin System:** Extensible via TypeScript SDK plugins
+- **REST API:** Token-authenticated API with rate limiting
+- **Import Framework:** Bulk data import support
 
 ## Architecture
 
