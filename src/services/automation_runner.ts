@@ -10,8 +10,7 @@ export default class AutomationRunner {
    * Evaluate all active automations against open tickets.
    */
   async run(): Promise<number> {
-    const automations = await Automation.query()
-      .withScopes((scopes) => scopes.activeScope())
+    const automations = await Automation.query().withScopes((scopes) => scopes.activeScope())
 
     let affected = 0
 
@@ -159,12 +158,18 @@ export default class AutomationRunner {
    */
   protected resolveOperator(operator: string): string {
     switch (operator) {
-      case '>': return '<'    // more hours ago = earlier datetime
-      case '>=': return '<='
-      case '<': return '>'
-      case '<=': return '>='
-      case '=': return '='
-      default: return '<'
+      case '>':
+        return '<' // more hours ago = earlier datetime
+      case '>=':
+        return '<='
+      case '<':
+        return '>'
+      case '<=':
+        return '>='
+      case '=':
+        return '='
+      default:
+        return '<'
     }
   }
 }

@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
 
 export interface AutomationCondition {
@@ -23,13 +23,15 @@ export default class Automation extends BaseModel {
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare conditions: AutomationCondition[]
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare actions: AutomationAction[]
 

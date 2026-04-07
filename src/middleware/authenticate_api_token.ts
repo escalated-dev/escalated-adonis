@@ -41,7 +41,8 @@ export default class AuthenticateApiToken {
     }
 
     // Update last usage
-    apiToken.lastUsedAt = (await import('luxon')).DateTime.now()
+    const { DateTime } = await import('luxon')
+    apiToken.lastUsedAt = DateTime.now()
     apiToken.lastUsedIp = ctx.request.ip() ?? null
     await apiToken.save()
 

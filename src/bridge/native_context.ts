@@ -150,10 +150,7 @@ export default class NativeContext implements PluginContext {
       },
 
       async set(collection: string, key: string, value: unknown): Promise<void> {
-        await PluginStoreRecord.updateOrCreate(
-          { plugin, collection, key },
-          { data: value as any }
-        )
+        await PluginStoreRecord.updateOrCreate({ plugin, collection, key }, { data: value as any })
       },
 
       async query(
@@ -197,17 +194,13 @@ export default class NativeContext implements PluginContext {
               }
             }
           } else {
-            query.whereRaw(`JSON_UNQUOTE(JSON_EXTRACT(data, '$.${field}')) = ?`, [
-              condition as any,
-            ])
+            query.whereRaw(`JSON_UNQUOTE(JSON_EXTRACT(data, '$.${field}')) = ?`, [condition as any])
           }
         }
 
         if (options?.orderBy) {
           const dir = options.order === 'desc' ? 'desc' : 'asc'
-          query.orderByRaw(
-            `JSON_UNQUOTE(JSON_EXTRACT(data, '$.${options.orderBy}')) ${dir}`
-          )
+          query.orderByRaw(`JSON_UNQUOTE(JSON_EXTRACT(data, '$.${options.orderBy}')) ${dir}`)
         }
 
         if (options?.limit) {
@@ -220,10 +213,7 @@ export default class NativeContext implements PluginContext {
         )
       },
 
-      async insert(
-        collection: string,
-        data: Record<string, unknown>
-      ): Promise<unknown> {
+      async insert(collection: string, data: Record<string, unknown>): Promise<unknown> {
         const record = await PluginStoreRecord.create({
           plugin,
           collection,
@@ -339,9 +329,9 @@ export default class NativeContext implements PluginContext {
     const tryBroadcast = async (channel: string, event: string, data: unknown): Promise<void> => {
       try {
         // Attempt to use AdonisJS transmit service if available
-        const { default: transmit } = await import(
-          '@adonisjs/transmit/services/main'
-        ).catch(() => ({ default: null }))
+        const { default: transmit } = await import('@adonisjs/transmit/services/main').catch(
+          () => ({ default: null })
+        )
 
         if (transmit) {
           await (transmit as any).broadcast(channel, { event, data })
@@ -360,8 +350,7 @@ export default class NativeContext implements PluginContext {
     return {
       toChannel: (channel, event, data) => tryBroadcast(channel, event, data),
       toUser: (userId, event, data) => tryBroadcast(`private-user.${userId}`, event, data),
-      toTicket: (ticketId, event, data) =>
-        tryBroadcast(`private-ticket.${ticketId}`, event, data),
+      toTicket: (ticketId, event, data) => tryBroadcast(`private-ticket.${ticketId}`, event, data),
     }
   }
 

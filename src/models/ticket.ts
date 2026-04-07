@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import {
   BaseModel,
   column,
@@ -9,12 +9,7 @@ import {
   computed,
   scope,
 } from '@adonisjs/lucid/orm'
-import type {
-  BelongsTo,
-  HasMany,
-  HasOne,
-  ManyToMany,
-} from '@adonisjs/lucid/types/relations'
+import type { BelongsTo, HasMany, HasOne, ManyToMany } from '@adonisjs/lucid/types/relations'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import { canTransitionTo, isOpenStatus } from '../types.js'
 import Reply from './reply.js'
@@ -95,7 +90,8 @@ export default class Ticket extends BaseModel {
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare metadata: Record<string, any> | null
 
@@ -199,8 +195,7 @@ export default class Ticket extends BaseModel {
 
   static breachedSla = scope((query) => {
     query.where((q) => {
-      q.where('sla_first_response_breached', true)
-        .orWhere('sla_resolution_breached', true)
+      q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
     })
   })
 
@@ -224,9 +219,7 @@ export default class Ticket extends BaseModel {
 
   static async generateReference(): Promise<string> {
     const prefix = await EscalatedSetting.get('ticket_reference_prefix', 'ESC')
-    const latest = await Ticket.query()
-      .max('id as max_id')
-      .first()
+    const latest = await Ticket.query().max('id as max_id').first()
 
     const nextId = ((latest as any)?.$extras?.max_id ?? 0) + 1
     return `${prefix}-${String(nextId).padStart(5, '0')}`

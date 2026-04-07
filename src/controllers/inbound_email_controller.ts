@@ -53,7 +53,9 @@ export default class InboundEmailController {
       case 'mailgun': {
         const signingKey = config.inboundEmail?.mailgun?.signingKey
         if (!signingKey) {
-          console.warn('[Escalated] Mailgun signing key not configured — rejecting inbound webhook.')
+          console.warn(
+            '[Escalated] Mailgun signing key not configured — rejecting inbound webhook.'
+          )
           return false
         }
 
@@ -84,7 +86,9 @@ export default class InboundEmailController {
       case 'postmark': {
         const postmarkToken = config.inboundEmail?.postmark?.token
         if (!postmarkToken) {
-          console.warn('[Escalated] Postmark inbound token not configured — rejecting inbound webhook.')
+          console.warn(
+            '[Escalated] Postmark inbound token not configured — rejecting inbound webhook.'
+          )
           return false
         }
 
@@ -115,7 +119,11 @@ export default class InboundEmailController {
 
         // Validate SNS message type
         const messageType = body.Type
-        if (!['SubscriptionConfirmation', 'Notification', 'UnsubscribeConfirmation'].includes(messageType)) {
+        if (
+          !['SubscriptionConfirmation', 'Notification', 'UnsubscribeConfirmation'].includes(
+            messageType
+          )
+        ) {
           return false
         }
 
@@ -124,7 +132,10 @@ export default class InboundEmailController {
         if (certUrl) {
           try {
             const url = new URL(certUrl)
-            if (url.protocol !== 'https:' || !/^sns\.[a-z0-9-]+\.amazonaws\.com$/.test(url.hostname)) {
+            if (
+              url.protocol !== 'https:' ||
+              !/^sns\.[a-z0-9-]+\.amazonaws\.com$/.test(url.hostname)
+            ) {
               console.warn('[Escalated] SES webhook has invalid SigningCertURL — rejecting.')
               return false
             }

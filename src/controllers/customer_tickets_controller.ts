@@ -56,7 +56,9 @@ export default class CustomerTicketsController {
     })
 
     session.flash('success', t('ticket.created'))
-    return response.redirect().toRoute('escalated.customer.tickets.show', { ticket: ticket.reference })
+    return response
+      .redirect()
+      .toRoute('escalated.customer.tickets.show', { ticket: ticket.reference })
   }
 
   /**

@@ -13,7 +13,7 @@ export default class ResolveTicket {
     if (ticketParam) {
       const ticket = await Ticket.query()
         .where('reference', ticketParam)
-        .orWhere('id', isNaN(Number(ticketParam)) ? 0 : Number(ticketParam))
+        .orWhere('id', Number.isNaN(Number(ticketParam)) ? 0 : Number(ticketParam))
         .firstOrFail()
 
       // Store the resolved ticket on the context for controllers to access

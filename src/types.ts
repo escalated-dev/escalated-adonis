@@ -52,14 +52,28 @@ export type InboundEmailStatus = 'pending' | 'processed' | 'failed' | 'spam'
  * Status transition map
  */
 export const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
-  open: ['in_progress', 'waiting_on_customer', 'waiting_on_agent', 'escalated', 'resolved', 'closed'],
+  open: [
+    'in_progress',
+    'waiting_on_customer',
+    'waiting_on_agent',
+    'escalated',
+    'resolved',
+    'closed',
+  ],
   in_progress: ['waiting_on_customer', 'waiting_on_agent', 'escalated', 'resolved', 'closed'],
   waiting_on_customer: ['open', 'in_progress', 'resolved', 'closed'],
   waiting_on_agent: ['open', 'in_progress', 'escalated', 'resolved', 'closed'],
   escalated: ['in_progress', 'resolved', 'closed'],
   resolved: ['reopened', 'closed'],
   closed: ['reopened'],
-  reopened: ['in_progress', 'waiting_on_customer', 'waiting_on_agent', 'escalated', 'resolved', 'closed'],
+  reopened: [
+    'in_progress',
+    'waiting_on_customer',
+    'waiting_on_agent',
+    'escalated',
+    'resolved',
+    'closed',
+  ],
 }
 
 /**
@@ -240,7 +254,7 @@ export interface EscalatedConfig {
     tokenExpiryDays: number | null
     prefix: string
   }
-  
+
   plugins: {
     enabled: boolean
     path: string
@@ -339,31 +353,101 @@ export interface BulkActionPayload {
  * Blocked file extensions for inbound email
  */
 export const BLOCKED_EXTENSIONS = [
-  'exe', 'bat', 'cmd', 'com', 'msi', 'scr', 'pif', 'vbs', 'vbe',
-  'js', 'jse', 'wsf', 'wsh', 'ps1', 'psm1', 'psd1', 'reg',
-  'cpl', 'hta', 'inf', 'lnk', 'sct', 'shb', 'sys', 'drv',
-  'php', 'phtml', 'php3', 'php4', 'php5', 'phar',
-  'sh', 'bash', 'csh', 'ksh', 'pl', 'py', 'rb',
-  'dll', 'so', 'dylib',
+  'exe',
+  'bat',
+  'cmd',
+  'com',
+  'msi',
+  'scr',
+  'pif',
+  'vbs',
+  'vbe',
+  'js',
+  'jse',
+  'wsf',
+  'wsh',
+  'ps1',
+  'psm1',
+  'psd1',
+  'reg',
+  'cpl',
+  'hta',
+  'inf',
+  'lnk',
+  'sct',
+  'shb',
+  'sys',
+  'drv',
+  'php',
+  'phtml',
+  'php3',
+  'php4',
+  'php5',
+  'phar',
+  'sh',
+  'bash',
+  'csh',
+  'ksh',
+  'pl',
+  'py',
+  'rb',
+  'dll',
+  'so',
+  'dylib',
 ]
 
 /**
  * Allowed HTML tags for inbound email body sanitization
  */
 export const ALLOWED_HTML_TAGS = [
-  'p', 'br', 'b', 'strong', 'i', 'em', 'u', 'a', 'ul', 'ol', 'li',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
-  'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'hr', 'div',
-  'span', 'sub', 'sup',
+  'p',
+  'br',
+  'b',
+  'strong',
+  'i',
+  'em',
+  'u',
+  'a',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'pre',
+  'code',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
+  'img',
+  'hr',
+  'div',
+  'span',
+  'sub',
+  'sup',
 ]
 
 /**
  * Allowed sort columns for ticket listing
  */
 export const ALLOWED_SORT_COLUMNS = [
-  'created_at', 'updated_at', 'status', 'priority',
-  'subject', 'reference', 'assigned_to', 'department_id',
-  'resolved_at', 'closed_at',
+  'created_at',
+  'updated_at',
+  'status',
+  'priority',
+  'subject',
+  'reference',
+  'assigned_to',
+  'department_id',
+  'resolved_at',
+  'closed_at',
 ]
 
 // ---- Plugin Types ----

@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 
 export default class EscalatedSetting extends BaseModel {
@@ -50,7 +50,7 @@ export default class EscalatedSetting extends BaseModel {
    */
   static async getInt(key: string, defaultValue: number = 0): Promise<number> {
     const value = await EscalatedSetting.get(key)
-    return value !== null ? parseInt(value, 10) : defaultValue
+    return value !== null ? Number.parseInt(value, 10) : defaultValue
   }
 
   /**

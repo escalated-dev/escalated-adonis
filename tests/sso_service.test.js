@@ -42,13 +42,20 @@ function createJwt(payload, secret, algorithm = 'HS256') {
 
 describe('JWT creation and parsing', () => {
   it('creates a valid 3-part JWT', () => {
-    const token = createJwt({ email: 'test@example.com', exp: Math.floor(Date.now() / 1000) + 3600 }, 'secret')
+    const token = createJwt(
+      { email: 'test@example.com', exp: Math.floor(Date.now() / 1000) + 3600 },
+      'secret'
+    )
     const parts = token.split('.')
     assert.equal(parts.length, 3)
   })
 
   it('payload round-trips correctly', () => {
-    const payload = { email: 'user@test.com', name: 'Test', exp: Math.floor(Date.now() / 1000) + 3600 }
+    const payload = {
+      email: 'user@test.com',
+      name: 'Test',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    }
     const token = createJwt(payload, 'secret')
     const decoded = JSON.parse(base64UrlDecode(token.split('.')[1]))
     assert.equal(decoded.email, 'user@test.com')
@@ -60,9 +67,7 @@ describe('JWT creation and parsing', () => {
     const token = createJwt({ email: 'a@b.com' }, secret)
     const [header, payload, sig] = token.split('.')
     const signingInput = `${header}.${payload}`
-    const expected = base64UrlEncode(
-      createHmac('sha256', secret).update(signingInput).digest()
-    )
+    const expected = base64UrlEncode(createHmac('sha256', secret).update(signingInput).digest())
     assert.equal(sig, expected)
   })
 
@@ -100,7 +105,8 @@ describe('JWT expiration checks', () => {
 
 describe('SAML XML parsing', () => {
   it('base64-encodes and decodes XML correctly', () => {
-    const xml = '<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"><saml:Issuer>test</saml:Issuer></saml:Assertion>'
+    const xml =
+      '<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"><saml:Issuer>test</saml:Issuer></saml:Assertion>'
     const encoded = Buffer.from(xml).toString('base64')
     const decoded = Buffer.from(encoded, 'base64').toString('utf-8')
     assert.equal(decoded, xml)

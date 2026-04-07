@@ -15,7 +15,7 @@
 
 import { DateTime } from 'luxon'
 import { string } from '@adonisjs/core/helpers'
-import ImportJob from '../models/import_job.js'
+import type ImportJob from '../models/import_job.js'
 import ImportSourceMap from '../models/import_source_map.js'
 import ImportContext from '../support/import_context.js'
 import type { ImportAdapter } from '../contracts/import_adapter.js'
@@ -272,7 +272,7 @@ export default class ImportService {
     if (!user) {
       throw new Error(
         `Agent with email '${record['email']}' not found in host application. ` +
-        `Ensure all agents exist before importing tickets.`
+          `Ensure all agents exist before importing tickets.`
       )
     }
 
@@ -400,7 +400,9 @@ export default class ImportService {
     )
 
     if (!ticketId) {
-      throw new Error(`Parent ticket not found for reply (ticket_source_id: ${record['ticket_source_id']}).`)
+      throw new Error(
+        `Parent ticket not found for reply (ticket_source_id: ${record['ticket_source_id']}).`
+      )
     }
 
     const config = (globalThis as any).__escalated_config
@@ -491,10 +493,7 @@ export default class ImportService {
       const { default: db } = await import('@adonisjs/lucid/services/db')
       const slug = string.slug(record['name'] ?? '')
 
-      let field = await db
-        .from('escalated_custom_fields')
-        .where('slug', slug)
-        .first()
+      let field = await db.from('escalated_custom_fields').where('slug', slug).first()
 
       if (!field) {
         const [id] = await db.table('escalated_custom_fields').insert({

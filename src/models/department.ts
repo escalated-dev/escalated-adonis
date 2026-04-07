@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import { BaseModel, column, hasMany, scope, beforeCreate } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import { string } from '@adonisjs/core/helpers'
@@ -55,10 +55,7 @@ export default class Department extends BaseModel {
 
   async agents(): Promise<any[]> {
     const { default: db } = await import('@adonisjs/lucid/services/db')
-    return db
-      .from('escalated_department_agent')
-      .where('department_id', this.id)
-      .select('agent_id')
+    return db.from('escalated_department_agent').where('department_id', this.id).select('agent_id')
   }
 
   async attachAgent(agentId: number): Promise<void> {

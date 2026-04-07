@@ -119,8 +119,7 @@ export default class AssignmentService {
       .where('assigned_to', agentId)
       .whereNotIn('status', ['resolved', 'closed'])
       .where((q) => {
-        q.where('sla_first_response_breached', true)
-          .orWhere('sla_resolution_breached', true)
+        q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
       })
       .count('* as total')
       .first()

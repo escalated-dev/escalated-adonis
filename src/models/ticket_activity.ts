@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ActivityType } from '../types.js'
@@ -24,7 +24,8 @@ export default class TicketActivity extends BaseModel {
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare properties: Record<string, any> | null
 

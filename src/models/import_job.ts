@@ -9,7 +9,7 @@
 |
 */
 
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'node:crypto'
@@ -115,19 +115,22 @@ export default class ImportJob extends BaseModel {
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare fieldMappings: Record<string, any> | null
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare progress: Record<string, EntityProgress> | null
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare errorLog: ErrorLogEntry[] | null
 
@@ -158,9 +161,7 @@ export default class ImportJob extends BaseModel {
     const allowed = ImportJob.VALID_TRANSITIONS[currentStatus] ?? []
 
     if (!allowed.includes(newStatus)) {
-      throw new Error(
-        `Cannot transition import job from '${currentStatus}' to '${newStatus}'.`
-      )
+      throw new Error(`Cannot transition import job from '${currentStatus}' to '${newStatus}'.`)
     }
 
     this.status = newStatus

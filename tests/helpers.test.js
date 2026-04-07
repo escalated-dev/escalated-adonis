@@ -245,7 +245,16 @@ describe('Config structure validation', () => {
       },
       priorities: ['low', 'medium', 'high', 'urgent', 'critical'],
       defaultPriority: 'medium',
-      statuses: ['open', 'in_progress', 'waiting_on_customer', 'waiting_on_agent', 'escalated', 'resolved', 'closed', 'reopened'],
+      statuses: [
+        'open',
+        'in_progress',
+        'waiting_on_customer',
+        'waiting_on_agent',
+        'escalated',
+        'resolved',
+        'closed',
+        'reopened',
+      ],
       sla: {
         enabled: false,
         businessHoursOnly: false,

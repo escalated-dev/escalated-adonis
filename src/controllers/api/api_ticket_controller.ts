@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Ticket from '../../models/ticket.js'
-import Tag from '../../models/tag.js'
+import type Ticket from '../../models/ticket.js'
+import type Tag from '../../models/tag.js'
 import Macro from '../../models/macro.js'
 import TicketService from '../../services/ticket_service.js'
 import AssignmentService from '../../services/assignment_service.js'
@@ -17,15 +17,23 @@ export default class ApiTicketController {
    */
   async index(ctx: HttpContext) {
     const filters = ctx.request.only([
-      'status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id',
-      'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following',
+      'status',
+      'priority',
+      'ticket_type',
+      'assigned_to',
+      'unassigned',
+      'department_id',
+      'search',
+      'sla_breached',
+      'tag_ids',
+      'sort_by',
+      'sort_dir',
+      'per_page',
+      'following',
     ])
 
     const user = (ctx as any).auth?.user ?? null
-    const tickets = await this.ticketService.list(
-      filters,
-      filters.following ? user : null,
-    )
+    const tickets = await this.ticketService.list(filters, filters.following ? user : null)
 
     return ctx.response.json({
       data: tickets.all().map((t: Ticket) => this.formatTicketCollection(t)),
@@ -101,7 +109,10 @@ export default class ApiTicketController {
   async reply(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const user = (ctx as any).auth.user
-    const { body, is_internal_note } = ctx.request.only(['body', 'is_internal_note'])
+    const { body, is_internal_note: isInternalNote } = ctx.request.only([
+      'body',
+      'is_internal_note',
+    ])
 
     if (!body) {
       return ctx.response.unprocessableEntity({
@@ -110,7 +121,7 @@ export default class ApiTicketController {
       })
     }
 
-    const isNote = !!is_internal_note
+    const isNote = !!isInternalNote
 
     let reply
     if (isNote) {
@@ -191,16 +202,16 @@ export default class ApiTicketController {
   async assign(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const user = (ctx as any).auth.user
-    const { agent_id } = ctx.request.only(['agent_id'])
+    const { agent_id: agentId } = ctx.request.only(['agent_id'])
 
-    if (!agent_id) {
+    if (!agentId) {
       return ctx.response.unprocessableEntity({
         message: 'Validation failed.',
         errors: { agent_id: ['The agent_id field is required.'] },
       })
     }
 
-    await this.assignmentService.assign(ticket, Number(agent_id), user)
+    await this.assignmentService.assign(ticket, Number(agentId), user)
 
     return ctx.response.json({ message: 'Ticket assigned.' })
   }
@@ -227,9 +238,9 @@ export default class ApiTicketController {
   async applyMacro(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const user = (ctx as any).auth.user
-    const { macro_id } = ctx.request.only(['macro_id'])
+    const { macro_id: macroId } = ctx.request.only(['macro_id'])
 
-    if (!macro_id) {
+    if (!macroId) {
       return ctx.response.unprocessableEntity({
         message: 'Validation failed.',
         errors: { macro_id: ['The macro_id field is required.'] },
@@ -238,7 +249,7 @@ export default class ApiTicketController {
 
     const macro = await Macro.query()
       .withScopes((scopes) => scopes.forAgent(user.id))
-      .where('id', macro_id)
+      .where('id', macroId)
       .firstOrFail()
 
     const macroService = new MacroService()
@@ -253,19 +264,19 @@ export default class ApiTicketController {
   async tags(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const user = (ctx as any).auth.user
-    const { tag_ids } = ctx.request.only(['tag_ids'])
+    const { tag_ids: tagIds } = ctx.request.only(['tag_ids'])
 
-    if (!tag_ids || !Array.isArray(tag_ids)) {
+    if (!tagIds || !Array.isArray(tagIds)) {
       return ctx.response.unprocessableEntity({
         message: 'Validation failed.',
         errors: { tag_ids: ['The tag_ids field is required and must be an array.'] },
       })
     }
 
-    const newTagIds = tag_ids.map(Number)
+    const newTagIds = tagIds.map(Number)
 
     await ticket.load('tags')
-    const currentTagIds = ticket.tags.map((t: Tag) => t.id)
+    const currentTagIds = ticket.tags.map((tag: Tag) => tag.id)
 
     const toAdd = newTagIds.filter((id: number) => !currentTagIds.includes(id))
     const toRemove = currentTagIds.filter((id: number) => !newTagIds.includes(id))
@@ -282,7 +293,8 @@ export default class ApiTicketController {
   async destroy(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
 
-    ticket.deletedAt = (await import('luxon')).DateTime.now()
+    const { DateTime } = await import('luxon')
+    ticket.deletedAt = DateTime.now()
     await ticket.save()
 
     return ctx.response.json({ message: 'Ticket deleted.' })
@@ -308,10 +320,12 @@ export default class ApiTicketController {
         email: ticket.requesterEmail,
       },
       assignee: null, // Assignee is loaded separately via user model
-      department: ticket.department ? {
-        id: ticket.department.id,
-        name: ticket.department.name,
-      } : null,
+      department: ticket.department
+        ? {
+            id: ticket.department.id,
+            name: ticket.department.name,
+          }
+        : null,
       sla_breached: ticket.slaFirstResponseBreached || ticket.slaResolutionBreached,
       created_at: ticket.createdAt.toISO(),
       updated_at: ticket.updatedAt.toISO(),
@@ -339,36 +353,42 @@ export default class ApiTicketController {
         email: ticket.requesterEmail,
       },
       assignee: null,
-      department: ticket.department ? {
-        id: ticket.department.id,
-        name: ticket.department.name,
-      } : null,
-      tags: ticket.tags?.map((tag: Tag) => ({
-        id: tag.id,
-        name: tag.name,
-        color: tag.color,
-      })) ?? [],
-      replies: ticket.replies?.map((r: any) => ({
-        id: r.id,
-        body: r.body,
-        is_internal_note: r.isInternalNote,
-        is_pinned: r.isPinned ?? false,
-        author: null, // Author loaded separately via user model
-        attachments: r.attachments?.map((a: any) => ({
-          id: a.id,
-          filename: a.filename,
-          mime_type: a.mimeType,
-          size: a.size,
-          url: a.url,
+      department: ticket.department
+        ? {
+            id: ticket.department.id,
+            name: ticket.department.name,
+          }
+        : null,
+      tags:
+        ticket.tags?.map((tag: Tag) => ({
+          id: tag.id,
+          name: tag.name,
+          color: tag.color,
         })) ?? [],
-        created_at: r.createdAt.toISO(),
-      })) ?? [],
-      activities: ticket.activities?.map((a: any) => ({
-        id: a.id,
-        type: a.type,
-        causer: null, // Causer loaded separately via user model
-        created_at: a.createdAt.toISO(),
-      })) ?? [],
+      replies:
+        ticket.replies?.map((r: any) => ({
+          id: r.id,
+          body: r.body,
+          is_internal_note: r.isInternalNote,
+          is_pinned: r.isPinned ?? false,
+          author: null, // Author loaded separately via user model
+          attachments:
+            r.attachments?.map((a: any) => ({
+              id: a.id,
+              filename: a.filename,
+              mime_type: a.mimeType,
+              size: a.size,
+              url: a.url,
+            })) ?? [],
+          created_at: r.createdAt.toISO(),
+        })) ?? [],
+      activities:
+        ticket.activities?.map((a: any) => ({
+          id: a.id,
+          type: a.type,
+          causer: null, // Causer loaded separately via user model
+          created_at: a.createdAt.toISO(),
+        })) ?? [],
       sla: {
         first_response_due_at: ticket.firstResponseDueAt?.toISO() ?? null,
         first_response_at: ticket.firstResponseAt?.toISO() ?? null,

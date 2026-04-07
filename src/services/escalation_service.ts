@@ -17,8 +17,7 @@ export default class EscalationService {
    * Evaluate all active escalation rules against open tickets.
    */
   async evaluateRules(): Promise<number> {
-    const rules = await EscalationRule.query()
-      .withScopes((scopes) => scopes.active())
+    const rules = await EscalationRule.query().withScopes((scopes) => scopes.active())
 
     let escalated = 0
 
@@ -62,22 +61,23 @@ export default class EscalationService {
           query.where(
             'created_at',
             '<=',
-            DateTime.now().minus({ hours: Number(value) }).toSQL()!
+            DateTime.now()
+              .minus({ hours: Number(value) })
+              .toSQL()!
           )
           break
         case 'no_response_hours':
-          query
-            .whereNull('first_response_at')
-            .where(
-              'created_at',
-              '<=',
-              DateTime.now().minus({ hours: Number(value) }).toSQL()!
-            )
+          query.whereNull('first_response_at').where(
+            'created_at',
+            '<=',
+            DateTime.now()
+              .minus({ hours: Number(value) })
+              .toSQL()!
+          )
           break
         case 'sla_breached':
           query.where((q) => {
-            q.where('sla_first_response_breached', true)
-              .orWhere('sla_resolution_breached', true)
+            q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
           })
           break
         case 'department_id':

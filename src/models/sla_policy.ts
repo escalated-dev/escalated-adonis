@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import { BaseModel, column, hasMany, scope } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import type { TicketPriority } from '../types.js'
@@ -21,13 +21,15 @@ export default class SlaPolicy extends BaseModel {
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare firstResponseHours: Record<string, number>
 
   @column({
     prepare: (value: any) => (value ? JSON.stringify(value) : null),
-    consume: (value: any) => (value ? (typeof value === 'string' ? JSON.parse(value) : value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare resolutionHours: Record<string, number>
 

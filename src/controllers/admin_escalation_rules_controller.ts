@@ -15,8 +15,13 @@ export default class AdminEscalationRulesController {
 
   async store({ request, response, session }: HttpContext) {
     const data = request.only([
-      'name', 'description', 'trigger_type',
-      'conditions', 'actions', 'order', 'is_active',
+      'name',
+      'description',
+      'trigger_type',
+      'conditions',
+      'actions',
+      'order',
+      'is_active',
     ])
 
     await EscalationRule.create({
@@ -41,8 +46,13 @@ export default class AdminEscalationRulesController {
   async update({ params, request, response, session }: HttpContext) {
     const rule = await EscalationRule.findOrFail(params.id)
     const data = request.only([
-      'name', 'description', 'trigger_type',
-      'conditions', 'actions', 'order', 'is_active',
+      'name',
+      'description',
+      'trigger_type',
+      'conditions',
+      'actions',
+      'order',
+      'is_active',
     ])
 
     rule.merge({

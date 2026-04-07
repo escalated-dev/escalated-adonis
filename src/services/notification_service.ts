@@ -23,9 +23,7 @@ export default class NotificationService {
     // Sign the webhook payload if a secret is configured
     const secret = config?.notifications?.webhookSecret
     if (secret) {
-      const signature = createHmac('sha256', secret)
-        .update(JSON.stringify(body))
-        .digest('hex')
+      const signature = createHmac('sha256', secret).update(JSON.stringify(body)).digest('hex')
       headers['X-Escalated-Signature'] = signature
     }
 

@@ -44,8 +44,12 @@ export default class GuestTicketsController {
 
     const config = getConfig()
     const data = request.only([
-      'guest_name', 'guest_email', 'subject', 'description',
-      'priority', 'department_id',
+      'guest_name',
+      'guest_email',
+      'subject',
+      'description',
+      'priority',
+      'department_id',
     ])
 
     const ticket = await Ticket.create({
@@ -80,9 +84,7 @@ export default class GuestTicketsController {
    * GET /support/guest/:token — Show guest ticket
    */
   async show(ctx: HttpContext) {
-    const ticket = await Ticket.query()
-      .where('guest_token', ctx.params.token)
-      .firstOrFail()
+    const ticket = await Ticket.query().where('guest_token', ctx.params.token).firstOrFail()
 
     await ticket.load('department')
     await ticket.load((loader: any) => {
@@ -101,9 +103,7 @@ export default class GuestTicketsController {
    * POST /support/guest/:token/reply — Reply to guest ticket
    */
   async reply({ params, request, response, session }: HttpContext) {
-    const ticket = await Ticket.query()
-      .where('guest_token', params.token)
-      .firstOrFail()
+    const ticket = await Ticket.query().where('guest_token', params.token).firstOrFail()
 
     if (ticket.status === 'closed') {
       session.flash('error', t('guest.ticket_closed'))

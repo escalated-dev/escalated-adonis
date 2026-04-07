@@ -174,14 +174,11 @@ export default class SsoService {
 
   private extractSamlAttributes(doc: Document): Record<string, string> {
     const attributes: Record<string, string> = {}
-    const attrEls = doc.getElementsByTagNameNS(
-      'urn:oasis:names:tc:SAML:2.0:assertion',
-      'Attribute'
-    )
-    for (let i = 0; i < attrEls.length; i++) {
-      const name = attrEls[i].getAttribute('Name')
+    const attrEls = doc.getElementsByTagNameNS('urn:oasis:names:tc:SAML:2.0:assertion', 'Attribute')
+    for (const attrEl of attrEls) {
+      const name = attrEl.getAttribute('Name')
       if (!name) continue
-      const valueEls = attrEls[i].getElementsByTagNameNS(
+      const valueEls = attrEl.getElementsByTagNameNS(
         'urn:oasis:names:tc:SAML:2.0:assertion',
         'AttributeValue'
       )
@@ -249,9 +246,7 @@ export default class SsoService {
     const attrRole = config.sso_attr_role || 'role'
 
     const email =
-      (payload[attrEmail] as string) ||
-      (payload.email as string) ||
-      (payload.sub as string)
+      (payload[attrEmail] as string) || (payload.email as string) || (payload.sub as string)
     if (!email) {
       throw new SsoValidationError('JWT missing email claim.')
     }
@@ -277,11 +272,11 @@ export default class SsoService {
     }
 
     if (algorithm in hmacAlgos) {
-      const expected = createHmac(hmacAlgos[algorithm], secret)
-        .update(signingInput)
-        .digest()
-      return expected.length === signature.length &&
+      const expected = createHmac(hmacAlgos[algorithm], secret).update(signingInput).digest()
+      return (
+        expected.length === signature.length &&
         require('node:crypto').timingSafeEqual(expected, signature)
+      )
     }
 
     throw new SsoValidationError(`Unsupported JWT algorithm: ${algorithm}`)

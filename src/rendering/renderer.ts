@@ -44,16 +44,16 @@ export class JsonRenderer implements RendererContract {
 /**
  * Resolve the appropriate renderer based on the current config.
  */
-let _cachedRenderer: RendererContract | null = null
+let cachedRenderer: RendererContract | null = null
 
 export function getRenderer(): RendererContract {
-  if (_cachedRenderer) return _cachedRenderer
+  if (cachedRenderer) return cachedRenderer
 
   const config = getConfig()
   const uiEnabled = (config as any).ui?.enabled !== false
 
-  _cachedRenderer = uiEnabled ? new InertiaRenderer() : new JsonRenderer()
-  return _cachedRenderer
+  cachedRenderer = uiEnabled ? new InertiaRenderer() : new JsonRenderer()
+  return cachedRenderer
 }
 
 /**
@@ -68,5 +68,5 @@ export function isUiEnabled(): boolean {
  * Reset the cached renderer (used when config changes, e.g. in tests).
  */
 export function resetRenderer(): void {
-  _cachedRenderer = null
+  cachedRenderer = null
 }

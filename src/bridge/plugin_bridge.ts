@@ -209,7 +209,7 @@ export default class PluginBridge {
     }
 
     const packageName: string = pkgJson.name ?? pkgPath
-    const mainEntry: string = pkgJson.main ?? pkgJson.exports?.['.' ] ?? 'index.js'
+    const mainEntry: string = pkgJson.main ?? pkgJson.exports?.['.'] ?? 'index.js'
 
     // Resolve absolute path to the entry file
     const entryPath = join(pkgPath, mainEntry)
@@ -232,8 +232,8 @@ export default class PluginBridge {
       pluginModule?.default?.__escalated === true
         ? pluginModule.default
         : pluginModule?.plugin?.__escalated === true
-        ? pluginModule.plugin
-        : undefined
+          ? pluginModule.plugin
+          : undefined
 
     if (!resolved) {
       // Not an SDK plugin — skip silently
@@ -254,10 +254,7 @@ export default class PluginBridge {
       try {
         await resolved.onActivate(context)
       } catch (err) {
-        console.error(
-          `[Escalated Bridge] onActivate failed for plugin "${resolved.name}":`,
-          err
-        )
+        console.error(`[Escalated Bridge] onActivate failed for plugin "${resolved.name}":`, err)
       }
     }
 
@@ -286,19 +283,14 @@ export default class PluginBridge {
     if (!this.booted) return
 
     for (const [name] of this.manifests) {
-      const entry = (this.dispatcher as any).plugins?.find(
-        (e: any) => e.plugin.name === name
-      )
+      const entry = (this.dispatcher as any).plugins?.find((e: any) => e.plugin.name === name)
       if (!entry) continue
 
       if (typeof entry.plugin.onDeactivate === 'function') {
         try {
           await entry.plugin.onDeactivate(entry.context)
         } catch (err) {
-          console.error(
-            `[Escalated Bridge] onDeactivate failed for plugin "${name}":`,
-            err
-          )
+          console.error(`[Escalated Bridge] onDeactivate failed for plugin "${name}":`, err)
         }
       }
     }

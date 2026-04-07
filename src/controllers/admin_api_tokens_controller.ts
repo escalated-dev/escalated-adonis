@@ -43,11 +43,14 @@ export default class AdminApiTokensController {
    * POST /support/admin/api-tokens — Create a new API token
    */
   async store(ctx: HttpContext) {
-    const { name, user_id, abilities, expires_in_days } = ctx.request.only([
-      'name', 'user_id', 'abilities', 'expires_in_days',
-    ])
+    const {
+      name,
+      user_id: userId,
+      abilities,
+      expires_in_days: expiresInDays,
+    } = ctx.request.only(['name', 'user_id', 'abilities', 'expires_in_days'])
 
-    if (!name || !user_id || !abilities || !Array.isArray(abilities)) {
+    if (!name || !userId || !abilities || !Array.isArray(abilities)) {
       ctx.session.flash('error', 'Name, user, and abilities are required.')
       return ctx.response.redirect().back()
     }
@@ -56,11 +59,9 @@ export default class AdminApiTokensController {
     const config = (globalThis as any).__escalated_config
     const userModelPath = config?.userModel ?? '#models/user'
     const { default: UserModel } = await import(userModelPath)
-    const user = await UserModel.findOrFail(user_id)
+    const user = await UserModel.findOrFail(userId)
 
-    const expiresAt = expires_in_days
-      ? DateTime.now().plus({ days: Number(expires_in_days) })
-      : null
+    const expiresAt = expiresInDays ? DateTime.now().plus({ days: Number(expiresInDays) }) : null
 
     const result = await ApiToken.createToken(user, name, abilities, expiresAt)
 
@@ -114,10 +115,18 @@ export default class AdminApiTokensController {
 
       const agents: { id: number; name: string; email: string }[] = []
       for (const user of users) {
-        const isAgent = config?.authorization?.isAgent ? await config.authorization.isAgent(user) : false
-        const isAdmin = config?.authorization?.isAdmin ? await config.authorization.isAdmin(user) : false
+        const isAgent = config?.authorization?.isAgent
+          ? await config.authorization.isAgent(user)
+          : false
+        const isAdmin = config?.authorization?.isAdmin
+          ? await config.authorization.isAdmin(user)
+          : false
         if (isAgent || isAdmin) {
-          agents.push({ id: user.id, name: user.name ?? user.fullName ?? '', email: user.email ?? '' })
+          agents.push({
+            id: user.id,
+            name: user.name ?? user.fullName ?? '',
+            email: user.email ?? '',
+          })
         }
       }
       return agents

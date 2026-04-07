@@ -10,7 +10,7 @@
 
 import type { HttpContext } from '@adonisjs/core/http'
 import PluginService from '../services/plugin_service.js'
-import HookManager from '../support/hook_manager.js'
+import type HookManager from '../support/hook_manager.js'
 import { getRenderer } from '../rendering/renderer.js'
 
 export default class AdminPluginsController {
@@ -106,7 +106,10 @@ export default class AdminPluginsController {
     const allPlugins = await this.getPluginService().getAllPlugins()
     const pluginData = allPlugins.find((p: any) => p.slug === ctx.params.slug)
     if (pluginData && pluginData.source === 'composer') {
-      ctx.session.flash('error', 'npm plugins cannot be deleted. Remove the package via npm instead.')
+      ctx.session.flash(
+        'error',
+        'npm plugins cannot be deleted. Remove the package via npm instead.'
+      )
       return ctx.response.redirect().back()
     }
 

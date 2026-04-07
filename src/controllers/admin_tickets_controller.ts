@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Ticket from '../models/ticket.js'
+import type Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
 import Department from '../models/department.js'
 import Tag from '../models/tag.js'
@@ -21,13 +21,24 @@ export default class AdminTicketsController {
    */
   async index(ctx: HttpContext) {
     const filters = ctx.request.only([
-      'status', 'priority', 'ticket_type', 'assigned_to', 'unassigned', 'department_id',
-      'search', 'sla_breached', 'tag_ids', 'sort_by', 'sort_dir', 'per_page', 'following',
+      'status',
+      'priority',
+      'ticket_type',
+      'assigned_to',
+      'unassigned',
+      'department_id',
+      'search',
+      'sla_breached',
+      'tag_ids',
+      'sort_by',
+      'sort_dir',
+      'per_page',
+      'following',
     ])
 
     const tickets = await this.ticketService.list(
       filters,
-      filters.following ? (ctx.auth.user as any) : null,
+      filters.following ? (ctx.auth.user as any) : null
     )
 
     const departments = await Department.query()
@@ -71,8 +82,9 @@ export default class AdminTicketsController {
 
     const tags = await Tag.query().select('id', 'name', 'color')
 
-    const cannedResponses = await CannedResponse.query()
-      .withScopes((scopes) => scopes.forAgent(userId))
+    const cannedResponses = await CannedResponse.query().withScopes((scopes) =>
+      scopes.forAgent(userId)
+    )
 
     const agents = await this.getAgents()
 
@@ -118,8 +130,8 @@ export default class AdminTicketsController {
   async assign(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const user = ctx.auth.user!
-    const { agent_id } = ctx.request.only(['agent_id'])
-    await this.assignmentService.assign(ticket, Number(agent_id), user as any)
+    const { agent_id: agentId } = ctx.request.only(['agent_id'])
+    await this.assignmentService.assign(ticket, Number(agentId), user as any)
     ctx.session.flash('success', t('ticket.assigned'))
     return ctx.response.redirect().back()
   }
@@ -145,11 +157,11 @@ export default class AdminTicketsController {
   async tags(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const user = ctx.auth.user!
-    const { tag_ids } = ctx.request.only(['tag_ids'])
-    const newTagIds = (tag_ids || []).map(Number)
+    const { tag_ids: tagIds } = ctx.request.only(['tag_ids'])
+    const newTagIds = (tagIds || []).map(Number)
 
     await ticket.load('tags')
-    const currentTagIds = ticket.tags.map((t: Tag) => t.id)
+    const currentTagIds = ticket.tags.map((tag: Tag) => tag.id)
     const toAdd = newTagIds.filter((id: number) => !currentTagIds.includes(id))
     const toRemove = currentTagIds.filter((id: number) => !newTagIds.includes(id))
     if (toAdd.length) await this.ticketService.addTags(ticket, toAdd, user as any)
@@ -161,8 +173,8 @@ export default class AdminTicketsController {
   async department(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const user = ctx.auth.user!
-    const { department_id } = ctx.request.only(['department_id'])
-    await this.ticketService.changeDepartment(ticket, Number(department_id), user as any)
+    const { department_id: departmentId } = ctx.request.only(['department_id'])
+    await this.ticketService.changeDepartment(ticket, Number(departmentId), user as any)
     ctx.session.flash('success', t('ticket.department_updated'))
     return ctx.response.redirect().back()
   }
@@ -170,10 +182,10 @@ export default class AdminTicketsController {
   async applyMacro(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const user = ctx.auth.user!
-    const { macro_id } = ctx.request.only(['macro_id'])
+    const { macro_id: macroId } = ctx.request.only(['macro_id'])
     const macro = await Macro.query()
       .withScopes((scopes) => scopes.forAgent(user.id))
-      .where('id', macro_id)
+      .where('id', macroId)
       .firstOrFail()
     const macroService = new MacroService()
     await macroService.apply(macro, ticket, user as any)
@@ -224,7 +236,10 @@ export default class AdminTicketsController {
     }
     reply.isPinned = !reply.isPinned
     await reply.save()
-    ctx.session.flash('success', reply.isPinned ? t('ticket.note_pinned') : t('ticket.note_unpinned'))
+    ctx.session.flash(
+      'success',
+      reply.isPinned ? t('ticket.note_pinned') : t('ticket.note_unpinned')
+    )
     return ctx.response.redirect().back()
   }
 
@@ -240,10 +255,18 @@ export default class AdminTicketsController {
 
       const agents: { id: number; name: string; email: string }[] = []
       for (const user of users) {
-        const isAgent = config?.authorization?.isAgent ? await config.authorization.isAgent(user) : false
-        const isAdmin = config?.authorization?.isAdmin ? await config.authorization.isAdmin(user) : false
+        const isAgent = config?.authorization?.isAgent
+          ? await config.authorization.isAgent(user)
+          : false
+        const isAdmin = config?.authorization?.isAdmin
+          ? await config.authorization.isAdmin(user)
+          : false
         if (isAgent || isAdmin) {
-          agents.push({ id: user.id, name: user.name ?? user.fullName ?? '', email: user.email ?? '' })
+          agents.push({
+            id: user.id,
+            name: user.name ?? user.fullName ?? '',
+            email: user.email ?? '',
+          })
         }
       }
       return agents

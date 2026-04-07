@@ -36,7 +36,8 @@ export default class TicketService {
     }
   ): Promise<Ticket> {
     const reference = await Ticket.generateReference()
-    const config = (await import('../helpers/config.js')).getConfig()
+    const configModule = await import('../helpers/config.js')
+    const config = configModule.getConfig()
 
     const ticket = await Ticket.create({
       reference,
@@ -55,11 +56,7 @@ export default class TicketService {
     })
 
     if (data.attachments && data.attachments.length > 0) {
-      await this.attachmentService.storeMany(
-        'Ticket',
-        ticket.id,
-        data.attachments
-      )
+      await this.attachmentService.storeMany('Ticket', ticket.id, data.attachments)
     }
 
     if (data.tags && data.tags.length > 0) {
@@ -101,11 +98,7 @@ export default class TicketService {
   /**
    * Change ticket status with transition validation.
    */
-  async changeStatus(
-    ticket: Ticket,
-    newStatus: TicketStatus,
-    causer?: any
-  ): Promise<Ticket> {
+  async changeStatus(ticket: Ticket, newStatus: TicketStatus, causer?: any): Promise<Ticket> {
     const oldStatus = ticket.status
 
     if (!canTransitionTo(oldStatus, newStatus)) {
@@ -219,11 +212,7 @@ export default class TicketService {
   /**
    * Change ticket priority.
    */
-  async changePriority(
-    ticket: Ticket,
-    priority: TicketPriority,
-    causer?: any
-  ): Promise<Ticket> {
+  async changePriority(ticket: Ticket, priority: TicketPriority, causer?: any): Promise<Ticket> {
     const oldPriority = ticket.priority
     ticket.priority = priority
     await ticket.save()
@@ -248,11 +237,7 @@ export default class TicketService {
   /**
    * Add tags to a ticket.
    */
-  async addTags(
-    ticket: Ticket,
-    tagIds: number[],
-    causer?: any
-  ): Promise<Ticket> {
+  async addTags(ticket: Ticket, tagIds: number[], causer?: any): Promise<Ticket> {
     await ticket.related('tags').attach(tagIds)
 
     for (const tagId of tagIds) {
@@ -270,11 +255,7 @@ export default class TicketService {
   /**
    * Remove tags from a ticket.
    */
-  async removeTags(
-    ticket: Ticket,
-    tagIds: number[],
-    causer?: any
-  ): Promise<Ticket> {
+  async removeTags(ticket: Ticket, tagIds: number[], causer?: any): Promise<Ticket> {
     await ticket.related('tags').detach(tagIds)
 
     for (const tagId of tagIds) {
@@ -292,11 +273,7 @@ export default class TicketService {
   /**
    * Change ticket department.
    */
-  async changeDepartment(
-    ticket: Ticket,
-    departmentId: number,
-    causer?: any
-  ): Promise<Ticket> {
+  async changeDepartment(ticket: Ticket, departmentId: number, causer?: any): Promise<Ticket> {
     const oldDepartmentId = ticket.departmentId
     ticket.departmentId = departmentId
     await ticket.save()
@@ -346,15 +323,11 @@ export default class TicketService {
     filters: Record<string, any> = {},
     forUser?: { id: number; constructor: { name: string } } | null
   ) {
-    const query = Ticket.query()
-      .preload('department')
-      .preload('tags')
+    const query = Ticket.query().preload('department').preload('tags')
 
     // If listing for a specific user (customer view)
     if (forUser) {
-      query
-        .where('requester_type', forUser.constructor.name)
-        .where('requester_id', forUser.id)
+      query.where('requester_type', forUser.constructor.name).where('requester_id', forUser.id)
     }
 
     if (filters.status) {
@@ -391,8 +364,7 @@ export default class TicketService {
 
     if (filters.sla_breached) {
       query.where((q) => {
-        q.where('sla_first_response_breached', true)
-          .orWhere('sla_resolution_breached', true)
+        q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
       })
     }
 
@@ -408,7 +380,10 @@ export default class TicketService {
         .from('escalated_ticket_followers')
         .where('user_id', forUser.id)
         .select('ticket_id')
-      query.whereIn('id', followerTicketIds.map((r: any) => r.ticket_id))
+      query.whereIn(
+        'id',
+        followerTicketIds.map((r: any) => r.ticket_id)
+      )
     }
 
     const sortBy = ALLOWED_SORT_COLUMNS.includes(filters.sort_by ?? '')

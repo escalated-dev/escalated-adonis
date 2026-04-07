@@ -31,7 +31,9 @@ function getHookManager(): HookManager {
 function getPluginUI(): PluginUIService {
   const pluginUI = (globalThis as any).__escalated_pluginUI
   if (!pluginUI) {
-    throw new Error('[Escalated] PluginUIService not initialized. Ensure EscalatedProvider has booted.')
+    throw new Error(
+      '[Escalated] PluginUIService not initialized. Ensure EscalatedProvider has booted.'
+    )
   }
   return pluginUI
 }

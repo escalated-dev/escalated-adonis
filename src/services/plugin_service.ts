@@ -154,7 +154,7 @@ export default class PluginService {
             isActive: dbPlugin?.isActive || false,
             activatedAt: dbPlugin?.activatedAt?.toISO() || null,
             path: dir,
-            source: 'composer',  // Use 'composer' for frontend consistency
+            source: 'composer', // Use 'composer' for frontend consistency
           })
         } catch {
           // Skip invalid manifests
@@ -204,7 +204,8 @@ export default class PluginService {
 
     if (!plugin.isActive) {
       plugin.isActive = true
-      plugin.activatedAt = (await import('luxon')).DateTime.now()
+      const { DateTime: LuxonDateTime } = await import('luxon')
+      plugin.activatedAt = LuxonDateTime.now()
       plugin.deactivatedAt = null
       await plugin.save()
 
@@ -231,7 +232,8 @@ export default class PluginService {
       await this.hookManager.doAction(`plugin_deactivated_${slug}`)
 
       plugin.isActive = false
-      plugin.deactivatedAt = (await import('luxon')).DateTime.now()
+      const { DateTime: LuxonDt } = await import('luxon')
+      plugin.deactivatedAt = LuxonDt.now()
       await plugin.save()
     }
 

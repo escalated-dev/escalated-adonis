@@ -26,9 +26,10 @@ export default class AttachmentService {
       attachableId,
       filename,
       originalFilename: file.clientName || filename,
-      mimeType: file.headers?.['content-type'] || file.type
-        ? `${file.type}/${file.subtype}`
-        : 'application/octet-stream',
+      mimeType:
+        file.headers?.['content-type'] || file.type
+          ? `${file.type}/${file.subtype}`
+          : 'application/octet-stream',
       size: file.size || 0,
       disk,
       path: `${basePath}/${filename}`,

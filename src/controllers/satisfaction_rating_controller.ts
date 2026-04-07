@@ -39,9 +39,7 @@ export default class SatisfactionRatingController {
    * POST /support/guest/:token/rate — Rate a ticket as guest
    */
   async storeGuest({ params, request, response, session }: HttpContext) {
-    const ticket = await Ticket.query()
-      .where('guest_token', params.token)
-      .firstOrFail()
+    const ticket = await Ticket.query().where('guest_token', params.token).firstOrFail()
 
     const { rating, comment } = request.only(['rating', 'comment'])
 
