@@ -33,8 +33,11 @@
     "dev": "tsc --watch",
     "clean": "rm -rf build",
     "test": "node --test tests/*.test.js",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
     "prepublishOnly": "npm run build"
   },
+  "prettier": "@adonisjs/prettier-config",
   "keywords": [
     "adonisjs",
     "support",
@@ -45,23 +48,27 @@
     "plugins"
   ],
   "peerDependencies": {
-    "@adonisjs/core": "^6.0.0",
-    "@adonisjs/lucid": "^21.0.0",
     "@adonisjs/auth": "^9.0.0",
-    "@adonisjs/inertia": "^1.0.0",
-    "@adonisjs/drive": "^3.0.0",
     "@adonisjs/cache": "^1.0.0",
+    "@adonisjs/core": "^6.0.0",
+    "@adonisjs/drive": "^3.0.0",
+    "@adonisjs/inertia": "^1.0.0",
+    "@adonisjs/lucid": "^21.0.0",
     "@adonisjs/mail": "^9.0.0"
   },
   "devDependencies": {
-    "@adonisjs/core": "^6.14.0",
-    "@adonisjs/lucid": "^21.3.0",
     "@adonisjs/auth": "^9.2.0",
-    "@adonisjs/inertia": "^1.2.0",
-    "@adonisjs/drive": "^3.0.0",
     "@adonisjs/cache": "^1.0.0",
+    "@adonisjs/core": "^6.14.0",
+    "@adonisjs/drive": "^3.0.0",
+    "@adonisjs/eslint-config": "^3.0.0",
+    "@adonisjs/inertia": "^1.2.0",
+    "@adonisjs/lucid": "^21.3.0",
     "@adonisjs/mail": "^9.0.0",
+    "@adonisjs/prettier-config": "^1.4.5",
     "@japa/runner": "^3.0.0",
+    "eslint": "^9.39.4",
+    "prettier": "^3.8.1",
     "typescript": "^5.4.0"
   },
   "repository": {

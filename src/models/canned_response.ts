@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { type DateTime } from 'luxon'
 import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
 
 export default class CannedResponse extends BaseModel {

@@ -110,10 +110,7 @@ export interface ImportAdapter {
    * Fetch the list of fields available on the source platform for a given
    * entity type. Used to populate the field-mapping UI.
    */
-  availableSourceFields(
-    entityType: string,
-    credentials: Record<string, string>
-  ): Promise<string[]>
+  availableSourceFields(entityType: string, credentials: Record<string, string>): Promise<string[]>
 
   /**
    * Extract a batch of normalized records from the platform.

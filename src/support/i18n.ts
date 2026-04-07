@@ -1,14 +1,14 @@
-import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
+import { readFileSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { dirname } from 'node:path'
 
 let translations: Record<string, any> = {}
 let currentLocale = 'en'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const langDir = join(__dirname, '../../resources/lang')
+const currentFilePath = fileURLToPath(import.meta.url)
+const currentDirPath = dirname(currentFilePath)
+const langDir = join(currentDirPath, '../../resources/lang')
 
 function loadLocale(locale: string): Record<string, any> {
   const filePath = join(langDir, locale, 'messages.json')

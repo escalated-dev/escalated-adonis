@@ -72,7 +72,8 @@ export default class ImportCommand extends BaseCommand {
   declare list: boolean
 
   @flags.string({
-    description: 'Field mapping overrides as a JSON string (e.g. \'{"tickets":{"subject":"title"}}\')',
+    description:
+      'Field mapping overrides as a JSON string (e.g. \'{"tickets":{"subject":"title"}}\')',
   })
   declare mapping: string | undefined
 
@@ -113,7 +114,9 @@ export default class ImportCommand extends BaseCommand {
 
     // ---- Fresh import ----
     if (!this.platform) {
-      this.logger.error('Provide a platform slug (e.g. "zendesk"). Use --list to see available adapters.')
+      this.logger.error(
+        'Provide a platform slug (e.g. "zendesk"). Use --list to see available adapters.'
+      )
       this.exitCode = 1
       return
     }
@@ -143,9 +146,7 @@ export default class ImportCommand extends BaseCommand {
             .join(', ')
         : 'no progress'
 
-      this.logger.info(
-        `  ${job.id}  platform=${job.platform}  status=${job.status}  [${progress}]`
-      )
+      this.logger.info(`  ${job.id}  platform=${job.platform}  status=${job.status}  [${progress}]`)
     }
   }
 
@@ -159,9 +160,7 @@ export default class ImportCommand extends BaseCommand {
     }
 
     if (!job.isResumable()) {
-      this.logger.error(
-        `Import job '${jobId}' cannot be resumed (current status: ${job.status}).`
-      )
+      this.logger.error(`Import job '${jobId}' cannot be resumed (current status: ${job.status}).`)
       this.exitCode = 1
       return
     }
@@ -177,9 +176,7 @@ export default class ImportCommand extends BaseCommand {
     if (!adapter) {
       const adapters = await importService.availableAdapters()
       const names = adapters.map((a) => a.name()).join(', ') || 'none registered'
-      this.logger.error(
-        `No import adapter found for platform '${platform}'. Available: ${names}`
-      )
+      this.logger.error(`No import adapter found for platform '${platform}'. Available: ${names}`)
       this.exitCode = 1
       return
     }
@@ -248,9 +245,7 @@ export default class ImportCommand extends BaseCommand {
     try {
       await importService.run(job, (entityType, progress) => {
         const pct =
-          progress.total > 0
-            ? ` (${Math.round((progress.processed / progress.total) * 100)}%)`
-            : ''
+          progress.total > 0 ? ` (${Math.round((progress.processed / progress.total) * 100)}%)` : ''
         this.logger.info(
           `  ${entityType}: processed=${progress.processed}  skipped=${progress.skipped}  failed=${progress.failed}${pct}`
         )
@@ -267,7 +262,9 @@ export default class ImportCommand extends BaseCommand {
           )
         }
       } else if (job.status === 'paused') {
-        this.logger.warning(`\nImport paused. Resume with: node ace escalated:import ${job.id} --resume`)
+        this.logger.warning(
+          `\nImport paused. Resume with: node ace escalated:import ${job.id} --resume`
+        )
       }
     } catch (err: any) {
       this.logger.error(`\nImport failed: ${err.message}`)

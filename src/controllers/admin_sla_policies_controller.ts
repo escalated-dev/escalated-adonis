@@ -19,9 +19,13 @@ export default class AdminSlaPoliciesController {
 
   async store({ request, response, session }: HttpContext) {
     const data = request.only([
-      'name', 'description', 'is_default',
-      'first_response_hours', 'resolution_hours',
-      'business_hours_only', 'is_active',
+      'name',
+      'description',
+      'is_default',
+      'first_response_hours',
+      'resolution_hours',
+      'business_hours_only',
+      'is_active',
     ])
 
     await SlaPolicy.create({
@@ -50,9 +54,13 @@ export default class AdminSlaPoliciesController {
   async update({ params, request, response, session }: HttpContext) {
     const policy = await SlaPolicy.findOrFail(params.id)
     const data = request.only([
-      'name', 'description', 'is_default',
-      'first_response_hours', 'resolution_hours',
-      'business_hours_only', 'is_active',
+      'name',
+      'description',
+      'is_default',
+      'first_response_hours',
+      'resolution_hours',
+      'business_hours_only',
+      'is_active',
     ])
 
     policy.merge({

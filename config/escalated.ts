@@ -9,7 +9,7 @@
 */
 
 import env from '#start/env'
-import { EscalatedConfig } from '../src/types.js'
+import { type EscalatedConfig } from '../src/types.js'
 
 const escalatedConfig: EscalatedConfig = {
   /*
@@ -87,8 +87,14 @@ const escalatedConfig: EscalatedConfig = {
   |--------------------------------------------------------------------------
   */
   statuses: [
-    'open', 'in_progress', 'waiting_on_customer', 'waiting_on_agent',
-    'escalated', 'resolved', 'closed', 'reopened',
+    'open',
+    'in_progress',
+    'waiting_on_customer',
+    'waiting_on_agent',
+    'escalated',
+    'resolved',
+    'closed',
+    'reopened',
   ],
 
   /*

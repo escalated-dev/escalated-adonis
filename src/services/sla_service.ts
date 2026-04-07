@@ -111,9 +111,7 @@ export default class SlaService {
       .where('first_response_due_at', '<=', threshold.toSQL()!)
 
     for (const ticket of firstResponseWarnings) {
-      const minutes = Math.round(
-        ticket.firstResponseDueAt!.diff(now, 'minutes').minutes
-      )
+      const minutes = Math.round(ticket.firstResponseDueAt!.diff(now, 'minutes').minutes)
       await emitter.emit(ESCALATED_EVENTS.SLA_WARNING, {
         ticket,
         type: 'first_response' as const,
@@ -131,9 +129,7 @@ export default class SlaService {
       .where('resolution_due_at', '<=', threshold.toSQL()!)
 
     for (const ticket of resolutionWarnings) {
-      const minutes = Math.round(
-        ticket.resolutionDueAt!.diff(now, 'minutes').minutes
-      )
+      const minutes = Math.round(ticket.resolutionDueAt!.diff(now, 'minutes').minutes)
       await emitter.emit(ESCALATED_EVENTS.SLA_WARNING, {
         ticket,
         type: 'resolution' as const,
@@ -148,11 +144,7 @@ export default class SlaService {
   /**
    * Calculate a due date, optionally respecting business hours.
    */
-  protected calculateDueDate(
-    from: DateTime,
-    hours: number,
-    businessHoursOnly: boolean
-  ): DateTime {
+  protected calculateDueDate(from: DateTime, hours: number, businessHoursOnly: boolean): DateTime {
     if (!businessHoursOnly) {
       return from.plus({ hours })
     }

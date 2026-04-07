@@ -48,29 +48,23 @@ export default class RouteRegistrar {
       router
         .group(() => {
           for (const ep of manifest.endpoints) {
-            const method = ep.method.toLowerCase() as
-              | 'get'
-              | 'post'
-              | 'put'
-              | 'patch'
-              | 'delete'
+            const method = ep.method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete'
 
             // Normalise path: strip leading slash so AdonisJS router doesn't
             // produce double-slashes
             const epPath = ep.path.replace(/^\/+/, '')
 
-            ;(router[method] as Function)(
-              `/${epPath}`,
-              async (ctx: any) => {
-                const response = await this.bridge.callEndpoint(name, ep.method, ep.path, {
-                  body: ctx.request.body(),
-                  params: ctx.params,
-                  query: ctx.request.qs(),
-                  headers: ctx.request.headers(),
-                })
-                return ctx.response.json(response)
-              }
-            ).as(`escalated.plugin.${this.slugify(name)}.endpoint.${method}.${this.slugify(epPath)}`)
+            ;(router[method] as Function)(`/${epPath}`, async (ctx: any) => {
+              const response = await this.bridge.callEndpoint(name, ep.method, ep.path, {
+                body: ctx.request.body(),
+                params: ctx.params,
+                query: ctx.request.qs(),
+                headers: ctx.request.headers(),
+              })
+              return ctx.response.json(response)
+            }).as(
+              `escalated.plugin.${this.slugify(name)}.endpoint.${method}.${this.slugify(epPath)}`
+            )
           }
         })
         .prefix(`${prefix}/plugins/${this.slugify(name)}/api`)
@@ -82,27 +76,21 @@ export default class RouteRegistrar {
       router
         .group(() => {
           for (const wh of manifest.webhooks) {
-            const method = wh.method.toLowerCase() as
-              | 'get'
-              | 'post'
-              | 'put'
-              | 'patch'
-              | 'delete'
+            const method = wh.method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete'
 
             const whPath = wh.path.replace(/^\/+/, '')
 
-            ;(router[method] as Function)(
-              `/${whPath}`,
-              async (ctx: any) => {
-                const response = await this.bridge.callWebhook(name, wh.method, wh.path, {
-                  body: ctx.request.body(),
-                  params: ctx.params,
-                  query: ctx.request.qs(),
-                  headers: ctx.request.headers(),
-                })
-                return ctx.response.json(response)
-              }
-            ).as(`escalated.plugin.${this.slugify(name)}.webhook.${method}.${this.slugify(whPath)}`)
+            ;(router[method] as Function)(`/${whPath}`, async (ctx: any) => {
+              const response = await this.bridge.callWebhook(name, wh.method, wh.path, {
+                body: ctx.request.body(),
+                params: ctx.params,
+                query: ctx.request.qs(),
+                headers: ctx.request.headers(),
+              })
+              return ctx.response.json(response)
+            }).as(
+              `escalated.plugin.${this.slugify(name)}.webhook.${method}.${this.slugify(whPath)}`
+            )
           }
         })
         .prefix(`${prefix}/plugins/${this.slugify(name)}/webhooks`)

@@ -5,5 +5,5 @@
   "author": "Escalated Team",
   "author_url": "https://escalated.dev",
   "requires": "0.4.0",
-  "main_file": "Plugin.js"
+  "main_file": "plugin.js"
 }

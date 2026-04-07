@@ -18,10 +18,7 @@ export default class RunAutomationsCommand extends BaseCommand {
 
   static description = 'Evaluate all active automations against open tickets'
 
-  static help = [
-    'Run all active automations:',
-    '  node ace escalated:run-automations',
-  ]
+  static help = ['Run all active automations:', '  node ace escalated:run-automations']
 
   static options: CommandOptions = {
     startApp: true,

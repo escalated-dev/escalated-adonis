@@ -28,7 +28,7 @@ export default class InboundEmailService {
       }
 
       // Check for duplicate message ID
-      if (message.messageId && await this.isDuplicate(message.messageId, inboundEmail.id)) {
+      if (message.messageId && (await this.isDuplicate(message.messageId, inboundEmail.id))) {
         await inboundEmail.markProcessed()
         return inboundEmail
       }
@@ -248,11 +248,18 @@ export default class InboundEmailService {
     for (const attachment of attachments) {
       if (stored >= maxCount) break
 
-      const size = attachment.size || (typeof attachment.content === 'string' ? attachment.content.length : (attachment.content as Buffer).length)
+      const size =
+        attachment.size ||
+        (typeof attachment.content === 'string'
+          ? attachment.content.length
+          : (attachment.content as Buffer).length)
 
       if (size > maxSize) continue
 
-      const extension = extname(attachment.filename || '').slice(1).toLowerCase() || 'bin'
+      const extension =
+        extname(attachment.filename || '')
+          .slice(1)
+          .toLowerCase() || 'bin'
 
       if (BLOCKED_EXTENSIONS.includes(extension)) continue
 
@@ -261,10 +268,14 @@ export default class InboundEmailService {
 
       try {
         const { default: drive } = await import('@adonisjs/drive/services/main')
-        await drive.use(disk as any).put(path, typeof attachment.content === 'string'
-          ? Buffer.from(attachment.content)
-          : attachment.content
-        )
+        await drive
+          .use(disk as any)
+          .put(
+            path,
+            typeof attachment.content === 'string'
+              ? Buffer.from(attachment.content)
+              : attachment.content
+          )
 
         await Attachment.create({
           attachableType: attachable.constructor.name,
@@ -341,8 +352,6 @@ export default class InboundEmailService {
    */
   protected nameFromEmail(email: string): string {
     const local = email.split('@')[0]
-    return local
-      .replace(/[._\-+]/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase())
+    return local.replace(/[._\-+]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
   }
 }

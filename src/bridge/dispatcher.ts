@@ -80,7 +80,7 @@ export default class Dispatcher {
     entries.sort((a, b) => a.priority - b.priority)
 
     let result: T = value
-    for (const { priority: _p, plugin, context } of entries) {
+    for (const { plugin, context } of entries) {
       const filterReg = plugin._normalizedFilters![hook]!
       try {
         result = (await filterReg.handler(result, context)) as T
@@ -119,9 +119,7 @@ export default class Dispatcher {
     const endpoint = entry.plugin._normalizedEndpoints?.[key]
 
     if (!endpoint) {
-      throw new Error(
-        `[Escalated Bridge] Endpoint "${key}" not found in plugin "${pluginName}"`
-      )
+      throw new Error(`[Escalated Bridge] Endpoint "${key}" not found in plugin "${pluginName}"`)
     }
 
     return endpoint.handler(entry.context, {
@@ -151,9 +149,7 @@ export default class Dispatcher {
     const handler = entry.plugin.webhooks?.[key]
 
     if (!handler) {
-      throw new Error(
-        `[Escalated Bridge] Webhook "${key}" not found in plugin "${pluginName}"`
-      )
+      throw new Error(`[Escalated Bridge] Webhook "${key}" not found in plugin "${pluginName}"`)
     }
 
     return handler(entry.context, {

@@ -76,7 +76,8 @@ export default class EscalatedProvider {
     })
 
     this.app.container.singleton('escalated.notificationService', async () => {
-      const { default: NotificationService } = await import('../src/services/notification_service.js')
+      const { default: NotificationService } =
+        await import('../src/services/notification_service.js')
       return new NotificationService()
     })
 
@@ -86,7 +87,8 @@ export default class EscalatedProvider {
     })
 
     this.app.container.singleton('escalated.inboundEmailService', async () => {
-      const { default: InboundEmailService } = await import('../src/services/inbound_email_service.js')
+      const { default: InboundEmailService } =
+        await import('../src/services/inbound_email_service.js')
       return new InboundEmailService()
     })
 
@@ -198,7 +200,8 @@ export default class EscalatedProvider {
 
             // Share guest tickets setting
             try {
-              const { default: EscalatedSetting } = await import('../src/models/escalated_setting.js')
+              const { default: EscalatedSetting } =
+                await import('../src/models/escalated_setting.js')
               data.guest_tickets_enabled = await EscalatedSetting.guestTicketsEnabled()
               data.show_powered_by = await EscalatedSetting.getBool('show_powered_by', true)
             } catch {
@@ -342,10 +345,7 @@ export default class EscalatedProvider {
       await bridge.boot()
     } catch (error) {
       // Don't crash the app if the bridge fails to boot
-      console.warn(
-        '[Escalated Bridge] Could not boot plugin bridge:',
-        (error as Error).message
-      )
+      console.warn('[Escalated Bridge] Could not boot plugin bridge:', (error as Error).message)
     }
   }
 

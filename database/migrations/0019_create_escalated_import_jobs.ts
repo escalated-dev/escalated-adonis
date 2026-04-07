@@ -6,14 +6,29 @@ export default class CreateEscalatedImportJobs extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       // UUID primary key
-      table.uuid('id').primary().defaultTo(this.raw('(lower(hex(randomblob(4))) || \'-\' || lower(hex(randomblob(2))) || \'-4\' || substr(lower(hex(randomblob(2))),2) || \'-\' || substr(\'89ab\',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || \'-\' || lower(hex(randomblob(6))))'))
+      table
+        .uuid('id')
+        .primary()
+        .defaultTo(
+          this.raw(
+            "(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))"
+          )
+        )
 
       // Platform slug (e.g. "zendesk", "freshdesk", "intercom")
       table.string('platform').notNullable()
 
       // Import lifecycle status
       table
-        .enum('status', ['pending', 'authenticating', 'mapping', 'importing', 'paused', 'completed', 'failed'])
+        .enum('status', [
+          'pending',
+          'authenticating',
+          'mapping',
+          'importing',
+          'paused',
+          'completed',
+          'failed',
+        ])
         .notNullable()
         .defaultTo('pending')
 

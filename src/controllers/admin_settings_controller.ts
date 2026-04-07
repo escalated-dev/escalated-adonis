@@ -13,14 +13,25 @@ export default class AdminSettingsController {
 
   async update({ request, response, session }: HttpContext) {
     const data = request.only([
-      'guest_tickets_enabled', 'allow_customer_close',
-      'auto_close_resolved_after_days', 'max_attachments_per_reply',
-      'max_attachment_size_kb', 'ticket_reference_prefix',
-      'inbound_email_enabled', 'inbound_email_adapter', 'inbound_email_address',
-      'mailgun_signing_key', 'postmark_inbound_token',
-      'ses_region', 'ses_topic_arn',
-      'imap_host', 'imap_port', 'imap_encryption',
-      'imap_username', 'imap_password', 'imap_mailbox',
+      'guest_tickets_enabled',
+      'allow_customer_close',
+      'auto_close_resolved_after_days',
+      'max_attachments_per_reply',
+      'max_attachment_size_kb',
+      'ticket_reference_prefix',
+      'inbound_email_enabled',
+      'inbound_email_adapter',
+      'inbound_email_address',
+      'mailgun_signing_key',
+      'postmark_inbound_token',
+      'ses_region',
+      'ses_topic_arn',
+      'imap_host',
+      'imap_port',
+      'imap_encryption',
+      'imap_username',
+      'imap_password',
+      'imap_mailbox',
       'show_powered_by',
     ])
 
@@ -46,24 +57,63 @@ export default class AdminSettingsController {
     return {
       guest_tickets_enabled: await EscalatedSetting.getBool('guest_tickets_enabled', true),
       allow_customer_close: await EscalatedSetting.getBool('allow_customer_close', true),
-      auto_close_resolved_after_days: await EscalatedSetting.getInt('auto_close_resolved_after_days', 7),
+      auto_close_resolved_after_days: await EscalatedSetting.getInt(
+        'auto_close_resolved_after_days',
+        7
+      ),
       max_attachments_per_reply: await EscalatedSetting.getInt('max_attachments_per_reply', 5),
       max_attachment_size_kb: await EscalatedSetting.getInt('max_attachment_size_kb', 10240),
       ticket_reference_prefix: await EscalatedSetting.get('ticket_reference_prefix', 'ESC'),
       show_powered_by: await EscalatedSetting.getBool('show_powered_by', true),
-      inbound_email_enabled: await EscalatedSetting.getBool('inbound_email_enabled', config.inboundEmail?.enabled ?? false),
-      inbound_email_adapter: await EscalatedSetting.get('inbound_email_adapter', config.inboundEmail?.adapter ?? 'mailgun'),
-      inbound_email_address: await EscalatedSetting.get('inbound_email_address', config.inboundEmail?.address ?? ''),
-      mailgun_signing_key: this.maskSecret(await EscalatedSetting.get('mailgun_signing_key', config.inboundEmail?.mailgun?.signingKey ?? '')),
-      postmark_inbound_token: this.maskSecret(await EscalatedSetting.get('postmark_inbound_token', config.inboundEmail?.postmark?.token ?? '')),
-      ses_region: await EscalatedSetting.get('ses_region', config.inboundEmail?.ses?.region ?? 'us-east-1'),
-      ses_topic_arn: await EscalatedSetting.get('ses_topic_arn', config.inboundEmail?.ses?.topicArn ?? ''),
+      inbound_email_enabled: await EscalatedSetting.getBool(
+        'inbound_email_enabled',
+        config.inboundEmail?.enabled ?? false
+      ),
+      inbound_email_adapter: await EscalatedSetting.get(
+        'inbound_email_adapter',
+        config.inboundEmail?.adapter ?? 'mailgun'
+      ),
+      inbound_email_address: await EscalatedSetting.get(
+        'inbound_email_address',
+        config.inboundEmail?.address ?? ''
+      ),
+      mailgun_signing_key: this.maskSecret(
+        await EscalatedSetting.get(
+          'mailgun_signing_key',
+          config.inboundEmail?.mailgun?.signingKey ?? ''
+        )
+      ),
+      postmark_inbound_token: this.maskSecret(
+        await EscalatedSetting.get(
+          'postmark_inbound_token',
+          config.inboundEmail?.postmark?.token ?? ''
+        )
+      ),
+      ses_region: await EscalatedSetting.get(
+        'ses_region',
+        config.inboundEmail?.ses?.region ?? 'us-east-1'
+      ),
+      ses_topic_arn: await EscalatedSetting.get(
+        'ses_topic_arn',
+        config.inboundEmail?.ses?.topicArn ?? ''
+      ),
       imap_host: await EscalatedSetting.get('imap_host', config.inboundEmail?.imap?.host ?? ''),
       imap_port: await EscalatedSetting.getInt('imap_port', config.inboundEmail?.imap?.port ?? 993),
-      imap_encryption: await EscalatedSetting.get('imap_encryption', config.inboundEmail?.imap?.encryption ?? 'ssl'),
-      imap_username: await EscalatedSetting.get('imap_username', config.inboundEmail?.imap?.username ?? ''),
-      imap_password: this.maskSecret(await EscalatedSetting.get('imap_password', config.inboundEmail?.imap?.password ?? '')),
-      imap_mailbox: await EscalatedSetting.get('imap_mailbox', config.inboundEmail?.imap?.mailbox ?? 'INBOX'),
+      imap_encryption: await EscalatedSetting.get(
+        'imap_encryption',
+        config.inboundEmail?.imap?.encryption ?? 'ssl'
+      ),
+      imap_username: await EscalatedSetting.get(
+        'imap_username',
+        config.inboundEmail?.imap?.username ?? ''
+      ),
+      imap_password: this.maskSecret(
+        await EscalatedSetting.get('imap_password', config.inboundEmail?.imap?.password ?? '')
+      ),
+      imap_mailbox: await EscalatedSetting.get(
+        'imap_mailbox',
+        config.inboundEmail?.imap?.mailbox ?? 'INBOX'
+      ),
     }
   }
 

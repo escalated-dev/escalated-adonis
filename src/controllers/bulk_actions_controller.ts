@@ -13,11 +13,11 @@ export default class BulkActionsController {
    * POST /support/agent/tickets/bulk or /support/admin/tickets/bulk
    */
   async handle({ request, auth, response, session }: HttpContext) {
-    const { ticket_ids, action, value } = request.only(['ticket_ids', 'action', 'value'])
+    const { ticket_ids: ticketIds, action, value } = request.only(['ticket_ids', 'action', 'value'])
     const causer = auth.user!
     let successCount = 0
 
-    const tickets = await Ticket.query().whereIn('id', ticket_ids)
+    const tickets = await Ticket.query().whereIn('id', ticketIds)
 
     for (const ticket of tickets) {
       try {
@@ -32,7 +32,11 @@ export default class BulkActionsController {
             await this.assignmentService.assign(ticket, Number(value), causer as any)
             break
           case 'tags':
-            await this.ticketService.addTags(ticket, Array.isArray(value) ? value : [value], causer as any)
+            await this.ticketService.addTags(
+              ticket,
+              Array.isArray(value) ? value : [value],
+              causer as any
+            )
             break
           case 'department':
             await this.ticketService.changeDepartment(ticket, Number(value), causer as any)

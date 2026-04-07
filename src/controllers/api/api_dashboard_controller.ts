@@ -31,8 +31,7 @@ export default class ApiDashboardController {
     const slaBreachedCount = await Ticket.query()
       .whereNotIn('status', ['resolved', 'closed'])
       .where((q) => {
-        q.where('sla_first_response_breached', true)
-          .orWhere('sla_resolution_breached', true)
+        q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
       })
       .count('* as total')
       .first()
@@ -50,8 +49,7 @@ export default class ApiDashboardController {
     const slaBreaching = await Ticket.query()
       .whereNotIn('status', ['resolved', 'closed'])
       .where((q) => {
-        q.where('sla_first_response_breached', true)
-          .orWhere('sla_resolution_breached', true)
+        q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
       })
       .limit(5)
 

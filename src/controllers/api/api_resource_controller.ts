@@ -24,8 +24,7 @@ export default class ApiResourceController {
    * GET /departments — List active departments
    */
   async departments(ctx: HttpContext) {
-    const departments = await Department.query()
-      .withScopes((scopes) => scopes.active())
+    const departments = await Department.query().withScopes((scopes) => scopes.active())
 
     return ctx.response.json({
       data: departments.map((d) => ({
@@ -58,8 +57,7 @@ export default class ApiResourceController {
   async cannedResponses(ctx: HttpContext) {
     const userId = (ctx as any).auth.user.id
 
-    const responses = await CannedResponse.query()
-      .withScopes((scopes) => scopes.forAgent(userId))
+    const responses = await CannedResponse.query().withScopes((scopes) => scopes.forAgent(userId))
 
     return ctx.response.json({
       data: responses.map((r) => ({
@@ -113,10 +111,18 @@ export default class ApiResourceController {
 
       const agents: { id: number; name: string; email: string }[] = []
       for (const user of users) {
-        const isAgent = config?.authorization?.isAgent ? await config.authorization.isAgent(user) : false
-        const isAdmin = config?.authorization?.isAdmin ? await config.authorization.isAdmin(user) : false
+        const isAgent = config?.authorization?.isAgent
+          ? await config.authorization.isAgent(user)
+          : false
+        const isAdmin = config?.authorization?.isAdmin
+          ? await config.authorization.isAdmin(user)
+          : false
         if (isAgent || isAdmin) {
-          agents.push({ id: user.id, name: user.name ?? user.fullName ?? '', email: user.email ?? '' })
+          agents.push({
+            id: user.id,
+            name: user.name ?? user.fullName ?? '',
+            email: user.email ?? '',
+          })
         }
       }
       return agents

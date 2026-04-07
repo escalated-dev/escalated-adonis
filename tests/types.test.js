@@ -51,14 +51,28 @@ const ALL_ACTIVITY_TYPES = [
 const INBOUND_EMAIL_STATUSES = ['pending', 'processed', 'failed', 'spam']
 
 const STATUS_TRANSITIONS = {
-  open: ['in_progress', 'waiting_on_customer', 'waiting_on_agent', 'escalated', 'resolved', 'closed'],
+  open: [
+    'in_progress',
+    'waiting_on_customer',
+    'waiting_on_agent',
+    'escalated',
+    'resolved',
+    'closed',
+  ],
   in_progress: ['waiting_on_customer', 'waiting_on_agent', 'escalated', 'resolved', 'closed'],
   waiting_on_customer: ['open', 'in_progress', 'resolved', 'closed'],
   waiting_on_agent: ['open', 'in_progress', 'escalated', 'resolved', 'closed'],
   escalated: ['in_progress', 'resolved', 'closed'],
   resolved: ['reopened', 'closed'],
   closed: ['reopened'],
-  reopened: ['in_progress', 'waiting_on_customer', 'waiting_on_agent', 'escalated', 'resolved', 'closed'],
+  reopened: [
+    'in_progress',
+    'waiting_on_customer',
+    'waiting_on_agent',
+    'escalated',
+    'resolved',
+    'closed',
+  ],
 }
 
 const STATUS_LABELS = {
@@ -108,25 +122,95 @@ const PRIORITY_WEIGHTS = {
 }
 
 const BLOCKED_EXTENSIONS = [
-  'exe', 'bat', 'cmd', 'com', 'msi', 'scr', 'pif', 'vbs', 'vbe',
-  'js', 'jse', 'wsf', 'wsh', 'ps1', 'psm1', 'psd1', 'reg',
-  'cpl', 'hta', 'inf', 'lnk', 'sct', 'shb', 'sys', 'drv',
-  'php', 'phtml', 'php3', 'php4', 'php5', 'phar',
-  'sh', 'bash', 'csh', 'ksh', 'pl', 'py', 'rb',
-  'dll', 'so', 'dylib',
+  'exe',
+  'bat',
+  'cmd',
+  'com',
+  'msi',
+  'scr',
+  'pif',
+  'vbs',
+  'vbe',
+  'js',
+  'jse',
+  'wsf',
+  'wsh',
+  'ps1',
+  'psm1',
+  'psd1',
+  'reg',
+  'cpl',
+  'hta',
+  'inf',
+  'lnk',
+  'sct',
+  'shb',
+  'sys',
+  'drv',
+  'php',
+  'phtml',
+  'php3',
+  'php4',
+  'php5',
+  'phar',
+  'sh',
+  'bash',
+  'csh',
+  'ksh',
+  'pl',
+  'py',
+  'rb',
+  'dll',
+  'so',
+  'dylib',
 ]
 
 const ALLOWED_HTML_TAGS = [
-  'p', 'br', 'b', 'strong', 'i', 'em', 'u', 'a', 'ul', 'ol', 'li',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
-  'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'hr', 'div',
-  'span', 'sub', 'sup',
+  'p',
+  'br',
+  'b',
+  'strong',
+  'i',
+  'em',
+  'u',
+  'a',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'pre',
+  'code',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
+  'img',
+  'hr',
+  'div',
+  'span',
+  'sub',
+  'sup',
 ]
 
 const ALLOWED_SORT_COLUMNS = [
-  'created_at', 'updated_at', 'status', 'priority',
-  'subject', 'reference', 'assigned_to', 'department_id',
-  'resolved_at', 'closed_at',
+  'created_at',
+  'updated_at',
+  'status',
+  'priority',
+  'subject',
+  'reference',
+  'assigned_to',
+  'department_id',
+  'resolved_at',
+  'closed_at',
 ]
 
 // ──────────────────────────────────────────────────────────────────
@@ -153,8 +237,14 @@ describe('TicketStatus enum values', () => {
 
   it('should contain all expected status values', () => {
     const expected = [
-      'open', 'in_progress', 'waiting_on_customer', 'waiting_on_agent',
-      'escalated', 'resolved', 'closed', 'reopened',
+      'open',
+      'in_progress',
+      'waiting_on_customer',
+      'waiting_on_agent',
+      'escalated',
+      'resolved',
+      'closed',
+      'reopened',
     ]
     assert.deepStrictEqual(ALL_STATUSES, expected)
   })
@@ -287,9 +377,7 @@ describe('STATUS_TRANSITIONS', () => {
 
   it('every status except resolved can reach closed (directly or indirectly)', () => {
     // Direct transitions to closed
-    const directToClosed = ALL_STATUSES.filter(
-      (s) => STATUS_TRANSITIONS[s].includes('closed')
-    )
+    const directToClosed = ALL_STATUSES.filter((s) => STATUS_TRANSITIONS[s].includes('closed'))
     // All except 'closed' itself should be able to reach 'closed'
     assert.ok(directToClosed.length >= 6)
   })
@@ -357,7 +445,14 @@ describe('canTransitionTo()', () => {
 
 describe('isOpenStatus()', () => {
   it('returns true for open statuses', () => {
-    const openStatuses = ['open', 'in_progress', 'waiting_on_customer', 'waiting_on_agent', 'escalated', 'reopened']
+    const openStatuses = [
+      'open',
+      'in_progress',
+      'waiting_on_customer',
+      'waiting_on_agent',
+      'escalated',
+      'reopened',
+    ]
     for (const status of openStatuses) {
       assert.ok(isOpenStatus(status), `'${status}' should be considered open`)
     }
@@ -392,10 +487,7 @@ describe('isOpenStatus()', () => {
 describe('STATUS_LABELS', () => {
   it('has a label for every status', () => {
     for (const status of ALL_STATUSES) {
-      assert.ok(
-        STATUS_LABELS.hasOwnProperty(status),
-        `Missing label for status: ${status}`
-      )
+      assert.ok(STATUS_LABELS.hasOwnProperty(status), `Missing label for status: ${status}`)
     }
   })
 
@@ -435,10 +527,7 @@ describe('STATUS_LABELS', () => {
 describe('STATUS_COLORS', () => {
   it('has a color for every status', () => {
     for (const status of ALL_STATUSES) {
-      assert.ok(
-        STATUS_COLORS.hasOwnProperty(status),
-        `Missing color for status: ${status}`
-      )
+      assert.ok(STATUS_COLORS.hasOwnProperty(status), `Missing color for status: ${status}`)
     }
   })
 
@@ -472,10 +561,7 @@ describe('STATUS_COLORS', () => {
 describe('PRIORITY_LABELS', () => {
   it('has a label for every priority', () => {
     for (const priority of ALL_PRIORITIES) {
-      assert.ok(
-        PRIORITY_LABELS.hasOwnProperty(priority),
-        `Missing label for priority: ${priority}`
-      )
+      assert.ok(PRIORITY_LABELS.hasOwnProperty(priority), `Missing label for priority: ${priority}`)
     }
   })
 
@@ -495,10 +581,7 @@ describe('PRIORITY_LABELS', () => {
 describe('PRIORITY_COLORS', () => {
   it('has a color for every priority', () => {
     for (const priority of ALL_PRIORITIES) {
-      assert.ok(
-        PRIORITY_COLORS.hasOwnProperty(priority),
-        `Missing color for priority: ${priority}`
-      )
+      assert.ok(PRIORITY_COLORS.hasOwnProperty(priority), `Missing color for priority: ${priority}`)
     }
   })
 
@@ -632,7 +715,23 @@ describe('BLOCKED_EXTENSIONS', () => {
   })
 
   it('does NOT block common safe file types', () => {
-    const safe = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv', 'zip', 'mp4', 'mp3']
+    const safe = [
+      'pdf',
+      'jpg',
+      'jpeg',
+      'png',
+      'gif',
+      'svg',
+      'doc',
+      'docx',
+      'xls',
+      'xlsx',
+      'txt',
+      'csv',
+      'zip',
+      'mp4',
+      'mp3',
+    ]
     for (const ext of safe) {
       assert.ok(!BLOCKED_EXTENSIONS.includes(ext), `Should NOT block .${ext}`)
     }
@@ -706,7 +805,22 @@ describe('ALLOWED_HTML_TAGS', () => {
   })
 
   it('does NOT allow dangerous tags', () => {
-    const dangerous = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button', 'style', 'link', 'meta', 'base', 'applet']
+    const dangerous = [
+      'script',
+      'iframe',
+      'object',
+      'embed',
+      'form',
+      'input',
+      'textarea',
+      'select',
+      'button',
+      'style',
+      'link',
+      'meta',
+      'base',
+      'applet',
+    ]
     for (const tag of dangerous) {
       assert.ok(!ALLOWED_HTML_TAGS.includes(tag), `Should NOT allow <${tag}>`)
     }
@@ -780,7 +894,11 @@ describe('Status transition graph integrity', () => {
       STATUS_TRANSITIONS[s].forEach((t) => reachable.add(t))
     }
 
-    assert.equal(reachable.size, ALL_STATUSES.length, 'All statuses should be reachable within 2 hops from open')
+    assert.equal(
+      reachable.size,
+      ALL_STATUSES.length,
+      'All statuses should be reachable within 2 hops from open'
+    )
   })
 
   it('there is always a path from any open status to closed', () => {
@@ -802,7 +920,9 @@ describe('Status transition graph integrity', () => {
       }
 
       assert.ok(
-        visited.has('closed') || queue.includes('closed') || STATUS_TRANSITIONS[start].includes('closed'),
+        visited.has('closed') ||
+          queue.includes('closed') ||
+          STATUS_TRANSITIONS[start].includes('closed'),
         `Should be possible to reach 'closed' from '${start}'`
       )
     }

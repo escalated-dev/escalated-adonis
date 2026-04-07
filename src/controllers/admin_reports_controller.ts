@@ -28,8 +28,7 @@ export default class AdminReportsController {
     const slaBreachCount = await Ticket.query()
       .where('created_at', '>=', since)
       .where((q) => {
-        q.where('sla_first_response_breached', true)
-          .orWhere('sla_resolution_breached', true)
+        q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
       })
       .count('* as total')
       .first()
@@ -90,7 +89,7 @@ export default class AdminReportsController {
       .select(db.raw(raw))
       .first()
 
-    return Math.round((Number(result?.avg_hours ?? 0)) * 10) / 10
+    return Math.round(Number(result?.avg_hours ?? 0) * 10) / 10
   }
 
   protected async getCsatMetrics(since: string, db: any) {
@@ -114,7 +113,7 @@ export default class AdminReportsController {
     }
 
     return {
-      average: Math.round((Number(avgResult?.average ?? 0)) * 10) / 10,
+      average: Math.round(Number(avgResult?.average ?? 0) * 10) / 10,
       total: Number(avgResult?.total ?? 0),
       breakdown: breakdownMap,
     }

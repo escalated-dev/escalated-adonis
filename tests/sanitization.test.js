@@ -19,19 +19,82 @@ import assert from 'node:assert/strict'
 // ──────────────────────────────────────────────────────────────────
 
 const ALLOWED_HTML_TAGS = [
-  'p', 'br', 'b', 'strong', 'i', 'em', 'u', 'a', 'ul', 'ol', 'li',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
-  'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'hr', 'div',
-  'span', 'sub', 'sup',
+  'p',
+  'br',
+  'b',
+  'strong',
+  'i',
+  'em',
+  'u',
+  'a',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'pre',
+  'code',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
+  'img',
+  'hr',
+  'div',
+  'span',
+  'sub',
+  'sup',
 ]
 
 const BLOCKED_EXTENSIONS = [
-  'exe', 'bat', 'cmd', 'com', 'msi', 'scr', 'pif', 'vbs', 'vbe',
-  'js', 'jse', 'wsf', 'wsh', 'ps1', 'psm1', 'psd1', 'reg',
-  'cpl', 'hta', 'inf', 'lnk', 'sct', 'shb', 'sys', 'drv',
-  'php', 'phtml', 'php3', 'php4', 'php5', 'phar',
-  'sh', 'bash', 'csh', 'ksh', 'pl', 'py', 'rb',
-  'dll', 'so', 'dylib',
+  'exe',
+  'bat',
+  'cmd',
+  'com',
+  'msi',
+  'scr',
+  'pif',
+  'vbs',
+  'vbe',
+  'js',
+  'jse',
+  'wsf',
+  'wsh',
+  'ps1',
+  'psm1',
+  'psd1',
+  'reg',
+  'cpl',
+  'hta',
+  'inf',
+  'lnk',
+  'sct',
+  'shb',
+  'sys',
+  'drv',
+  'php',
+  'phtml',
+  'php3',
+  'php4',
+  'php5',
+  'phar',
+  'sh',
+  'bash',
+  'csh',
+  'ksh',
+  'pl',
+  'py',
+  'rb',
+  'dll',
+  'so',
+  'dylib',
 ]
 
 // ──────────────────────────────────────────────────────────────────
@@ -87,9 +150,7 @@ function sanitizeSubject(subject) {
  */
 function nameFromEmail(email) {
   const local = email.split('@')[0]
-  return local
-    .replace(/[._\-+]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return local.replace(/[._\-+]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 /**
@@ -180,7 +241,8 @@ describe('sanitizeHtml()', () => {
     })
 
     it('preserves table tags', () => {
-      const input = '<table><thead><tr><th>Col</th></tr></thead><tbody><tr><td>Val</td></tr></tbody></table>'
+      const input =
+        '<table><thead><tr><th>Col</th></tr></thead><tbody><tr><td>Val</td></tr></tbody></table>'
       assert.equal(sanitizeHtml(input), input)
     })
 
@@ -411,7 +473,8 @@ describe('sanitizeHtml()', () => {
 
   describe('complex sanitization scenarios', () => {
     it('handles mixed allowed and disallowed content', () => {
-      const input = '<p>Safe</p><script>evil()</script><b>bold</b><iframe src="x"></iframe><em>italic</em>'
+      const input =
+        '<p>Safe</p><script>evil()</script><b>bold</b><iframe src="x"></iframe><em>italic</em>'
       const result = sanitizeHtml(input)
       assert.ok(result.includes('<p>Safe</p>'))
       assert.ok(result.includes('<b>bold</b>'))

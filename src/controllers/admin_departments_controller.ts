@@ -5,8 +5,7 @@ import { t } from '../support/i18n.js'
 
 export default class AdminDepartmentsController {
   async index(ctx: HttpContext) {
-    const departments = await Department.query()
-      .withCount('tickets')
+    const departments = await Department.query().withCount('tickets')
 
     // Also get agent counts via raw query
     const { default: db } = await import('@adonisjs/lucid/services/db')

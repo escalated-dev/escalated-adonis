@@ -1,5 +1,5 @@
-import Macro from '../models/macro.js'
-import Ticket from '../models/ticket.js'
+import type Macro from '../models/macro.js'
+import type Ticket from '../models/ticket.js'
 import TicketService from './ticket_service.js'
 import AssignmentService from './assignment_service.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
@@ -13,11 +13,7 @@ export default class MacroService {
   /**
    * Apply a macro's actions to a ticket.
    */
-  async apply(
-    macro: Macro,
-    ticket: Ticket,
-    causer: any
-  ): Promise<Ticket> {
+  async apply(macro: Macro, ticket: Ticket, causer: any): Promise<Ticket> {
     for (const action of macro.actions) {
       const type = action.type
       const value = action.value
