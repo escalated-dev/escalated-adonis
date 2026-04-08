@@ -31,6 +31,7 @@ const AdminReportsController = () => import('../src/controllers/admin_reports_co
 const AdminSettingsController = () => import('../src/controllers/admin_settings_controller.js')
 const AdminPluginsController = () => import('../src/controllers/admin_plugins_controller.js')
 const BulkActionsController = () => import('../src/controllers/bulk_actions_controller.js')
+const SavedViewsController = () => import('../src/controllers/saved_views_controller.js')
 const SatisfactionRatingController = () =>
   import('../src/controllers/satisfaction_rating_controller.js')
 const GuestTicketsController = () => import('../src/controllers/guest_tickets_controller.js')
@@ -144,6 +145,17 @@ function registerUiRoutes(config: any) {
       router
         .post('/tickets/bulk', [BulkActionsController, 'handle'])
         .as('escalated.agent.tickets.bulk')
+
+      // Saved Views
+      router.get('/views', [SavedViewsController, 'index']).as('escalated.agent.views.index')
+      router.post('/views', [SavedViewsController, 'store']).as('escalated.agent.views.store')
+      router
+        .post('/views/reorder', [SavedViewsController, 'reorder'])
+        .as('escalated.agent.views.reorder')
+      router.put('/views/:id', [SavedViewsController, 'update']).as('escalated.agent.views.update')
+      router
+        .delete('/views/:id', [SavedViewsController, 'destroy'])
+        .as('escalated.agent.views.destroy')
 
       router
         .group(() => {
