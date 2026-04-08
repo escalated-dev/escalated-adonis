@@ -211,11 +211,17 @@ describe('Knowledge Base Toggle Settings', () => {
     })
 
     it('feedback is independent of public setting', () => {
-      const s1 = buildKbSettings({ knowledge_base_public: true, knowledge_base_feedback_enabled: false })
+      const s1 = buildKbSettings({
+        knowledge_base_public: true,
+        knowledge_base_feedback_enabled: false,
+      })
       assert.equal(s1.knowledge_base_public, true)
       assert.equal(s1.knowledge_base_feedback_enabled, false)
 
-      const s2 = buildKbSettings({ knowledge_base_public: false, knowledge_base_feedback_enabled: true })
+      const s2 = buildKbSettings({
+        knowledge_base_public: false,
+        knowledge_base_feedback_enabled: true,
+      })
       assert.equal(s2.knowledge_base_public, false)
       assert.equal(s2.knowledge_base_feedback_enabled, true)
     })
