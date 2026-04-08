@@ -117,6 +117,14 @@ authorization: {
 - **Plugin System:** Extensible via TypeScript SDK plugins
 - **REST API:** Token-authenticated API with rate limiting
 - **Import Framework:** Bulk data import support
+- **Ticket Splitting:** Split a reply into a new standalone ticket while preserving the original context
+- **Ticket Snooze:** Snooze tickets with presets (1h, 4h, tomorrow, next week); `node ace escalated:wake_snoozed_tickets` Ace command auto-wakes them on schedule
+- **Saved Views / Custom Queues:** Save, name, and share filter presets as reusable ticket views
+- **Embeddable Support Widget:** Lightweight `<script>` widget with KB search, ticket form, and status check
+- **Email Threading:** Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
+- **Branded Email Templates:** Configurable logo, primary color, and footer text for all outbound emails
+- **Real-time Broadcasting:** Opt-in broadcasting via AdonisJS Transmit with automatic polling fallback
+- **Knowledge Base Toggle:** Enable or disable the public knowledge base from admin settings
 
 ## Architecture
 
