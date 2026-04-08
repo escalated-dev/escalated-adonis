@@ -222,9 +222,24 @@ describe('Widget API', () => {
         createdAt: '2025-01-01T00:00:00.000Z',
       }
       const replies = [
-        { body: 'Public reply', authorType: 'User', isInternalNote: false, createdAt: '2025-01-01T01:00:00.000Z' },
-        { body: 'Internal note', authorType: 'User', isInternalNote: true, createdAt: '2025-01-01T02:00:00.000Z' },
-        { body: 'Another reply', authorType: 'Agent', isInternalNote: false, createdAt: '2025-01-01T03:00:00.000Z' },
+        {
+          body: 'Public reply',
+          authorType: 'User',
+          isInternalNote: false,
+          createdAt: '2025-01-01T01:00:00.000Z',
+        },
+        {
+          body: 'Internal note',
+          authorType: 'User',
+          isInternalNote: true,
+          createdAt: '2025-01-01T02:00:00.000Z',
+        },
+        {
+          body: 'Another reply',
+          authorType: 'Agent',
+          isInternalNote: false,
+          createdAt: '2025-01-01T03:00:00.000Z',
+        },
       ]
       const response = buildTicketLookupResponse(ticket, replies)
       assert.equal(response.replies.length, 2)
@@ -240,7 +255,12 @@ describe('Widget API', () => {
         createdAt: '2025-01-01T00:00:00.000Z',
       }
       const replies = [
-        { body: 'Internal only', authorType: 'User', isInternalNote: true, createdAt: '2025-01-01T01:00:00.000Z' },
+        {
+          body: 'Internal only',
+          authorType: 'User',
+          isInternalNote: true,
+          createdAt: '2025-01-01T01:00:00.000Z',
+        },
       ]
       const response = buildTicketLookupResponse(ticket, replies)
       assert.equal(response.replies.length, 0)
