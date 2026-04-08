@@ -65,10 +65,12 @@ function filterOwnedBy(views, userId) {
  * Simulate reorder
  */
 function reorder(views, orderIds) {
-  return orderIds.map((id, index) => {
-    const view = views.find((v) => v.id === id)
-    return view ? { ...view, order: index } : null
-  }).filter(Boolean)
+  return orderIds
+    .map((id, index) => {
+      const view = views.find((v) => v.id === id)
+      return view ? { ...view, order: index } : null
+    })
+    .filter(Boolean)
 }
 
 // ──────────────────────────────────────────────────────────────────
