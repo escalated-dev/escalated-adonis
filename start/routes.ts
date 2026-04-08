@@ -219,6 +219,11 @@ function registerUiRoutes(config: any) {
             .post('/tickets/:ticket/replies/:reply/pin', [AgentTicketsController, 'pin'])
             .as('escalated.agent.tickets.pin')
           router
+            .post('/tickets/:ticket/snooze', [AgentTicketsController, 'snooze'])
+            .as('escalated.agent.tickets.snooze')
+          router
+            .post('/tickets/:ticket/unsnooze', [AgentTicketsController, 'unsnooze'])
+            .as('escalated.agent.tickets.unsnooze')
             .post('/tickets/:ticket/split', [AgentTicketsController, 'split'])
             .as('escalated.agent.tickets.split')
         })

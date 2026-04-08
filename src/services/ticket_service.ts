@@ -397,6 +397,58 @@ export default class TicketService {
   }
 
   /**
+   * Snooze a ticket until a given date/time.
+   *
+   * Saves the current status so it can be restored when the ticket is unsnoozed.
+   */
+  async snoozeTicket(
+    ticket: Ticket,
+    until: DateTime,
+    causer: { id: number; constructor: { name: string } }
+  ): Promise<Ticket> {
+    ticket.statusBeforeSnooze = ticket.status
+    ticket.snoozedUntil = until
+    ticket.snoozedBy = causer.id
+    ticket.status = 'waiting_on_customer' as TicketStatus
+    await ticket.save()
+
+    await this.logActivity(ticket, 'status_changed', causer, {
+      action: 'snoozed',
+      snoozed_until: until.toISO(),
+      old_status: ticket.statusBeforeSnooze,
+    })
+
+    return ticket.refresh()
+  }
+
+  /**
+   * Unsnooze a ticket, restoring its previous status.
+   */
+  async unsnoozeTicket(ticket: Ticket, causer?: any): Promise<Ticket> {
+    const previousStatus = (ticket.statusBeforeSnooze || 'open') as TicketStatus
+    ticket.status = previousStatus
+    ticket.snoozedUntil = null
+    ticket.snoozedBy = null
+    ticket.statusBeforeSnooze = null
+    await ticket.save()
+
+    await this.logActivity(ticket, 'status_changed', causer, {
+      action: 'unsnoozed',
+      restored_status: previousStatus,
+    })
+
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_STATUS_CHANGED, {
+        ticket,
+        oldStatus: 'waiting_on_customer' as TicketStatus,
+        newStatus: previousStatus,
+        causer,
+      })
+    }
+
+    return ticket.refresh()
+  }
+  n /**
    * Split a ticket by creating a new ticket from a specific reply.
    *
    * The new ticket inherits the original's priority, type, channel, department,

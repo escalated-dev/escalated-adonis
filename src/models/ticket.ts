@@ -112,6 +112,15 @@ export default class Ticket extends BaseModel {
   declare updatedAt: DateTime
 
   @column.dateTime()
+  declare snoozedUntil: DateTime | null
+
+  @column()
+  declare snoozedBy: number | null
+
+  @column()
+  declare statusBeforeSnooze: string | null
+
+  @column.dateTime()
   declare deletedAt: DateTime | null
 
   // ---- Relationships ----
@@ -145,6 +154,17 @@ export default class Ticket extends BaseModel {
   // We handle this through direct pivot table queries.
 
   // ---- Computed ----
+
+  @computed()
+  get isSnoozed(): boolean {
+    if (!this.snoozedUntil) return false
+    const now = new Date()
+    const snoozedUntil =
+      this.snoozedUntil instanceof Date
+        ? this.snoozedUntil
+        : new Date(this.snoozedUntil.toISO!() ?? this.snoozedUntil.toString())
+    return snoozedUntil > now
+  }
 
   @computed()
   get isGuest(): boolean {
@@ -191,6 +211,14 @@ export default class Ticket extends BaseModel {
 
   static inDepartment = scope((query, departmentId: number) => {
     query.where('department_id', departmentId)
+  })
+
+  static snoozed = scope((query) => {
+    query.whereNotNull('snoozed_until').where('snoozed_until', '>', new Date().toISOString())
+  })
+
+  static awakeDue = scope((query) => {
+    query.whereNotNull('snoozed_until').where('snoozed_until', '<=', new Date().toISOString())
   })
 
   static breachedSla = scope((query) => {
