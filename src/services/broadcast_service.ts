@@ -118,6 +118,20 @@ export default class BroadcastService {
     return `escalated.user.${userId}`
   }
 
+  /**
+   * Get the channel for a specific chat session.
+   */
+  chatChannel(sessionId: number): string {
+    return `escalated.chat.${sessionId}`
+  }
+
+  /**
+   * Get the channel for the chat queue (agents listening for new chats).
+   */
+  chatQueueChannel(): string {
+    return 'escalated.chat.queue'
+  }
+
   // ---- Authorization ----
 
   /**

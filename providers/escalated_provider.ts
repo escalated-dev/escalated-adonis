@@ -96,6 +96,24 @@ export default class EscalatedProvider {
       const { default: ImportService } = await import('../src/services/import_service.js')
       return new ImportService()
     })
+
+    this.app.container.singleton('escalated.chatSessionService', async () => {
+      const { default: ChatSessionService } =
+        await import('../src/services/chat_session_service.js')
+      return new ChatSessionService()
+    })
+
+    this.app.container.singleton('escalated.chatRoutingService', async () => {
+      const { default: ChatRoutingService } =
+        await import('../src/services/chat_routing_service.js')
+      return new ChatRoutingService()
+    })
+
+    this.app.container.singleton('escalated.chatAvailabilityService', async () => {
+      const { default: ChatAvailabilityService } =
+        await import('../src/services/chat_availability_service.js')
+      return new ChatAvailabilityService()
+    })
   }
 
   /**

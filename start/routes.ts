@@ -43,6 +43,8 @@ const AdminAutomationsController = () =>
 // Lazy-load controllers (core — non-UI)
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
 const WidgetController = () => import('../src/controllers/widget_controller.js')
+const ChatController = () => import('../src/controllers/chat_controller.js')
+const WidgetChatController = () => import('../src/controllers/widget_chat_controller.js')
 
 // API controllers
 const ApiAuthController = () => import('../src/controllers/api/api_auth_controller.js')
@@ -107,6 +109,33 @@ function registerCoreRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/widget`)
+    .use([ApiRateLimit])
+
+  // ---- Widget Chat Routes (no auth, rate-limited) ----
+  router
+    .group(() => {
+      router
+        .get('/availability', [WidgetChatController, 'availability'])
+        .as('escalated.widget.chat.availability')
+      router.post('/start', [WidgetChatController, 'start']).as('escalated.widget.chat.start')
+      router
+        .post('/:token/message', [WidgetChatController, 'message'])
+        .as('escalated.widget.chat.message')
+        .where('token', /^[A-Za-z0-9]{64}$/)
+      router
+        .post('/:token/typing', [WidgetChatController, 'typing'])
+        .as('escalated.widget.chat.typing')
+        .where('token', /^[A-Za-z0-9]{64}$/)
+      router
+        .post('/:token/end', [WidgetChatController, 'end'])
+        .as('escalated.widget.chat.end')
+        .where('token', /^[A-Za-z0-9]{64}$/)
+      router
+        .post('/:token/rate', [WidgetChatController, 'rate'])
+        .as('escalated.widget.chat.rate')
+        .where('token', /^[A-Za-z0-9]{64}$/)
+    })
+    .prefix(`${prefix}/widget/chat`)
     .use([ApiRateLimit])
 
   // ---- API Routes ----
@@ -230,6 +259,23 @@ function registerUiRoutes(config: any) {
         .use([ResolveTicket])
     })
     .prefix(`${prefix}/agent`)
+    .use([...adminMiddleware, EnsureIsAgent])
+
+  // ---- Agent Chat Routes ----
+  router
+    .group(() => {
+      router.get('/', [ChatController, 'index']).as('escalated.agent.chats.index')
+      router.get('/queue', [ChatController, 'queue']).as('escalated.agent.chats.queue')
+      router.post('/status', [ChatController, 'updateStatus']).as('escalated.agent.chats.status')
+      router.post('/:id/accept', [ChatController, 'accept']).as('escalated.agent.chats.accept')
+      router.post('/:id/end', [ChatController, 'end']).as('escalated.agent.chats.end')
+      router
+        .post('/:id/transfer', [ChatController, 'transfer'])
+        .as('escalated.agent.chats.transfer')
+      router.post('/:id/message', [ChatController, 'message']).as('escalated.agent.chats.message')
+      router.post('/:id/typing', [ChatController, 'typing']).as('escalated.agent.chats.typing')
+    })
+    .prefix(`${prefix}/agent/chats`)
     .use([...adminMiddleware, EnsureIsAgent])
 
   // ---- Admin Routes ----

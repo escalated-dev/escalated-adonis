@@ -70,3 +70,11 @@ export { default as ImportContext } from './src/support/import_context.js'
 export { ExtractResult } from './src/contracts/import_adapter.js'
 export type { ImportAdapter, CredentialField } from './src/contracts/import_adapter.js'
 export type { ImportJobStatus, EntityProgress, ErrorLogEntry } from './src/models/import_job.js'
+
+// Live Chat
+export { default as ChatSession } from './src/models/chat_session.js'
+export { default as ChatRoutingRule } from './src/models/chat_routing_rule.js'
+export { default as AgentProfile } from './src/models/agent_profile.js'
+export { default as ChatSessionService } from './src/services/chat_session_service.js'
+export { default as ChatRoutingService } from './src/services/chat_routing_service.js'
+export { default as ChatAvailabilityService } from './src/services/chat_availability_service.js'

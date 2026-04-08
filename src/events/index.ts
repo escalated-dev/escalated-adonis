@@ -105,6 +105,31 @@ export interface TagRemovedFromTicketData {
   tag: Tag
 }
 
+export interface ChatStartedData {
+  ticket: Ticket
+  sessionId: number
+}
+
+export interface ChatEndedData {
+  ticket: Ticket
+  sessionId: number
+}
+
+export interface ChatMessageData {
+  ticketId: number
+  sessionId: number
+  authorType: string | null
+  authorId: number | null
+  body: string
+}
+
+export interface ChatTransferredData {
+  ticket: Ticket
+  sessionId: number
+  fromAgentId: number | null
+  toAgentId: number
+}
+
 // ---- Event Names ----
 
 export const ESCALATED_EVENTS = {
@@ -125,6 +150,10 @@ export const ESCALATED_EVENTS = {
   SLA_WARNING: 'escalated:sla:warning',
   TAG_ADDED: 'escalated:tag:added',
   TAG_REMOVED: 'escalated:tag:removed',
+  CHAT_STARTED: 'escalated:chat:started',
+  CHAT_ENDED: 'escalated:chat:ended',
+  CHAT_MESSAGE: 'escalated:chat:message',
+  CHAT_TRANSFERRED: 'escalated:chat:transferred',
 } as const
 
 // ---- Event type map for Adonis Emitter ----
@@ -147,4 +176,8 @@ export interface EscalatedEventsList {
   [ESCALATED_EVENTS.SLA_WARNING]: SlaWarningData
   [ESCALATED_EVENTS.TAG_ADDED]: TagAddedToTicketData
   [ESCALATED_EVENTS.TAG_REMOVED]: TagRemovedFromTicketData
+  [ESCALATED_EVENTS.CHAT_STARTED]: ChatStartedData
+  [ESCALATED_EVENTS.CHAT_ENDED]: ChatEndedData
+  [ESCALATED_EVENTS.CHAT_MESSAGE]: ChatMessageData
+  [ESCALATED_EVENTS.CHAT_TRANSFERRED]: ChatTransferredData
 }
