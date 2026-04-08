@@ -42,6 +42,7 @@ const AdminAutomationsController = () =>
 
 // Lazy-load controllers (core — non-UI)
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
+const WidgetController = () => import('../src/controllers/widget_controller.js')
 
 // API controllers
 const ApiAuthController = () => import('../src/controllers/api/api_auth_controller.js')
@@ -88,6 +89,25 @@ function registerCoreRoutes(config: any) {
       })
       .prefix(`${prefix}/inbound`)
   }
+
+  // ---- Widget Routes (no auth, rate-limited) ----
+  router
+    .group(() => {
+      router.get('/config', [WidgetController, 'config']).as('escalated.widget.config')
+      router.get('/articles', [WidgetController, 'articles']).as('escalated.widget.articles')
+      router
+        .get('/articles/:id', [WidgetController, 'articleDetail'])
+        .as('escalated.widget.articles.show')
+      router
+        .post('/tickets', [WidgetController, 'createTicket'])
+        .as('escalated.widget.tickets.create')
+      router
+        .get('/tickets/:token', [WidgetController, 'lookupTicket'])
+        .as('escalated.widget.tickets.lookup')
+        .where('token', /^[A-Za-z0-9]{64}$/)
+    })
+    .prefix(`${prefix}/widget`)
+    .use([ApiRateLimit])
 
   // ---- API Routes ----
   if ((config as any).api?.enabled) {
