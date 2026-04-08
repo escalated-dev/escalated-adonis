@@ -52,7 +52,7 @@ function buildThreadingHeaders(ticketId, replyId, domain, inboundMessageId, exis
   return {
     'Message-ID': messageId,
     'In-Reply-To': inReplyTo,
-    References: refs.join(' '),
+    'References': refs.join(' '),
   }
 }
 
