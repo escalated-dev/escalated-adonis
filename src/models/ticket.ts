@@ -121,6 +121,16 @@ export default class Ticket extends BaseModel {
   declare statusBeforeSnooze: string | null
 
   @column.dateTime()
+  declare chatEndedAt: DateTime | null
+
+  @column({
+    prepare: (value: any) => (value ? JSON.stringify(value) : null),
+    consume: (value: any) =>
+      value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
+  })
+  declare chatMetadata: Record<string, any> | null
+
+  @column.dateTime()
   declare deletedAt: DateTime | null
 
   // ---- Relationships ----
@@ -180,6 +190,11 @@ export default class Ticket extends BaseModel {
   }
 
   @computed()
+  get isLiveChat(): boolean {
+    return this.channel === 'chat'
+  }
+
+  @computed()
   get requesterEmail(): string {
     if (this.isGuest) {
       return this.guestEmail ?? ''
@@ -225,6 +240,10 @@ export default class Ticket extends BaseModel {
     query.where((q) => {
       q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
     })
+  })
+
+  static liveChat = scope((query) => {
+    query.where('channel', 'chat')
   })
 
   static search = scope((query, term: string) => {
