@@ -396,6 +396,80 @@ export default class TicketService {
     return query.paginate(1, filters.per_page ?? 15)
   }
 
+  /**
+   * Split a ticket by creating a new ticket from a specific reply.
+   *
+   * The new ticket inherits the original's priority, type, channel, department,
+   * and tags. Both tickets are linked via metadata and an activity log entry
+   * is recorded on each.
+   */
+  async splitTicket(
+    sourceTicket: Ticket,
+    replyId: number,
+    causer: { id: number; constructor: { name: string } }
+  ): Promise<Ticket> {
+    const reply = await Reply.query()
+      .where('id', replyId)
+      .where('ticket_id', sourceTicket.id)
+      .firstOrFail()
+
+    const reference = await Ticket.generateReference()
+
+    const newTicket = await Ticket.create({
+      reference,
+      requesterType: reply.authorType,
+      requesterId: reply.authorId,
+      subject: `[Split] ${sourceTicket.subject}`,
+      description: reply.body,
+      status: 'open' as TicketStatus,
+      priority: sourceTicket.priority,
+      ticketType: sourceTicket.ticketType,
+      channel: sourceTicket.channel,
+      departmentId: sourceTicket.departmentId,
+      metadata: {
+        split_from_ticket_id: sourceTicket.id,
+        split_from_reply_id: reply.id,
+      },
+      slaFirstResponseBreached: false,
+      slaResolutionBreached: false,
+    })
+
+    // Copy tags from the source ticket
+    await sourceTicket.load('tags')
+    const tagIds = sourceTicket.tags.map((tag: Tag) => tag.id)
+    if (tagIds.length > 0) {
+      await newTicket.related('tags').sync(tagIds)
+    }
+
+    // Link back to new ticket on source metadata
+    const sourceMetadata = sourceTicket.metadata ?? {}
+    const splitTo = Array.isArray(sourceMetadata.split_to_ticket_ids)
+      ? sourceMetadata.split_to_ticket_ids
+      : []
+    splitTo.push(newTicket.id)
+    sourceTicket.metadata = { ...sourceMetadata, split_to_ticket_ids: splitTo }
+    await sourceTicket.save()
+
+    // Log activity on both tickets
+    await this.logActivity(sourceTicket, 'status_changed', causer, {
+      action: 'ticket_split',
+      new_ticket_id: newTicket.id,
+      reply_id: reply.id,
+    })
+    await this.logActivity(newTicket, 'status_changed', causer, {
+      action: 'ticket_split_created',
+      source_ticket_id: sourceTicket.id,
+      reply_id: reply.id,
+      new_status: 'open',
+    })
+
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket: newTicket })
+    }
+
+    return newTicket.refresh()
+  }
+
   // ---- Private ----
 
   protected async logActivity(

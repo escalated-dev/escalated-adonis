@@ -300,6 +300,20 @@ export default class AgentTicketsController {
   }
 
   /**
+   * POST /support/agent/tickets/:ticket/split — Split ticket from a reply
+   */
+  async split(ctx: HttpContext) {
+    const ticket = (ctx as any).escalatedTicket as Ticket
+    const user = ctx.auth.user!
+    const { reply_id: replyId } = ctx.request.only(['reply_id'])
+
+    const newTicket = await this.ticketService.splitTicket(ticket, Number(replyId), user as any)
+
+    ctx.session.flash('success', t('ticket.split_success', { reference: newTicket.reference }))
+    return ctx.response.redirect().back()
+  }
+
+  /**
    * POST /support/agent/tickets/:ticket/replies/:replyId/pin — Toggle pin
    */
   async pin(ctx: HttpContext) {

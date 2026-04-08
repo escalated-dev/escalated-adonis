@@ -186,6 +186,9 @@ function registerUiRoutes(config: any) {
           router
             .post('/tickets/:ticket/replies/:reply/pin', [AgentTicketsController, 'pin'])
             .as('escalated.agent.tickets.pin')
+          router
+            .post('/tickets/:ticket/split', [AgentTicketsController, 'split'])
+            .as('escalated.agent.tickets.split')
         })
         .use([ResolveTicket])
     })
