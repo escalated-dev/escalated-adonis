@@ -64,9 +64,7 @@ function isSnoozed(ticket) {
  */
 function filterAwakeDue(tickets) {
   const now = new Date()
-  return tickets.filter(
-    (t) => t.snoozedUntil !== null && new Date(t.snoozedUntil) <= now
-  )
+  return tickets.filter((t) => t.snoozedUntil !== null && new Date(t.snoozedUntil) <= now)
 }
 
 // ──────────────────────────────────────────────────────────────────
