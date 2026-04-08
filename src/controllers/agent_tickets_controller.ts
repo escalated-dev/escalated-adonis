@@ -300,6 +300,41 @@ export default class AgentTicketsController {
   }
 
   /**
+   * POST /support/agent/tickets/:ticket/snooze — Snooze a ticket
+   */
+  async snooze(ctx: HttpContext) {
+    const ticket = (ctx as any).escalatedTicket as Ticket
+    const user = ctx.auth.user!
+    const { snoozed_until: snoozedUntil } = ctx.request.only(['snoozed_until'])
+
+    const { DateTime } = await import('luxon')
+    const until = DateTime.fromISO(snoozedUntil)
+
+    if (!until.isValid) {
+      ctx.session.flash('error', t('ticket.invalid_snooze_date'))
+      return ctx.response.redirect().back()
+    }
+
+    await this.ticketService.snoozeTicket(ticket, until, user as any)
+
+    ctx.session.flash('success', t('ticket.snoozed'))
+    return ctx.response.redirect().back()
+  }
+
+  /**
+   * POST /support/agent/tickets/:ticket/unsnooze — Unsnooze a ticket
+   */
+  async unsnooze(ctx: HttpContext) {
+    const ticket = (ctx as any).escalatedTicket as Ticket
+    const user = ctx.auth.user!
+
+    await this.ticketService.unsnoozeTicket(ticket, user as any)
+
+    ctx.session.flash('success', t('ticket.unsnoozed'))
+    return ctx.response.redirect().back()
+  }
+
+  /**
    * POST /support/agent/tickets/:ticket/replies/:replyId/pin — Toggle pin
    */
   async pin(ctx: HttpContext) {
