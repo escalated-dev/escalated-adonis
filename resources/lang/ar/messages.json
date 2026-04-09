@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "تم إرسال الرد.",
+    "note_added": "تمت إضافة الملاحظة.",
+    "assigned": "تم تعيين التذكرة.",
+    "status_updated": "تم تحديث الحالة.",
+    "priority_updated": "تم تحديث الأولوية.",
+    "tags_updated": "تم تحديث الوسوم.",
+    "department_updated": "تم تحديث القسم.",
+    "macro_applied": "تم تطبيق الماكرو \":name\".",
+    "unfollowed": "تم إلغاء متابعة التذكرة.",
+    "following": "أنت تتابع التذكرة.",
+    "note_pinned": "تم تثبيت الملاحظة.",
+    "note_unpinned": "تم إلغاء تثبيت الملاحظة.",
+    "pin_notes_only": "يمكن تثبيت الملاحظات الداخلية فقط.",
+    "updated": "تم تحديث التذكرة.",
+    "created": "تم إنشاء التذكرة بنجاح.",
+    "closed": "تم إغلاق التذكرة.",
+    "reopened": "تم إعادة فتح التذكرة.",
+    "customer_close_forbidden": "لا يمكن للعملاء إغلاق التذاكر."
+  },
+  "guest": {
+    "created": "تم إنشاء التذكرة. احفظ هذا الرابط للتحقق من حالة تذكرتك.",
+    "reply_sent": "تم إرسال الرد.",
+    "ticket_closed": "هذه التذكرة مغلقة."
+  },
+  "bulk": {
+    "updated": "تم تحديث :count تذكرة."
+  },
+  "rating": {
+    "thank_you": "شكرا لك على ملاحظاتك!",
+    "only_resolved_closed": "يمكنك تقييم التذاكر المحلولة أو المغلقة فقط.",
+    "already_rated": "تم تقييم هذه التذكرة بالفعل."
+  },
+  "admin": {
+    "department_created": "تم إنشاء القسم.",
+    "department_updated": "تم تحديث القسم.",
+    "department_deleted": "تم حذف القسم.",
+    "sla_policy_created": "تم إنشاء سياسة SLA.",
+    "sla_policy_updated": "تم تحديث سياسة SLA.",
+    "sla_policy_deleted": "تم حذف سياسة SLA.",
+    "rule_created": "تم إنشاء القاعدة.",
+    "rule_updated": "تم تحديث القاعدة.",
+    "rule_deleted": "تم حذف القاعدة.",
+    "canned_response_created": "تم إنشاء الرد الجاهز.",
+    "canned_response_updated": "تم تحديث الرد الجاهز.",
+    "canned_response_deleted": "تم حذف الرد الجاهز.",
+    "macro_created": "تم إنشاء الماكرو.",
+    "macro_updated": "تم تحديث الماكرو.",
+    "macro_deleted": "تم حذف الماكرو.",
+    "tag_created": "تم إنشاء الوسم.",
+    "tag_updated": "تم تحديث الوسم.",
+    "tag_deleted": "تم حذف الوسم.",
+    "settings_updated": "تم تحديث الإعدادات."
+  },
+  "middleware": {
+    "not_admin": "ليس لديك صلاحية كمسؤول دعم.",
+    "not_agent": "ليس لديك صلاحية كوكيل دعم."
+  },
+  "inbound": {
+    "disabled": "البريد الإلكتروني الوارد معطّل.",
+    "invalid_signature": "توقيع غير صالح.",
+    "processing_failed": "فشلت المعالجة."
+  },
+  "labels": {
+    "status": {
+      "open": "مفتوح",
+      "in_progress": "قيد التنفيذ",
+      "waiting_on_customer": "بانتظار العميل",
+      "waiting_on_agent": "بانتظار الوكيل",
+      "escalated": "مُصعَّد",
+      "resolved": "تم الحل",
+      "closed": "مغلق",
+      "reopened": "أُعيد فتحه"
+    },
+    "priority": {
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "مرتفع",
+      "urgent": "عاجل",
+      "critical": "حرج"
+    }
+  }
+}

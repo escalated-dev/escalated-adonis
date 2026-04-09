@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Resposta enviada.",
+    "note_added": "Nota adicionada.",
+    "assigned": "Chamado atribuido.",
+    "status_updated": "Status atualizado.",
+    "priority_updated": "Prioridade atualizada.",
+    "tags_updated": "Tags atualizadas.",
+    "department_updated": "Departamento atualizado.",
+    "macro_applied": "Macro \":name\" aplicada.",
+    "unfollowed": "Deixou de seguir o chamado.",
+    "following": "Seguindo o chamado.",
+    "note_pinned": "Nota fixada.",
+    "note_unpinned": "Nota desafixada.",
+    "pin_notes_only": "Apenas notas internas podem ser fixadas.",
+    "updated": "Chamado atualizado.",
+    "created": "Chamado criado com sucesso.",
+    "closed": "Chamado fechado.",
+    "reopened": "Chamado reaberto.",
+    "customer_close_forbidden": "Clientes nao podem fechar chamados."
+  },
+  "guest": {
+    "created": "Chamado criado. Salve este link para verificar o status.",
+    "reply_sent": "Resposta enviada.",
+    "ticket_closed": "Este chamado esta fechado."
+  },
+  "bulk": {
+    "updated": ":count chamado(s) atualizado(s)."
+  },
+  "rating": {
+    "thank_you": "Obrigado pelo feedback!",
+    "only_resolved_closed": "Voce so pode avaliar chamados resolvidos ou fechados.",
+    "already_rated": "Este chamado ja foi avaliado."
+  },
+  "admin": {
+    "department_created": "Departamento criado.",
+    "department_updated": "Departamento atualizado.",
+    "department_deleted": "Departamento excluido.",
+    "sla_policy_created": "Politica SLA criada.",
+    "sla_policy_updated": "Politica SLA atualizada.",
+    "sla_policy_deleted": "Politica SLA excluida.",
+    "rule_created": "Regra criada.",
+    "rule_updated": "Regra atualizada.",
+    "rule_deleted": "Regra excluida.",
+    "canned_response_created": "Resposta padrao criada.",
+    "canned_response_updated": "Resposta padrao atualizada.",
+    "canned_response_deleted": "Resposta padrao excluida.",
+    "macro_created": "Macro criada.",
+    "macro_updated": "Macro atualizada.",
+    "macro_deleted": "Macro excluida.",
+    "tag_created": "Tag criada.",
+    "tag_updated": "Tag atualizada.",
+    "tag_deleted": "Tag excluida.",
+    "settings_updated": "Configuracoes atualizadas."
+  },
+  "middleware": {
+    "not_admin": "Nao autorizado como administrador.",
+    "not_agent": "Nao autorizado como agente."
+  },
+  "inbound": {
+    "disabled": "E-mail de entrada desabilitado.",
+    "invalid_signature": "Assinatura invalida.",
+    "processing_failed": "Processamento falhou."
+  },
+  "labels": {
+    "status": {
+      "open": "Aberto",
+      "in_progress": "Em andamento",
+      "waiting_on_customer": "Aguardando cliente",
+      "waiting_on_agent": "Aguardando agente",
+      "escalated": "Escalado",
+      "resolved": "Resolvido",
+      "closed": "Fechado",
+      "reopened": "Reaberto"
+    },
+    "priority": {
+      "low": "Baixa",
+      "medium": "Media",
+      "high": "Alta",
+      "urgent": "Urgente",
+      "critical": "Critica"
+    }
+  }
+}

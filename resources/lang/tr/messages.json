@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Yanit gonderildi.",
+    "note_added": "Not eklendi.",
+    "assigned": "Destek talebi atandi.",
+    "status_updated": "Durum guncellendi.",
+    "priority_updated": "Oncelik guncellendi.",
+    "tags_updated": "Etiketler guncellendi.",
+    "department_updated": "Departman guncellendi.",
+    "macro_applied": "Makro \":name\" uygulandi.",
+    "unfollowed": "Takipten cikarildi.",
+    "following": "Takip ediyorsunuz.",
+    "note_pinned": "Not sabitlendi.",
+    "note_unpinned": "Not sabitleme kaldirildi.",
+    "pin_notes_only": "Yalnizca dahili notlar sabitlenebilir.",
+    "updated": "Destek talebi guncellendi.",
+    "created": "Destek talebi basariyla olusturuldu.",
+    "closed": "Destek talebi kapatildi.",
+    "reopened": "Destek talebi yeniden acildi.",
+    "customer_close_forbidden": "Musteriler destek taleplerini kapatamazlar."
+  },
+  "guest": {
+    "created": "Destek talebi olusturuldu. Bu linki saklayiniz.",
+    "reply_sent": "Yanit gonderildi.",
+    "ticket_closed": "Bu destek talebi kapatilmistir."
+  },
+  "bulk": {
+    "updated": ":count destek talebi guncellendi."
+  },
+  "rating": {
+    "thank_you": "Geri bildiriminiz icin tesekkurler!",
+    "only_resolved_closed": "Yalnizca cozulmus veya kapatilmis destek taleplerini derecelendirebilirsiniz.",
+    "already_rated": "Bu destek talebi zaten derecelendirilmis."
+  },
+  "admin": {
+    "department_created": "Departman olusturuldu.",
+    "department_updated": "Departman guncellendi.",
+    "department_deleted": "Departman silindi.",
+    "sla_policy_created": "SLA Politikasi olusturuldu.",
+    "sla_policy_updated": "SLA Politikasi guncellendi.",
+    "sla_policy_deleted": "SLA Politikasi silindi.",
+    "rule_created": "Kural olusturuldu.",
+    "rule_updated": "Kural guncellendi.",
+    "rule_deleted": "Kural silindi.",
+    "canned_response_created": "Hazir yanit olusturuldu.",
+    "canned_response_updated": "Hazir yanit guncellendi.",
+    "canned_response_deleted": "Hazir yanit silindi.",
+    "macro_created": "Makro olusturuldu.",
+    "macro_updated": "Makro guncellendi.",
+    "macro_deleted": "Makro silindi.",
+    "tag_created": "Etiket olusturuldu.",
+    "tag_updated": "Etiket guncellendi.",
+    "tag_deleted": "Etiket silindi.",
+    "settings_updated": "Ayarlar guncellendi."
+  },
+  "middleware": {
+    "not_admin": "Yonetici yetkisi yok.",
+    "not_agent": "Temsilci yetkisi yok."
+  },
+  "inbound": {
+    "disabled": "Gelen e-posta devre disi.",
+    "invalid_signature": "Gecersiz imza.",
+    "processing_failed": "Isleme basarisiz."
+  },
+  "labels": {
+    "status": {
+      "open": "Acik",
+      "in_progress": "Devam ediyor",
+      "waiting_on_customer": "Musteri bekleniyor",
+      "waiting_on_agent": "Temsilci bekleniyor",
+      "escalated": "Eskalasyon yapildi",
+      "resolved": "Cozuldu",
+      "closed": "Kapatildi",
+      "reopened": "Yeniden acildi"
+    },
+    "priority": {
+      "low": "Dusuk",
+      "medium": "Orta",
+      "high": "Yuksek",
+      "urgent": "Acil",
+      "critical": "Kritik"
+    }
+  }
+}

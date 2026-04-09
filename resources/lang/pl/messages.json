@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Odpowiedz wyslana.",
+    "note_added": "Notatka dodana.",
+    "assigned": "Zgloszenie przypisane.",
+    "status_updated": "Status zaktualizowany.",
+    "priority_updated": "Priorytet zaktualizowany.",
+    "tags_updated": "Tagi zaktualizowane.",
+    "department_updated": "Dzial zaktualizowany.",
+    "macro_applied": "Makro \":name\" zastosowane.",
+    "unfollowed": "Przestales obserwowac zgloszenie.",
+    "following": "Obserwujesz zgloszenie.",
+    "note_pinned": "Notatka przypieta.",
+    "note_unpinned": "Notatka odpieta.",
+    "pin_notes_only": "Tylko notatki wewnetrzne moga byc przypiete.",
+    "updated": "Zgloszenie zaktualizowane.",
+    "created": "Zgloszenie utworzone pomyslnie.",
+    "closed": "Zgloszenie zamkniete.",
+    "reopened": "Zgloszenie ponownie otwarte.",
+    "customer_close_forbidden": "Klienci nie moga zamykac zgloszen."
+  },
+  "guest": {
+    "created": "Zgloszenie utworzone. Zapisz ten link.",
+    "reply_sent": "Odpowiedz wyslana.",
+    "ticket_closed": "To zgloszenie jest zamkniete."
+  },
+  "bulk": {
+    "updated": "Zaktualizowano :count zgloszen."
+  },
+  "rating": {
+    "thank_you": "Dziekujemy za opinie!",
+    "only_resolved_closed": "Mozesz oceniac tylko rozwiazane lub zamkniete zgloszenia.",
+    "already_rated": "To zgloszenie zostalo juz ocenione."
+  },
+  "admin": {
+    "department_created": "Dzial utworzony.",
+    "department_updated": "Dzial zaktualizowany.",
+    "department_deleted": "Dzial usuniety.",
+    "sla_policy_created": "Polityka SLA utworzona.",
+    "sla_policy_updated": "Polityka SLA zaktualizowana.",
+    "sla_policy_deleted": "Polityka SLA usunieta.",
+    "rule_created": "Regula utworzona.",
+    "rule_updated": "Regula zaktualizowana.",
+    "rule_deleted": "Regula usunieta.",
+    "canned_response_created": "Gotowa odpowiedz utworzona.",
+    "canned_response_updated": "Gotowa odpowiedz zaktualizowana.",
+    "canned_response_deleted": "Gotowa odpowiedz usunieta.",
+    "macro_created": "Makro utworzone.",
+    "macro_updated": "Makro zaktualizowane.",
+    "macro_deleted": "Makro usuniete.",
+    "tag_created": "Tag utworzony.",
+    "tag_updated": "Tag zaktualizowany.",
+    "tag_deleted": "Tag usuniety.",
+    "settings_updated": "Ustawienia zaktualizowane."
+  },
+  "middleware": {
+    "not_admin": "Brak uprawnien administratora.",
+    "not_agent": "Brak uprawnien agenta."
+  },
+  "inbound": {
+    "disabled": "Poczta przychodzaca wylaczona.",
+    "invalid_signature": "Nieprawidlowy podpis.",
+    "processing_failed": "Przetwarzanie nie powiodlo sie."
+  },
+  "labels": {
+    "status": {
+      "open": "Otwarty",
+      "in_progress": "W toku",
+      "waiting_on_customer": "Oczekiwanie na klienta",
+      "waiting_on_agent": "Oczekiwanie na agenta",
+      "escalated": "Eskalowany",
+      "resolved": "Rozwiazany",
+      "closed": "Zamkniety",
+      "reopened": "Ponownie otwarty"
+    },
+    "priority": {
+      "low": "Niski",
+      "medium": "Sredni",
+      "high": "Wysoki",
+      "urgent": "Pilny",
+      "critical": "Krytyczny"
+    }
+  }
+}

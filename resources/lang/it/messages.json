@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Risposta inviata.",
+    "note_added": "Nota aggiunta.",
+    "assigned": "Ticket assegnato.",
+    "status_updated": "Stato aggiornato.",
+    "priority_updated": "Priorita aggiornata.",
+    "tags_updated": "Tag aggiornati.",
+    "department_updated": "Reparto aggiornato.",
+    "macro_applied": "Macro \":name\" applicata.",
+    "unfollowed": "Non segui piu il ticket.",
+    "following": "Stai seguendo il ticket.",
+    "note_pinned": "Nota fissata.",
+    "note_unpinned": "Nota rimossa dai fissati.",
+    "pin_notes_only": "Solo le note interne possono essere fissate.",
+    "updated": "Ticket aggiornato.",
+    "created": "Ticket creato con successo.",
+    "closed": "Ticket chiuso.",
+    "reopened": "Ticket riaperto.",
+    "customer_close_forbidden": "I clienti non possono chiudere i ticket."
+  },
+  "guest": {
+    "created": "Ticket creato. Salva questo link per verificare lo stato.",
+    "reply_sent": "Risposta inviata.",
+    "ticket_closed": "Questo ticket e chiuso."
+  },
+  "bulk": {
+    "updated": ":count ticket aggiornato/i."
+  },
+  "rating": {
+    "thank_you": "Grazie per il tuo feedback!",
+    "only_resolved_closed": "Puoi valutare solo ticket risolti o chiusi.",
+    "already_rated": "Questo ticket e gia stato valutato."
+  },
+  "admin": {
+    "department_created": "Reparto creato.",
+    "department_updated": "Reparto aggiornato.",
+    "department_deleted": "Reparto eliminato.",
+    "sla_policy_created": "Policy SLA creata.",
+    "sla_policy_updated": "Policy SLA aggiornata.",
+    "sla_policy_deleted": "Policy SLA eliminata.",
+    "rule_created": "Regola creata.",
+    "rule_updated": "Regola aggiornata.",
+    "rule_deleted": "Regola eliminata.",
+    "canned_response_created": "Risposta predefinita creata.",
+    "canned_response_updated": "Risposta predefinita aggiornata.",
+    "canned_response_deleted": "Risposta predefinita eliminata.",
+    "macro_created": "Macro creata.",
+    "macro_updated": "Macro aggiornata.",
+    "macro_deleted": "Macro eliminata.",
+    "tag_created": "Tag creato.",
+    "tag_updated": "Tag aggiornato.",
+    "tag_deleted": "Tag eliminato.",
+    "settings_updated": "Impostazioni aggiornate."
+  },
+  "middleware": {
+    "not_admin": "Non sei autorizzato come amministratore.",
+    "not_agent": "Non sei autorizzato come agente."
+  },
+  "inbound": {
+    "disabled": "Email in entrata disabilitata.",
+    "invalid_signature": "Firma non valida.",
+    "processing_failed": "Elaborazione fallita."
+  },
+  "labels": {
+    "status": {
+      "open": "Aperto",
+      "in_progress": "In corso",
+      "waiting_on_customer": "In attesa del cliente",
+      "waiting_on_agent": "In attesa dell'agente",
+      "escalated": "Escalato",
+      "resolved": "Risolto",
+      "closed": "Chiuso",
+      "reopened": "Riaperto"
+    },
+    "priority": {
+      "low": "Bassa",
+      "medium": "Media",
+      "high": "Alta",
+      "urgent": "Urgente",
+      "critical": "Critica"
+    }
+  }
+}

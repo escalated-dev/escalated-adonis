@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "回复已发送。",
+    "note_added": "备注已添加。",
+    "assigned": "工单已分配。",
+    "status_updated": "状态已更新。",
+    "priority_updated": "优先级已更新。",
+    "tags_updated": "标签已更新。",
+    "department_updated": "部门已更新。",
+    "macro_applied": "宏\":name\"已应用。",
+    "unfollowed": "已取消关注工单。",
+    "following": "正在关注工单。",
+    "note_pinned": "备注已置顶。",
+    "note_unpinned": "备注已取消置顶。",
+    "pin_notes_only": "只有内部备注可以置顶。",
+    "updated": "工单已更新。",
+    "created": "工单创建成功。",
+    "closed": "工单已关闭。",
+    "reopened": "工单已重新打开。",
+    "customer_close_forbidden": "客户无法关闭工单。"
+  },
+  "guest": {
+    "created": "工单已创建。保存此链接以查看工单状态。",
+    "reply_sent": "回复已发送。",
+    "ticket_closed": "此工单已关闭。"
+  },
+  "bulk": {
+    "updated": "已更新:count个工单。"
+  },
+  "rating": {
+    "thank_you": "感谢您的反馈！",
+    "only_resolved_closed": "您只能评价已解决或已关闭的工单。",
+    "already_rated": "此工单已被评价。"
+  },
+  "admin": {
+    "department_created": "部门已创建。",
+    "department_updated": "部门已更新。",
+    "department_deleted": "部门已删除。",
+    "sla_policy_created": "SLA策略已创建。",
+    "sla_policy_updated": "SLA策略已更新。",
+    "sla_policy_deleted": "SLA策略已删除。",
+    "rule_created": "规则已创建。",
+    "rule_updated": "规则已更新。",
+    "rule_deleted": "规则已删除。",
+    "canned_response_created": "预设回复已创建。",
+    "canned_response_updated": "预设回复已更新。",
+    "canned_response_deleted": "预设回复已删除。",
+    "macro_created": "宏已创建。",
+    "macro_updated": "宏已更新。",
+    "macro_deleted": "宏已删除。",
+    "tag_created": "标签已创建。",
+    "tag_updated": "标签已更新。",
+    "tag_deleted": "标签已删除。",
+    "settings_updated": "设置已更新。"
+  },
+  "middleware": {
+    "not_admin": "未获授权为支持管理员。",
+    "not_agent": "未获授权为支持客服。"
+  },
+  "inbound": {
+    "disabled": "入站邮件已禁用。",
+    "invalid_signature": "无效签名。",
+    "processing_failed": "处理失败。"
+  },
+  "labels": {
+    "status": {
+      "open": "打开",
+      "in_progress": "处理中",
+      "waiting_on_customer": "等待客户",
+      "waiting_on_agent": "等待客服",
+      "escalated": "已升级",
+      "resolved": "已解决",
+      "closed": "已关闭",
+      "reopened": "已重开"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "urgent": "紧急",
+      "critical": "严重"
+    }
+  }
+}
