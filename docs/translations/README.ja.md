@@ -89,7 +89,7 @@ const escalatedConfig: EscalatedConfig = {
 }
 ```
 
-### Authorization
+### 認可
 
 The `isAgent` and `isAdmin` callbacks determine role-based access. You can use boolean properties, methods, or any async logic:
 
@@ -143,7 +143,7 @@ authorization: {
 - **Real-time Broadcasting:** Opt-in broadcasting via AdonisJS Transmit with automatic polling fallback
 - **Knowledge Base Toggle:** Enable or disable the public knowledge base from admin settings
 
-## Architecture
+## アーキテクチャ
 
 ### Models (14)
 
@@ -205,21 +205,21 @@ authorization: {
 | `EnsureIsAdmin` | Verifies user is an admin via config callback |
 | `ResolveTicket` | Resolves ticket by reference or ID, attaches to context |
 
-## Inertia Page Components
+## Inertiaページコンポーネント
 
 All controllers render Inertia pages with the `Escalated/` prefix. Your Vue app must provide these page components:
 
-### Customer Pages
+### カスタマーページ
 - `Escalated/Customer/Index` - Ticket list
 - `Escalated/Customer/Create` - New ticket form
 - `Escalated/Customer/Show` - Ticket detail with replies
 
-### Agent Pages
+### エージェントページ
 - `Escalated/Agent/Dashboard` - Agent dashboard
 - `Escalated/Agent/Tickets/Index` - Ticket list with filters
 - `Escalated/Agent/Tickets/Show` - Ticket detail with all actions
 
-### Admin Pages
+### 管理ページ
 - `Escalated/Admin/Tickets/Index` - Admin ticket list
 - `Escalated/Admin/Tickets/Show` - Admin ticket detail
 - `Escalated/Admin/Departments/Index` - Departments list
@@ -237,11 +237,11 @@ All controllers render Inertia pages with the `Escalated/` prefix. Your Vue app 
 - `Escalated/Admin/Reports` - Reports dashboard
 - `Escalated/Admin/Settings` - Settings management
 
-### Guest Pages
+### ゲストページ
 - `Escalated/Guest/Create` - Guest ticket form
 - `Escalated/Guest/Show` - Guest ticket view
 
-## Route Names
+## ルート名
 
 All routes are named with the `escalated.` prefix:
 
@@ -334,7 +334,7 @@ escalated.guest.tickets.rate
 escalated.inbound.webhook
 ```
 
-## Ticket Status Machine
+## チケットステータスマシン
 
 Tickets follow a strict state machine:
 
@@ -349,7 +349,7 @@ closed -> reopened
 reopened -> in_progress, waiting_on_customer, waiting_on_agent, escalated, resolved, closed
 ```
 
-## Database Tables (14)
+## データベーステーブル (14)
 
 All tables use the `escalated_` prefix by default (configurable):
 
@@ -368,7 +368,7 @@ All tables use the `escalated_` prefix by default (configurable):
 13. `escalated_ticket_followers`
 14. `escalated_satisfaction_ratings`
 
-## Shared Inertia Data
+## Inertia共有データ
 
 The provider automatically shares the following data via Inertia on every request:
 
@@ -424,7 +424,7 @@ The system will:
 4. Process attachments (with blocked extension filtering)
 5. Log the inbound email for audit trail
 
-## Using Services Directly
+## サービスの直接使用
 
 You can resolve services from the container for custom logic:
 
@@ -443,7 +443,7 @@ const assignmentService = await app.container.make('escalated.assignmentService'
 await assignmentService.autoAssign(ticket)
 ```
 
-## Frontend Package
+## フロントエンドパッケージ
 
 This package serves only the backend API via Inertia.js. The shared Vue 3 frontend components are provided by the `@escalated-dev/escalated` package, which is framework-agnostic and works with all Escalated backends (AdonisJS, Laravel, Rails, Django).
 
@@ -455,14 +455,14 @@ npm install @escalated-dev/escalated
 
 Escalated supports framework-agnostic plugins built with the [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Plugins are written once in TypeScript and work across all Escalated backends.
 
-### Installing Plugins
+### プラグインのインストール
 
 ```bash
 npm install @escalated-dev/plugin-slack
 npm install @escalated-dev/plugin-jira
 ```
 
-### Enabling SDK Plugins
+### SDKプラグインの有効化
 
 Enable the plugin system in your `EscalatedProvider` config:
 
@@ -477,11 +477,11 @@ const escalatedConfig: EscalatedConfig = {
 }
 ```
 
-### How It Works
+### 仕組み
 
 Unlike other Escalated backends, AdonisJS runs SDK plugins **in-process** — no subprocess, no JSON-RPC overhead. Plugins are loaded directly into the Node.js runtime alongside your AdonisJS application, giving native performance and eliminating the need for a separate plugin runtime process.
 
-### Building Your Own Plugin
+### 独自プラグインの作成
 
 ```typescript
 import { definePlugin } from '@escalated-dev/plugin-sdk'
@@ -497,13 +497,13 @@ export default definePlugin({
 })
 ```
 
-### Resources
+### リソース
 
 - [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — TypeScript SDK for building plugins
 - [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Runtime host for plugins
 - [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Full documentation
 
-## 他のフレームワーク向け
+## 他のフレームワーク向けも提供
 
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer package
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
