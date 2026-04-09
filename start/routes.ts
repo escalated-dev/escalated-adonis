@@ -28,6 +28,8 @@ const AdminCannedResponsesController = () =>
   import('../src/controllers/admin_canned_responses_controller.js')
 const AdminMacrosController = () => import('../src/controllers/admin_macros_controller.js')
 const AdminReportsController = () => import('../src/controllers/admin_reports_controller.js')
+const AdminAdvancedReportsController = () =>
+  import('../src/controllers/admin_advanced_reports_controller.js')
 const AdminSettingsController = () => import('../src/controllers/admin_settings_controller.js')
 const AdminPluginsController = () => import('../src/controllers/admin_plugins_controller.js')
 const BulkActionsController = () => import('../src/controllers/bulk_actions_controller.js')
@@ -283,6 +285,47 @@ function registerUiRoutes(config: any) {
     .group(() => {
       // Reports
       router.get('/reports', [AdminReportsController, 'handle']).as('escalated.admin.reports')
+
+      // Advanced Reports
+      router
+        .get('/reports/advanced/sla-trends', [AdminAdvancedReportsController, 'slaBreachTrends'])
+        .as('escalated.admin.reports.slaTrends')
+      router
+        .get('/reports/advanced/frt-distribution', [
+          AdminAdvancedReportsController,
+          'frtDistribution',
+        ])
+        .as('escalated.admin.reports.frtDistribution')
+      router
+        .get('/reports/advanced/frt-trends', [AdminAdvancedReportsController, 'frtTrends'])
+        .as('escalated.admin.reports.frtTrends')
+      router
+        .get('/reports/advanced/frt-by-agent', [AdminAdvancedReportsController, 'frtByAgent'])
+        .as('escalated.admin.reports.frtByAgent')
+      router
+        .get('/reports/advanced/resolution-distribution', [
+          AdminAdvancedReportsController,
+          'resolutionDistribution',
+        ])
+        .as('escalated.admin.reports.resolutionDistribution')
+      router
+        .get('/reports/advanced/resolution-trends', [
+          AdminAdvancedReportsController,
+          'resolutionTrends',
+        ])
+        .as('escalated.admin.reports.resolutionTrends')
+      router
+        .get('/reports/advanced/agent-ranking', [AdminAdvancedReportsController, 'agentRanking'])
+        .as('escalated.admin.reports.agentRanking')
+      router
+        .get('/reports/advanced/cohort', [AdminAdvancedReportsController, 'cohort'])
+        .as('escalated.admin.reports.cohort')
+      router
+        .get('/reports/advanced/comparison', [AdminAdvancedReportsController, 'comparison'])
+        .as('escalated.admin.reports.comparison')
+      router
+        .get('/reports/advanced/export', [AdminAdvancedReportsController, 'export'])
+        .as('escalated.admin.reports.export')
 
       // Tickets
       router.get('/tickets', [AdminTicketsController, 'index']).as('escalated.admin.tickets.index')
