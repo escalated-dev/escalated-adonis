@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Ответ отправлен.",
+    "note_added": "Заметка добавлена.",
+    "assigned": "Заявка назначена.",
+    "status_updated": "Статус обновлен.",
+    "priority_updated": "Приоритет обновлен.",
+    "tags_updated": "Теги обновлены.",
+    "department_updated": "Отдел обновлен.",
+    "macro_applied": "Макрос \":name\" применен.",
+    "unfollowed": "Вы отписались от заявки.",
+    "following": "Вы подписаны на заявку.",
+    "note_pinned": "Заметка закреплена.",
+    "note_unpinned": "Заметка откреплена.",
+    "pin_notes_only": "Можно закрепить только внутренние заметки.",
+    "updated": "Заявка обновлена.",
+    "created": "Заявка успешно создана.",
+    "closed": "Заявка закрыта.",
+    "reopened": "Заявка переоткрыта.",
+    "customer_close_forbidden": "Клиенты не могут закрывать заявки."
+  },
+  "guest": {
+    "created": "Заявка создана. Сохраните эту ссылку для проверки статуса.",
+    "reply_sent": "Ответ отправлен.",
+    "ticket_closed": "Эта заявка закрыта."
+  },
+  "bulk": {
+    "updated": "Обновлено :count заявок."
+  },
+  "rating": {
+    "thank_you": "Спасибо за отзыв!",
+    "only_resolved_closed": "Можно оценивать только решенные или закрытые заявки.",
+    "already_rated": "Эта заявка уже оценена."
+  },
+  "admin": {
+    "department_created": "Отдел создан.",
+    "department_updated": "Отдел обновлен.",
+    "department_deleted": "Отдел удален.",
+    "sla_policy_created": "Политика SLA создана.",
+    "sla_policy_updated": "Политика SLA обновлена.",
+    "sla_policy_deleted": "Политика SLA удалена.",
+    "rule_created": "Правило создано.",
+    "rule_updated": "Правило обновлено.",
+    "rule_deleted": "Правило удалено.",
+    "canned_response_created": "Шаблон ответа создан.",
+    "canned_response_updated": "Шаблон ответа обновлен.",
+    "canned_response_deleted": "Шаблон ответа удален.",
+    "macro_created": "Макрос создан.",
+    "macro_updated": "Макрос обновлен.",
+    "macro_deleted": "Макрос удален.",
+    "tag_created": "Тег создан.",
+    "tag_updated": "Тег обновлен.",
+    "tag_deleted": "Тег удален.",
+    "settings_updated": "Настройки обновлены."
+  },
+  "middleware": {
+    "not_admin": "Нет прав администратора поддержки.",
+    "not_agent": "Нет прав агента поддержки."
+  },
+  "inbound": {
+    "disabled": "Входящая почта отключена.",
+    "invalid_signature": "Недопустимая подпись.",
+    "processing_failed": "Обработка не удалась."
+  },
+  "labels": {
+    "status": {
+      "open": "Открыта",
+      "in_progress": "В работе",
+      "waiting_on_customer": "Ожидание клиента",
+      "waiting_on_agent": "Ожидание агента",
+      "escalated": "Эскалирована",
+      "resolved": "Решена",
+      "closed": "Закрыта",
+      "reopened": "Переоткрыта"
+    },
+    "priority": {
+      "low": "Низкий",
+      "medium": "Средний",
+      "high": "Высокий",
+      "urgent": "Срочный",
+      "critical": "Критический"
+    }
+  }
+}

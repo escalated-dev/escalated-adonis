@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "Antwoord verzonden.",
+    "note_added": "Notitie toegevoegd.",
+    "assigned": "Ticket toegewezen.",
+    "status_updated": "Status bijgewerkt.",
+    "priority_updated": "Prioriteit bijgewerkt.",
+    "tags_updated": "Tags bijgewerkt.",
+    "department_updated": "Afdeling bijgewerkt.",
+    "macro_applied": "Macro \":name\" toegepast.",
+    "unfollowed": "Je volgt dit ticket niet meer.",
+    "following": "Je volgt dit ticket.",
+    "note_pinned": "Notitie vastgezet.",
+    "note_unpinned": "Notitie losgemaakt.",
+    "pin_notes_only": "Alleen interne notities kunnen worden vastgezet.",
+    "updated": "Ticket bijgewerkt.",
+    "created": "Ticket succesvol aangemaakt.",
+    "closed": "Ticket gesloten.",
+    "reopened": "Ticket heropend.",
+    "customer_close_forbidden": "Klanten kunnen tickets niet sluiten."
+  },
+  "guest": {
+    "created": "Ticket aangemaakt. Bewaar deze link om de status te controleren.",
+    "reply_sent": "Antwoord verzonden.",
+    "ticket_closed": "Dit ticket is gesloten."
+  },
+  "bulk": {
+    "updated": ":count ticket(s) bijgewerkt."
+  },
+  "rating": {
+    "thank_you": "Bedankt voor je feedback!",
+    "only_resolved_closed": "Je kunt alleen opgeloste of gesloten tickets beoordelen.",
+    "already_rated": "Dit ticket is al beoordeeld."
+  },
+  "admin": {
+    "department_created": "Afdeling aangemaakt.",
+    "department_updated": "Afdeling bijgewerkt.",
+    "department_deleted": "Afdeling verwijderd.",
+    "sla_policy_created": "SLA-beleid aangemaakt.",
+    "sla_policy_updated": "SLA-beleid bijgewerkt.",
+    "sla_policy_deleted": "SLA-beleid verwijderd.",
+    "rule_created": "Regel aangemaakt.",
+    "rule_updated": "Regel bijgewerkt.",
+    "rule_deleted": "Regel verwijderd.",
+    "canned_response_created": "Standaardantwoord aangemaakt.",
+    "canned_response_updated": "Standaardantwoord bijgewerkt.",
+    "canned_response_deleted": "Standaardantwoord verwijderd.",
+    "macro_created": "Macro aangemaakt.",
+    "macro_updated": "Macro bijgewerkt.",
+    "macro_deleted": "Macro verwijderd.",
+    "tag_created": "Tag aangemaakt.",
+    "tag_updated": "Tag bijgewerkt.",
+    "tag_deleted": "Tag verwijderd.",
+    "settings_updated": "Instellingen bijgewerkt."
+  },
+  "middleware": {
+    "not_admin": "Niet geautoriseerd als beheerder.",
+    "not_agent": "Niet geautoriseerd als medewerker."
+  },
+  "inbound": {
+    "disabled": "Inkomende e-mail is uitgeschakeld.",
+    "invalid_signature": "Ongeldige handtekening.",
+    "processing_failed": "Verwerking mislukt."
+  },
+  "labels": {
+    "status": {
+      "open": "Open",
+      "in_progress": "In behandeling",
+      "waiting_on_customer": "Wachten op klant",
+      "waiting_on_agent": "Wachten op medewerker",
+      "escalated": "Geescaleerd",
+      "resolved": "Opgelost",
+      "closed": "Gesloten",
+      "reopened": "Heropend"
+    },
+    "priority": {
+      "low": "Laag",
+      "medium": "Gemiddeld",
+      "high": "Hoog",
+      "urgent": "Urgent",
+      "critical": "Kritiek"
+    }
+  }
+}

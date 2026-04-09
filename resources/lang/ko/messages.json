@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "답변이 전송되었습니다.",
+    "note_added": "메모가 추가되었습니다.",
+    "assigned": "티켓이 할당되었습니다.",
+    "status_updated": "상태가 업데이트되었습니다.",
+    "priority_updated": "우선순위가 업데이트되었습니다.",
+    "tags_updated": "태그가 업데이트되었습니다.",
+    "department_updated": "부서가 업데이트되었습니다.",
+    "macro_applied": "매크로 \":name\"이(가) 적용되었습니다.",
+    "unfollowed": "티켓 팔로우를 취소했습니다.",
+    "following": "티켓을 팔로우합니다.",
+    "note_pinned": "메모가 고정되었습니다.",
+    "note_unpinned": "메모 고정이 해제되었습니다.",
+    "pin_notes_only": "내부 메모만 고정할 수 있습니다.",
+    "updated": "티켓이 업데이트되었습니다.",
+    "created": "티켓이 성공적으로 생성되었습니다.",
+    "closed": "티켓이 종료되었습니다.",
+    "reopened": "티켓이 다시 열렸습니다.",
+    "customer_close_forbidden": "고객은 티켓을 종료할 수 없습니다."
+  },
+  "guest": {
+    "created": "티켓이 생성되었습니다. 이 링크를 저장하여 티켓 상태를 확인하세요.",
+    "reply_sent": "답변이 전송되었습니다.",
+    "ticket_closed": "이 티켓은 종료되었습니다."
+  },
+  "bulk": {
+    "updated": ":count개의 티켓이 업데이트되었습니다."
+  },
+  "rating": {
+    "thank_you": "피드백 감사합니다!",
+    "only_resolved_closed": "해결되었거나 종료된 티켓만 평가할 수 있습니다.",
+    "already_rated": "이 티켓은 이미 평가되었습니다."
+  },
+  "admin": {
+    "department_created": "부서가 생성되었습니다.",
+    "department_updated": "부서가 업데이트되었습니다.",
+    "department_deleted": "부서가 삭제되었습니다.",
+    "sla_policy_created": "SLA 정책이 생성되었습니다.",
+    "sla_policy_updated": "SLA 정책이 업데이트되었습니다.",
+    "sla_policy_deleted": "SLA 정책이 삭제되었습니다.",
+    "rule_created": "규칙이 생성되었습니다.",
+    "rule_updated": "규칙이 업데이트되었습니다.",
+    "rule_deleted": "규칙이 삭제되었습니다.",
+    "canned_response_created": "정형 응답이 생성되었습니다.",
+    "canned_response_updated": "정형 응답이 업데이트되었습니다.",
+    "canned_response_deleted": "정형 응답이 삭제되었습니다.",
+    "macro_created": "매크로가 생성되었습니다.",
+    "macro_updated": "매크로가 업데이트되었습니다.",
+    "macro_deleted": "매크로가 삭제되었습니다.",
+    "tag_created": "태그가 생성되었습니다.",
+    "tag_updated": "태그가 업데이트되었습니다.",
+    "tag_deleted": "태그가 삭제되었습니다.",
+    "settings_updated": "설정이 업데이트되었습니다."
+  },
+  "middleware": {
+    "not_admin": "지원 관리자 권한이 없습니다.",
+    "not_agent": "지원 상담원 권한이 없습니다."
+  },
+  "inbound": {
+    "disabled": "수신 이메일이 비활성화되어 있습니다.",
+    "invalid_signature": "잘못된 서명입니다.",
+    "processing_failed": "처리에 실패했습니다."
+  },
+  "labels": {
+    "status": {
+      "open": "열림",
+      "in_progress": "진행 중",
+      "waiting_on_customer": "고객 대기",
+      "waiting_on_agent": "상담원 대기",
+      "escalated": "에스컬레이션됨",
+      "resolved": "해결됨",
+      "closed": "종료",
+      "reopened": "재개됨"
+    },
+    "priority": {
+      "low": "낮음",
+      "medium": "보통",
+      "high": "높음",
+      "urgent": "긴급",
+      "critical": "심각"
+    }
+  }
+}

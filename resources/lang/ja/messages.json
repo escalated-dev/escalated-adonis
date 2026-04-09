@@ -1,0 +1,84 @@
+{
+  "ticket": {
+    "reply_sent": "返信を送信しました。",
+    "note_added": "メモを追加しました。",
+    "assigned": "チケットを割り当てました。",
+    "status_updated": "ステータスを更新しました。",
+    "priority_updated": "優先度を更新しました。",
+    "tags_updated": "タグを更新しました。",
+    "department_updated": "部門を更新しました。",
+    "macro_applied": "マクロ「:name」を適用しました。",
+    "unfollowed": "チケットのフォローを解除しました。",
+    "following": "チケットをフォロー中です。",
+    "note_pinned": "メモをピン留めしました。",
+    "note_unpinned": "メモのピン留めを解除しました。",
+    "pin_notes_only": "内部メモのみピン留めできます。",
+    "updated": "チケットを更新しました。",
+    "created": "チケットを正常に作成しました。",
+    "closed": "チケットをクローズしました。",
+    "reopened": "チケットを再開しました。",
+    "customer_close_forbidden": "顧客はチケットをクローズできません。"
+  },
+  "guest": {
+    "created": "チケットを作成しました。このリンクを保存してステータスを確認してください。",
+    "reply_sent": "返信を送信しました。",
+    "ticket_closed": "このチケットはクローズされています。"
+  },
+  "bulk": {
+    "updated": ":count件のチケットを更新しました。"
+  },
+  "rating": {
+    "thank_you": "フィードバックありがとうございます！",
+    "only_resolved_closed": "解決済みまたはクローズ済みのチケットのみ評価できます。",
+    "already_rated": "このチケットは既に評価されています。"
+  },
+  "admin": {
+    "department_created": "部門を作成しました。",
+    "department_updated": "部門を更新しました。",
+    "department_deleted": "部門を削除しました。",
+    "sla_policy_created": "SLAポリシーを作成しました。",
+    "sla_policy_updated": "SLAポリシーを更新しました。",
+    "sla_policy_deleted": "SLAポリシーを削除しました。",
+    "rule_created": "ルールを作成しました。",
+    "rule_updated": "ルールを更新しました。",
+    "rule_deleted": "ルールを削除しました。",
+    "canned_response_created": "定型応答を作成しました。",
+    "canned_response_updated": "定型応答を更新しました。",
+    "canned_response_deleted": "定型応答を削除しました。",
+    "macro_created": "マクロを作成しました。",
+    "macro_updated": "マクロを更新しました。",
+    "macro_deleted": "マクロを削除しました。",
+    "tag_created": "タグを作成しました。",
+    "tag_updated": "タグを更新しました。",
+    "tag_deleted": "タグを削除しました。",
+    "settings_updated": "設定を更新しました。"
+  },
+  "middleware": {
+    "not_admin": "サポート管理者として認可されていません。",
+    "not_agent": "サポートエージェントとして認可されていません。"
+  },
+  "inbound": {
+    "disabled": "受信メールは無効です。",
+    "invalid_signature": "無効な署名です。",
+    "processing_failed": "処理に失敗しました。"
+  },
+  "labels": {
+    "status": {
+      "open": "オープン",
+      "in_progress": "対応中",
+      "waiting_on_customer": "顧客待ち",
+      "waiting_on_agent": "エージェント待ち",
+      "escalated": "エスカレーション済み",
+      "resolved": "解決済み",
+      "closed": "クローズ",
+      "reopened": "再開"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高",
+      "urgent": "緊急",
+      "critical": "重大"
+    }
+  }
+}
