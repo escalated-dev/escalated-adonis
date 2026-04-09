@@ -1,18 +1,18 @@
 <p align="center">
-  <a href="docs/translations/README.ar.md">العربية</a> •
-  <a href="docs/translations/README.de.md">Deutsch</a> •
-  <b>English</b> •
-  <a href="docs/translations/README.es.md">Español</a> •
-  <a href="docs/translations/README.fr.md">Français</a> •
-  <a href="docs/translations/README.it.md">Italiano</a> •
-  <a href="docs/translations/README.ja.md">日本語</a> •
-  <a href="docs/translations/README.ko.md">한국어</a> •
-  <a href="docs/translations/README.nl.md">Nederlands</a> •
-  <a href="docs/translations/README.pl.md">Polski</a> •
-  <a href="docs/translations/README.pt-BR.md">Português (BR)</a> •
-  <a href="docs/translations/README.ru.md">Русский</a> •
-  <a href="docs/translations/README.tr.md">Türkçe</a> •
-  <a href="docs/translations/README.zh-CN.md">简体中文</a>
+  <a href="README.ar.md">العربية</a> •
+  <a href="README.de.md">Deutsch</a> •
+  <a href="../../README.md">English</a> •
+  <a href="README.es.md">Español</a> •
+  <a href="README.fr.md">Français</a> •
+  <a href="README.it.md">Italiano</a> •
+  <a href="README.ja.md">日本語</a> •
+  <a href="README.ko.md">한국어</a> •
+  <a href="README.nl.md">Nederlands</a> •
+  <a href="README.pl.md">Polski</a> •
+  <a href="README.pt-BR.md">Português (BR)</a> •
+  <a href="README.ru.md">Русский</a> •
+  <b>Türkçe</b> •
+  <a href="README.zh-CN.md">简体中文</a>
 </p>
 
 # Escalated for AdonisJS
@@ -25,7 +25,7 @@ A full-featured, embeddable support ticket system for AdonisJS v6. Drop it into 
 
 > **[escalated.dev](https://escalated.dev)** — Learn more, view demos, and compare Cloud vs Self-Hosted options.
 
-## Requirements
+## Gereksinimler
 
 - AdonisJS v6 (Core ^6.0)
 - @adonisjs/lucid ^21.0
@@ -35,7 +35,7 @@ A full-featured, embeddable support ticket system for AdonisJS v6. Drop it into 
 - @adonisjs/mail ^9.0 (optional, for notifications)
 - Node.js 20+
 
-## Installation
+## Kurulum
 
 ```bash
 npm install @escalated-dev/escalated-adonis
@@ -59,7 +59,7 @@ Run the migrations:
 node ace migration:run
 ```
 
-## Configuration
+## Yapılandırma
 
 Edit `config/escalated.ts` to customize behavior:
 
@@ -105,7 +105,7 @@ authorization: {
 }
 ```
 
-## Features
+## Özellikler
 
 - **Tickets:** Create, view, update, close, reopen tickets with status machine
 - **Replies:** Threaded conversations with rich text and pinned notes
@@ -383,7 +383,7 @@ The provider automatically shares the following data via Inertia on every reques
 }
 ```
 
-## Events
+## Olaylar
 
 The package emits the following events that you can listen to:
 
@@ -407,7 +407,7 @@ The package emits the following events that you can listen to:
 | `escalated:sla:breached` | SLA target breached |
 | `escalated:rating:created` | CSAT rating submitted |
 
-## Inbound Email
+## Gelen E-posta
 
 Enable inbound email processing by setting `inboundEmail.enabled: true` in your config. Point your email provider's webhook to:
 
@@ -503,7 +503,7 @@ export default definePlugin({
 - [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Runtime host for plugins
 - [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Full documentation
 
-## Also Available For
+## Şunlar İçin de Mevcut
 
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer package
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
@@ -514,6 +514,6 @@ export default definePlugin({
 
 Same architecture, same Vue UI, same three hosting modes — for every major backend framework.
 
-## License
+## Lisans
 
 MIT
