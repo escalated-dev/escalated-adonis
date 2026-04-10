@@ -21,9 +21,9 @@
 [![AdonisJS](https://img.shields.io/badge/adonisjs-v6-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A full-featured, embeddable support ticket system for AdonisJS v6. Drop it into any app — get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+AdonisJS v6用のフル機能で埋め込み可能なサポートチケットシステム。任意のアプリに導入するだけで、SLA追跡、エスカレーションルール、エージェントワークフロー、カスタマーポータルを備えた完全なヘルプデスクが手に入ります。外部サービスは不要です。
 
-> **[escalated.dev](https://escalated.dev)** — Learn more, view demos, and compare Cloud vs Self-Hosted options.
+> **[escalated.dev](https://escalated.dev)** — 詳細の確認、デモの閲覧、クラウドとセルフホストのオプション比較はこちら。
 
 ## 要件
 
@@ -135,12 +135,12 @@ authorization: {
 - **REST API:** Token-authenticated API with rate limiting
 - **Import Framework:** Bulk data import support
 - **Ticket Splitting:** Split a reply into a new standalone ticket while preserving the original context
-- **Ticket Snooze:** Snooze tickets with presets (1h, 4h, tomorrow, next week); `node ace escalated:wake_snoozed_tickets` Ace command auto-wakes them on schedule
+- **Ticket Snooze:** プリセットでチケットをスヌーズ（1時間、4時間、明日、来週）、Aceコマンド `node ace escalated:wake_snoozed_tickets` がスケジュールに従って自動的に起動
 - **Saved Views / Custom Queues:** Save, name, and share filter presets as reusable ticket views
-- **Embeddable Support Widget:** Lightweight `<script>` widget with KB search, ticket form, and status check
+- **Embeddable Support Widget:** 軽量 `<script>` ウィジェット、KB検索、チケットフォーム、ステータス確認付き
 - **Email Threading:** Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
 - **Branded Email Templates:** Configurable logo, primary color, and footer text for all outbound emails
-- **Real-time Broadcasting:** Opt-in broadcasting via AdonisJS Transmit with automatic polling fallback
+- **Real-time Broadcasting:** AdonisJS Transmitによるオプトインブロードキャスト、自動ポーリングフォールバック付き
 - **Knowledge Base Toggle:** Enable or disable the public knowledge base from admin settings
 
 ## アーキテクチャ
@@ -453,7 +453,7 @@ npm install @escalated-dev/escalated
 
 ## プラグインSDK
 
-Escalated supports framework-agnostic plugins built with the [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Plugins are written once in TypeScript and work across all Escalated backends.
+Escalatedは[Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk)で構築されたフレームワーク非依存のプラグインをサポートしています。プラグインはTypeScriptで一度書くだけで、すべてのEscalatedバックエンドで動作します。
 
 ### プラグインのインストール
 
@@ -499,20 +499,20 @@ export default definePlugin({
 
 ### リソース
 
-- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — TypeScript SDK for building plugins
-- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Runtime host for plugins
-- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Full documentation
+- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — プラグイン構築用TypeScript SDK
+- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — プラグイン用ランタイムホスト
+- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — 完全なドキュメント
 
 ## 他のフレームワーク向けも提供
 
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer package
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6 package (you are here)
-- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3 admin panel plugin
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UI components
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composerパッケージ
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Railsエンジン
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Django再利用可能アプリ
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6パッケージ（現在のページ）
+- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3管理パネルプラグイン
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UIコンポーネント
 
-Same architecture, same Vue UI, same three hosting modes — for every major backend framework.
+同じアーキテクチャ、同じVue UI、同じ3つのホスティングモード — すべての主要バックエンドフレームワークに対応。
 
 ## ライセンス
 

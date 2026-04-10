@@ -21,9 +21,9 @@
 [![AdonisJS](https://img.shields.io/badge/adonisjs-v6-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A full-featured, embeddable support ticket system for AdonisJS v6. Drop it into any app — get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+W pełni funkcjonalny, wbudowywalny system zgłoszeń wsparcia dla AdonisJS v6. Dodaj go do dowolnej aplikacji — otrzymasz kompletny helpdesk ze śledzeniem SLA, regułami eskalacji, przepływami pracy agentów i portalem klienta. Nie wymaga zewnętrznych usług.
 
-> **[escalated.dev](https://escalated.dev)** — Learn more, view demos, and compare Cloud vs Self-Hosted options.
+> **[escalated.dev](https://escalated.dev)** — Dowiedz się więcej, zobacz dema i porównaj opcje Cloud z Self-Hosted.
 
 ## Wymagania
 
@@ -135,12 +135,12 @@ authorization: {
 - **REST API:** Token-authenticated API with rate limiting
 - **Import Framework:** Bulk data import support
 - **Ticket Splitting:** Split a reply into a new standalone ticket while preserving the original context
-- **Ticket Snooze:** Snooze tickets with presets (1h, 4h, tomorrow, next week); `node ace escalated:wake_snoozed_tickets` Ace command auto-wakes them on schedule
+- **Ticket Snooze:** Odraczanie zgłoszeń z predefiniowanymi ustawieniami (1h, 4h, jutro, przyszły tydzień); komenda Ace `node ace escalated:wake_snoozed_tickets` budzi je automatycznie według harmonogramu
 - **Saved Views / Custom Queues:** Save, name, and share filter presets as reusable ticket views
-- **Embeddable Support Widget:** Lightweight `<script>` widget with KB search, ticket form, and status check
+- **Embeddable Support Widget:** Lekki widget `<script>` z wyszukiwaniem w bazie wiedzy, formularzem zgłoszenia i sprawdzaniem statusu
 - **Email Threading:** Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
 - **Branded Email Templates:** Configurable logo, primary color, and footer text for all outbound emails
-- **Real-time Broadcasting:** Opt-in broadcasting via AdonisJS Transmit with automatic polling fallback
+- **Real-time Broadcasting:** Opcjonalne nadawanie przez AdonisJS Transmit z automatycznym fallbackiem na polling
 - **Knowledge Base Toggle:** Enable or disable the public knowledge base from admin settings
 
 ## Architektura
@@ -453,7 +453,7 @@ npm install @escalated-dev/escalated
 
 ## SDK Wtyczek
 
-Escalated supports framework-agnostic plugins built with the [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Plugins are written once in TypeScript and work across all Escalated backends.
+Escalated obsługuje wtyczki niezależne od frameworka zbudowane z [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Wtyczki są pisane raz w TypeScript i działają na wszystkich backendach Escalated.
 
 ### Instalacja Wtyczek
 
@@ -499,20 +499,20 @@ export default definePlugin({
 
 ### Zasoby
 
-- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — TypeScript SDK for building plugins
-- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Runtime host for plugins
-- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Full documentation
+- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — TypeScript SDK do tworzenia wtyczek
+- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Host runtime dla wtyczek
+- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Pełna dokumentacja
 
 ## Dostępne Również Dla
 
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer package
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6 package (you are here)
-- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3 admin panel plugin
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UI components
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Pakiet Laravel Composer
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Silnik Ruby on Rails
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Aplikacja wielokrotnego użytku Django
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — Pakiet AdonisJS v6 (jesteś tutaj)
+- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Wtyczka panelu administracyjnego Filament v3
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Komponenty UI Vue 3 + Inertia.js
 
-Same architecture, same Vue UI, same three hosting modes — for every major backend framework.
+Ta sama architektura, ten sam interfejs Vue, te same trzy tryby hostingu — dla każdego ważnego frameworka backendowego.
 
 ## Licencja
 

@@ -21,9 +21,9 @@
 [![AdonisJS](https://img.shields.io/badge/adonisjs-v6-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A full-featured, embeddable support ticket system for AdonisJS v6. Drop it into any app — get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
+一个功能完整、可嵌入的 AdonisJS v6 支持工单系统。将其添加到任何应用中 — 即可获得完整的帮助台，包含 SLA 跟踪、升级规则、客服工作流和客户门户。无需外部服务。
 
-> **[escalated.dev](https://escalated.dev)** — Learn more, view demos, and compare Cloud vs Self-Hosted options.
+> **[escalated.dev](https://escalated.dev)** — 了解更多、查看演示，并比较云端与自托管选项。
 
 ## 环境要求
 
@@ -135,12 +135,12 @@ authorization: {
 - **REST API:** Token-authenticated API with rate limiting
 - **Import Framework:** Bulk data import support
 - **Ticket Splitting:** Split a reply into a new standalone ticket while preserving the original context
-- **Ticket Snooze:** Snooze tickets with presets (1h, 4h, tomorrow, next week); `node ace escalated:wake_snoozed_tickets` Ace command auto-wakes them on schedule
+- **Ticket Snooze:** 使用预设延迟工单（1小时、4小时、明天、下周）；Ace 命令 `node ace escalated:wake_snoozed_tickets` 按计划自动唤醒
 - **Saved Views / Custom Queues:** Save, name, and share filter presets as reusable ticket views
-- **Embeddable Support Widget:** Lightweight `<script>` widget with KB search, ticket form, and status check
+- **Embeddable Support Widget:** 轻量级 `<script>` 小部件，包含知识库搜索、工单表单和状态检查
 - **Email Threading:** Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
 - **Branded Email Templates:** Configurable logo, primary color, and footer text for all outbound emails
-- **Real-time Broadcasting:** Opt-in broadcasting via AdonisJS Transmit with automatic polling fallback
+- **Real-time Broadcasting:** 通过 AdonisJS Transmit 进行可选广播，带有自动轮询回退
 - **Knowledge Base Toggle:** Enable or disable the public knowledge base from admin settings
 
 ## 架构
@@ -453,7 +453,7 @@ npm install @escalated-dev/escalated
 
 ## 插件 SDK
 
-Escalated supports framework-agnostic plugins built with the [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). Plugins are written once in TypeScript and work across all Escalated backends.
+Escalated 支持使用 [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) 构建的框架无关插件。插件用 TypeScript 编写一次，即可在所有 Escalated 后端上运行。
 
 ### 安装插件
 
@@ -499,20 +499,20 @@ export default definePlugin({
 
 ### 资源
 
-- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — TypeScript SDK for building plugins
-- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Runtime host for plugins
-- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Full documentation
+- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — 用于构建插件的 TypeScript SDK
+- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — 插件运行时宿主
+- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — 完整文档
 
 ## 其他框架版本
 
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer package
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails engine
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Django reusable app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6 package (you are here)
-- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3 admin panel plugin
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UI components
+- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer 包
+- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails 引擎
+- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Django 可复用应用
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6 包（当前页面）
+- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3 管理面板插件
+- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UI 组件
 
-Same architecture, same Vue UI, same three hosting modes — for every major backend framework.
+相同的架构、相同的 Vue UI、相同的三种托管模式 — 适用于每个主流后端框架。
 
 ## 许可证
 
