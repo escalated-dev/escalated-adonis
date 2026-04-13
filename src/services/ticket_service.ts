@@ -384,8 +384,8 @@ export default class TicketService {
     }
 
     if (filters.following && forUser) {
-      const { default: db } = await import('@adonisjs/lucid/services/db')
-      const followerTicketIds = await db
+      const { default: lucidDb } = await import('@adonisjs/lucid/services/db')
+      const followerTicketIds = await lucidDb
         .from('escalated_ticket_followers')
         .where('user_id', forUser.id)
         .select('ticket_id')
