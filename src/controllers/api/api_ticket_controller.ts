@@ -58,7 +58,7 @@ export default class ApiTicketController {
     await ticket.load('satisfactionRating')
     await ticket.load((loader: any) => {
       loader.load('replies', (query: any) => {
-        query.orderBy('created_at', 'desc')
+        query.preload('attachments').orderBy('created_at', 'desc')
       })
       loader.load('activities', (query: any) => {
         query.orderBy('created_at', 'desc').limit(20)
@@ -89,7 +89,7 @@ export default class ApiTicketController {
     const relatedTickets = await this.loadRelatedTickets(ticket)
 
     return ctx.response.json({
-      data: this.formatTicketDetail(ticket, {
+      data: await this.formatTicketDetail(ticket, {
         chatSession,
         chatMessages,
         requesterTicketCount,
@@ -127,7 +127,7 @@ export default class ApiTicketController {
     await ticket.load('tags')
 
     return ctx.response.created({
-      data: this.formatTicketDetail(ticket),
+      data: await this.formatTicketDetail(ticket),
       message: 'Ticket created.',
     })
   }
@@ -369,7 +369,7 @@ export default class ApiTicketController {
    * Format a ticket for detail (show) responses.
    * Matches the Laravel TicketResource output.
    */
-  protected formatTicketDetail(
+  protected async formatTicketDetail(
     ticket: Ticket,
     extras?: {
       chatSession?: ChatSession | null
@@ -377,7 +377,7 @@ export default class ApiTicketController {
       requesterTicketCount?: number
       relatedTickets?: { id: number; reference: string; subject: string; status: string }[]
     }
-  ): Record<string, any> {
+  ): Promise<Record<string, any>> {
     const data: Record<string, any> = {
       id: ticket.id,
       reference: ticket.reference,
@@ -406,23 +406,25 @@ export default class ApiTicketController {
           name: tag.name,
           color: tag.color,
         })) ?? [],
-      replies:
-        ticket.replies?.map((r: any) => ({
+      replies: await Promise.all(
+        (ticket.replies ?? []).map(async (r: any) => ({
           id: r.id,
           body: r.body,
           is_internal_note: r.isInternalNote,
           is_pinned: r.isPinned ?? false,
           author: null, // Author loaded separately via user model
-          attachments:
-            r.attachments?.map((a: any) => ({
+          attachments: await Promise.all(
+            (r.attachments ?? []).map(async (a: any) => ({
               id: a.id,
               filename: a.filename,
               mime_type: a.mimeType,
               size: a.size,
-              url: a.downloadUrl,
-            })) ?? [],
+              url: a.downloadUrl ?? await a.url(),
+            }))
+          ),
           created_at: r.createdAt.toISO(),
-        })) ?? [],
+        }))
+      ),
       activities:
         ticket.activities?.map((a: any) => ({
           id: a.id,

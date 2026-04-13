@@ -74,9 +74,16 @@ export default class CustomerTicketsController {
     await ticket.load('tags')
     await ticket.load((loader: any) => {
       loader.load('replies', (query: any) => {
-        query.where('is_internal_note', false).orderBy('created_at', 'desc')
+        query.preload('attachments').where('is_internal_note', false).orderBy('created_at', 'desc')
       })
     })
+
+    // Resolve attachment URLs (url() is async on the Attachment model)
+    for (const reply of ticket.replies ?? []) {
+      for (const attachment of reply.attachments ?? []) {
+        ;(attachment as any).$extras.url = await attachment.url()
+      }
+    }
 
     return getRenderer().render(ctx, 'Escalated/Customer/Show', {
       ticket,
