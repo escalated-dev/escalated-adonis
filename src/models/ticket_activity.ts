@@ -1,5 +1,5 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { BaseModel, column, belongsTo, computed } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { ActivityType } from '../types.js'
 import Ticket from './ticket.js'
@@ -33,6 +33,14 @@ export default class TicketActivity extends BaseModel {
   declare createdAt: DateTime
 
   // Note: No updated_at — only created_at for activity logs
+
+  // ---- Computed ----
+
+  @computed()
+  get createdAtHuman(): string {
+    if (!this.createdAt) return ''
+    return this.createdAt.toRelative() ?? this.createdAt.toISO() ?? ''
+  }
 
   // ---- Relationships ----
 

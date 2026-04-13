@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type Ticket from '../../models/ticket.js'
 import type Tag from '../../models/tag.js'
 import Macro from '../../models/macro.js'
+import ChatSession from '../../models/chat_session.js'
 import TicketService from '../../services/ticket_service.js'
 import AssignmentService from '../../services/assignment_service.js'
 import MacroService from '../../services/macro_service.js'
@@ -64,8 +65,36 @@ export default class ApiTicketController {
       })
     })
 
+    // Load associated chat session (if this ticket originated from chat)
+    const chatSession = await ChatSession.query()
+      .where('ticket_id', ticket.id)
+      .first()
+
+    // Load chat messages (replies with type 'chat_message')
+    const chatMessages = ticket.replies?.filter((r: any) => r.type === 'chat_message') ?? []
+
+    // Count requester's total tickets
+    const { default: TicketModel } = await import('../../models/ticket.js')
+    let requesterTicketCount = 0
+    if (ticket.requesterId && ticket.requesterType) {
+      const countResult = await TicketModel.query()
+        .where('requester_type', ticket.requesterType)
+        .where('requester_id', ticket.requesterId)
+        .count('* as total')
+        .first()
+      requesterTicketCount = Number((countResult as any)?.$extras?.total ?? 0)
+    }
+
+    // Load related tickets (from split metadata links)
+    const relatedTickets = await this.loadRelatedTickets(ticket)
+
     return ctx.response.json({
-      data: await this.formatTicketDetail(ticket),
+      data: await this.formatTicketDetail(ticket, {
+        chatSession,
+        chatMessages,
+        requesterTicketCount,
+        relatedTickets,
+      }),
     })
   }
 
@@ -340,7 +369,15 @@ export default class ApiTicketController {
    * Format a ticket for detail (show) responses.
    * Matches the Laravel TicketResource output.
    */
-  protected async formatTicketDetail(ticket: Ticket): Promise<Record<string, any>> {
+  protected async formatTicketDetail(
+    ticket: Ticket,
+    extras?: {
+      chatSession?: ChatSession | null
+      chatMessages?: any[]
+      requesterTicketCount?: number
+      relatedTickets?: { id: number; reference: string; subject: string; status: string }[]
+    }
+  ): Promise<Record<string, any>> {
     const data: Record<string, any> = {
       id: ticket.id,
       reference: ticket.reference,
@@ -382,7 +419,7 @@ export default class ApiTicketController {
               filename: a.filename,
               mime_type: a.mimeType,
               size: a.size,
-              url: await a.url(),
+              url: a.downloadUrl ?? await a.url(),
             }))
           ),
           created_at: r.createdAt.toISO(),
@@ -394,6 +431,7 @@ export default class ApiTicketController {
           type: a.type,
           causer: null, // Causer loaded separately via user model
           created_at: a.createdAt.toISO(),
+          created_at_human: a.createdAt.toRelative() ?? a.createdAt.toISO(),
         })) ?? [],
       sla: {
         first_response_due_at: ticket.firstResponseDueAt?.toISO() ?? null,
@@ -410,8 +448,65 @@ export default class ApiTicketController {
       closed_at: ticket.closedAt?.toISO() ?? null,
       created_at: ticket.createdAt.toISO(),
       updated_at: ticket.updatedAt.toISO(),
+
+      // Chat context fields
+      chat_session_id: extras?.chatSession?.id ?? null,
+      chat_started_at: extras?.chatSession?.createdAt?.toISO() ?? null,
+      chat_messages:
+        extras?.chatMessages?.map((m: any) => ({
+          id: m.id,
+          body: m.body,
+          author_type: m.authorType,
+          author_id: m.authorId,
+          created_at: m.createdAt.toISO(),
+        })) ?? [],
+      chat_metadata: extras?.chatSession?.metadata ?? ticket.chatMetadata ?? null,
+
+      // Requester context
+      requester_ticket_count: extras?.requesterTicketCount ?? 0,
+
+      // Related tickets (from splits / metadata links)
+      related_tickets: extras?.relatedTickets ?? [],
     }
 
     return data
+  }
+
+  /**
+   * Load tickets related to the given ticket via split metadata.
+   */
+  protected async loadRelatedTickets(
+    ticket: Ticket
+  ): Promise<{ id: number; reference: string; subject: string; status: string }[]> {
+    const { default: TicketModel } = await import('../../models/ticket.js')
+    const relatedIds: number[] = []
+
+    const meta = ticket.metadata ?? {}
+
+    // Ticket was split from another ticket
+    if (meta.split_from_ticket_id) {
+      relatedIds.push(Number(meta.split_from_ticket_id))
+    }
+
+    // Ticket was split into other tickets
+    if (Array.isArray(meta.split_to_ticket_ids)) {
+      relatedIds.push(...meta.split_to_ticket_ids.map(Number))
+    }
+
+    if (relatedIds.length === 0) return []
+
+    const related = await TicketModel.query().whereIn('id', relatedIds).select(
+      'id',
+      'reference',
+      'subject',
+      'status'
+    )
+
+    return related.map((t: any) => ({
+      id: t.id,
+      reference: t.reference,
+      subject: t.subject,
+      status: t.status,
+    }))
   }
 }

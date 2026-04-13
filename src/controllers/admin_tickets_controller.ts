@@ -5,6 +5,7 @@ import Department from '../models/department.js'
 import Tag from '../models/tag.js'
 import CannedResponse from '../models/canned_response.js'
 import Macro from '../models/macro.js'
+import ChatSession from '../models/chat_session.js'
 import TicketService from '../services/ticket_service.js'
 import AssignmentService from '../services/assignment_service.js'
 import MacroService from '../services/macro_service.js'
@@ -102,6 +103,29 @@ export default class AdminTicketsController {
     const isFollowing = await ticket.isFollowedBy(userId)
     const followersCount = await ticket.followersCount()
 
+    // Load associated chat session
+    const chatSession = await ChatSession.query()
+      .where('ticket_id', ticket.id)
+      .first()
+
+    // Chat messages are replies with type 'chat_message'
+    const chatMessages = ticket.replies?.filter((r: any) => r.type === 'chat_message') ?? []
+
+    // Count requester's total tickets
+    const { default: TicketModel } = await import('../models/ticket.js')
+    let requesterTicketCount = 0
+    if (ticket.requesterId && ticket.requesterType) {
+      const countResult = await TicketModel.query()
+        .where('requester_type', ticket.requesterType)
+        .where('requester_id', ticket.requesterId)
+        .count('* as total')
+        .first()
+      requesterTicketCount = Number((countResult as any)?.$extras?.total ?? 0)
+    }
+
+    // Load related tickets via split metadata
+    const relatedTickets = await this.loadRelatedTickets(ticket)
+
     return getRenderer().render(ctx, 'Escalated/Admin/Tickets/Show', {
       ticket,
       departments,
@@ -111,6 +135,18 @@ export default class AdminTicketsController {
       macros,
       is_following: isFollowing,
       followers_count: followersCount,
+      chat_session_id: chatSession?.id ?? null,
+      chat_started_at: chatSession?.createdAt?.toISO() ?? null,
+      chat_messages: chatMessages.map((m: any) => ({
+        id: m.id,
+        body: m.body,
+        author_type: m.authorType,
+        author_id: m.authorId,
+        created_at: m.createdAt.toISO(),
+      })),
+      chat_metadata: chatSession?.metadata ?? ticket.chatMetadata ?? null,
+      requester_ticket_count: requesterTicketCount,
+      related_tickets: relatedTickets,
     })
   }
 
@@ -248,6 +284,37 @@ export default class AdminTicketsController {
       reply.isPinned ? t('ticket.note_pinned') : t('ticket.note_unpinned')
     )
     return ctx.response.redirect().back()
+  }
+
+  /**
+   * Load tickets related to the given ticket via split metadata.
+   */
+  protected async loadRelatedTickets(
+    ticket: Ticket
+  ): Promise<{ id: number; reference: string; subject: string; status: string }[]> {
+    const { default: TicketModel } = await import('../models/ticket.js')
+    const relatedIds: number[] = []
+    const meta = ticket.metadata ?? {}
+
+    if (meta.split_from_ticket_id) {
+      relatedIds.push(Number(meta.split_from_ticket_id))
+    }
+    if (Array.isArray(meta.split_to_ticket_ids)) {
+      relatedIds.push(...meta.split_to_ticket_ids.map(Number))
+    }
+
+    if (relatedIds.length === 0) return []
+
+    const related = await TicketModel.query()
+      .whereIn('id', relatedIds)
+      .select('id', 'reference', 'subject', 'status')
+
+    return related.map((t: any) => ({
+      id: t.id,
+      reference: t.reference,
+      subject: t.subject,
+      status: t.status,
+    }))
   }
 
   /**
