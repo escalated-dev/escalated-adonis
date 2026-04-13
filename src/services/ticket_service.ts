@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon'
+import db from '@adonisjs/lucid/services/db'
 import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
@@ -323,7 +324,15 @@ export default class TicketService {
     filters: Record<string, any> = {},
     forUser?: { id: number; constructor: { name: string } } | null
   ) {
-    const query = Ticket.query().preload('department').preload('tags')
+    const query = Ticket.query()
+      .preload('department')
+      .preload('tags')
+      .select('escalated_tickets.*')
+      .select(
+        db.rawQuery(
+          '(select max(r.created_at) from escalated_replies r where r.ticket_id = escalated_tickets.id and r.deleted_at is null) as last_reply_at'
+        )
+      )
 
     // If listing for a specific user (customer view)
     if (forUser) {
@@ -375,8 +384,8 @@ export default class TicketService {
     }
 
     if (filters.following && forUser) {
-      const { default: db } = await import('@adonisjs/lucid/services/db')
-      const followerTicketIds = await db
+      const { default: lucidDb } = await import('@adonisjs/lucid/services/db')
+      const followerTicketIds = await lucidDb
         .from('escalated_ticket_followers')
         .where('user_id', forUser.id)
         .select('ticket_id')
