@@ -1,5 +1,5 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, computed } from '@adonisjs/lucid/orm'
 
 export default class Attachment extends BaseModel {
   static table = 'escalated_attachments'
@@ -36,6 +36,15 @@ export default class Attachment extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+
+  /**
+   * Synchronous download URL included in JSON serialization via @computed.
+   * For the actual storage driver URL, use the async url() method instead.
+   */
+  @computed()
+  get downloadUrl(): string {
+    return `/escalated/attachments/${this.id}/download`
+  }
 
   // ---- Helpers ----
 

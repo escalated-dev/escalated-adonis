@@ -419,7 +419,7 @@ export default class ApiTicketController {
               filename: a.filename,
               mime_type: a.mimeType,
               size: a.size,
-              url: a.url,
+              url: a.downloadUrl,
             })) ?? [],
           created_at: r.createdAt.toISO(),
         })) ?? [],
