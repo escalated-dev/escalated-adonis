@@ -69,12 +69,19 @@ export default class AdminTicketsController {
     await ticket.load('satisfactionRating')
     await ticket.load((loader: any) => {
       loader.load('replies', (query: any) => {
-        query.orderBy('created_at', 'desc')
+        query.preload('attachments').orderBy('created_at', 'desc')
       })
       loader.load('activities', (query: any) => {
         query.orderBy('created_at', 'desc').limit(20)
       })
     })
+
+    // Resolve attachment URLs (url() is async on the Attachment model)
+    for (const reply of ticket.replies ?? []) {
+      for (const attachment of reply.attachments ?? []) {
+        ;(attachment as any).$extras.url = await attachment.url()
+      }
+    }
 
     const departments = await Department.query()
       .withScopes((scopes) => scopes.active())
