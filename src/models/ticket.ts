@@ -191,7 +191,36 @@ export default class Ticket extends BaseModel {
 
   @computed()
   get isLiveChat(): boolean {
-    return this.channel === 'chat'
+    return this.status === 'live' && this.channel === 'chat'
+  }
+
+  @computed()
+  get lastReplyAt(): string | null {
+    // Prefer $extras populated by a subquery; fall back to preloaded replies
+    if ((this as any).$extras?.last_reply_at) {
+      return (this as any).$extras.last_reply_at
+    }
+    const replies = Array.isArray(this.replies) ? this.replies : []
+    if (replies.length > 0) {
+      // replies may be ordered desc already; pick the most recent
+      const sorted = [...replies].sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt?.toISO?.() ?? b.createdAt).getTime() -
+          new Date(a.createdAt?.toISO?.() ?? a.createdAt).getTime()
+      )
+      const ts = sorted[0].createdAt
+      return ts?.toISO?.() ?? ts?.toString() ?? null
+    }
+    return null
+  }
+
+  @computed()
+  get lastReplyAuthor(): string | null {
+    // Prefer $extras populated by a subquery; fall back to preloaded replies
+    if ((this as any).$extras?.last_reply_author) {
+      return (this as any).$extras.last_reply_author
+    }
+    return null
   }
 
   @computed()
