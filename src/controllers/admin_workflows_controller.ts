@@ -129,7 +129,11 @@ export default class AdminWorkflowsController {
     const workflow = await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
     const logs = await db
       .from('escalated_workflow_logs')
-      .leftJoin('escalated_workflows', 'escalated_workflow_logs.workflow_id', 'escalated_workflows.id')
+      .leftJoin(
+        'escalated_workflows',
+        'escalated_workflow_logs.workflow_id',
+        'escalated_workflows.id'
+      )
       .leftJoin('escalated_tickets', 'escalated_workflow_logs.ticket_id', 'escalated_tickets.id')
       .select(
         'escalated_workflow_logs.*',

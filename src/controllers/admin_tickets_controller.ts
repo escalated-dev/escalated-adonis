@@ -104,9 +104,7 @@ export default class AdminTicketsController {
     const followersCount = await ticket.followersCount()
 
     // Load associated chat session
-    const chatSession = await ChatSession.query()
-      .where('ticket_id', ticket.id)
-      .first()
+    const chatSession = await ChatSession.query().where('ticket_id', ticket.id).first()
 
     // Chat messages are replies with type 'chat_message'
     const chatMessages = ticket.replies?.filter((r: any) => r.type === 'chat_message') ?? []
@@ -309,11 +307,11 @@ export default class AdminTicketsController {
       .whereIn('id', relatedIds)
       .select('id', 'reference', 'subject', 'status')
 
-    return related.map((t: any) => ({
-      id: t.id,
-      reference: t.reference,
-      subject: t.subject,
-      status: t.status,
+    return related.map((linkedTicket: any) => ({
+      id: linkedTicket.id,
+      reference: linkedTicket.reference,
+      subject: linkedTicket.subject,
+      status: linkedTicket.status,
     }))
   }
 

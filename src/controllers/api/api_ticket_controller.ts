@@ -37,7 +37,7 @@ export default class ApiTicketController {
     const tickets = await this.ticketService.list(filters, filters.following ? user : null)
 
     return ctx.response.json({
-      data: tickets.all().map((t: Ticket) => this.formatTicketCollection(t)),
+      data: tickets.all().map((ticket: Ticket) => this.formatTicketCollection(ticket)),
       meta: {
         current_page: tickets.currentPage,
         last_page: tickets.lastPage,
@@ -66,9 +66,7 @@ export default class ApiTicketController {
     })
 
     // Load associated chat session (if this ticket originated from chat)
-    const chatSession = await ChatSession.query()
-      .where('ticket_id', ticket.id)
-      .first()
+    const chatSession = await ChatSession.query().where('ticket_id', ticket.id).first()
 
     // Load chat messages (replies with type 'chat_message')
     const chatMessages = ticket.replies?.filter((r: any) => r.type === 'chat_message') ?? []
@@ -419,7 +417,7 @@ export default class ApiTicketController {
               filename: a.filename,
               mime_type: a.mimeType,
               size: a.size,
-              url: a.downloadUrl ?? await a.url(),
+              url: a.downloadUrl ?? (await a.url()),
             }))
           ),
           created_at: r.createdAt.toISO(),
@@ -495,18 +493,15 @@ export default class ApiTicketController {
 
     if (relatedIds.length === 0) return []
 
-    const related = await TicketModel.query().whereIn('id', relatedIds).select(
-      'id',
-      'reference',
-      'subject',
-      'status'
-    )
+    const related = await TicketModel.query()
+      .whereIn('id', relatedIds)
+      .select('id', 'reference', 'subject', 'status')
 
-    return related.map((t: any) => ({
-      id: t.id,
-      reference: t.reference,
-      subject: t.subject,
-      status: t.status,
+    return related.map((linkedTicket: any) => ({
+      id: linkedTicket.id,
+      reference: linkedTicket.reference,
+      subject: linkedTicket.subject,
+      status: linkedTicket.status,
     }))
   }
 }
