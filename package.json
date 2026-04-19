@@ -30,12 +30,17 @@
   ],
   "scripts": {
     "build": "tsc",
+    "build:emit": "tsc --noEmitOnError false || true",
     "dev": "tsc --watch",
     "clean": "rm -rf build",
     "test": "node --test tests/*.test.js",
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "^0.8.13",
+    "luxon": "^3.7.2"
   },
   "prettier": "@adonisjs/prettier-config",
   "keywords": [
