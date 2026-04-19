@@ -255,6 +255,7 @@ function registerUiRoutes(config: any) {
           router
             .post('/tickets/:ticket/unsnooze', [AgentTicketsController, 'unsnooze'])
             .as('escalated.agent.tickets.unsnooze')
+          router
             .post('/tickets/:ticket/split', [AgentTicketsController, 'split'])
             .as('escalated.agent.tickets.split')
         })

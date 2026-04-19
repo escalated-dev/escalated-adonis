@@ -175,7 +175,7 @@ export default class SsoService {
   private extractSamlAttributes(doc: Document): Record<string, string> {
     const attributes: Record<string, string> = {}
     const attrEls = doc.getElementsByTagNameNS('urn:oasis:names:tc:SAML:2.0:assertion', 'Attribute')
-    for (const attrEl of attrEls) {
+    for (const attrEl of Array.from(attrEls)) {
       const name = attrEl.getAttribute('Name')
       if (!name) continue
       const valueEls = attrEl.getElementsByTagNameNS(

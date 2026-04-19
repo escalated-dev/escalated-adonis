@@ -42,6 +42,7 @@ export type ActivityType =
   | 'reopened'
   | 'resolved'
   | 'closed'
+  | 'mention'
 
 /**
  * Inbound email statuses
