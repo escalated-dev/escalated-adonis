@@ -349,12 +349,15 @@ export default class AdvancedReportingService {
 
   private async cohortByChannel() {
     const { default: db } = await import('@adonisjs/lucid/services/db')
-    const channels = await db
+    // Lucid's `DatabaseQueryBuilderContract` doesn't expose `.pluck()`;
+    // select the column and map manually.
+    const rows = await db
       .from('escalated_tickets')
       .whereBetween('created_at', [this.from.toSQL()!, this.to.toSQL()!])
       .whereNotNull('channel')
       .distinct('channel')
-      .pluck('channel')
+      .select('channel')
+    const channels = rows.map((r: { channel: string }) => r.channel)
     const results = []
     for (const ch of channels) {
       const scope = Ticket.query()
@@ -367,12 +370,13 @@ export default class AdvancedReportingService {
 
   private async cohortByType() {
     const { default: db } = await import('@adonisjs/lucid/services/db')
-    const types = await db
+    const rows = await db
       .from('escalated_tickets')
       .whereBetween('created_at', [this.from.toSQL()!, this.to.toSQL()!])
       .whereNotNull('ticket_type')
       .distinct('ticket_type')
-      .pluck('ticket_type')
+      .select('ticket_type')
+    const types = rows.map((r: { ticket_type: string }) => r.ticket_type)
     const results = []
     for (const t of types) {
       const scope = Ticket.query()
@@ -384,7 +388,10 @@ export default class AdvancedReportingService {
   }
 
   private async buildCohort(name: string, query: ReturnType<typeof Ticket.query>) {
-    const tickets = await query
+    // `ReturnType<typeof Ticket.query>` loses the model parameter on await,
+    // so the returned array is `unknown[]` to TypeScript even though it's
+    // really `Ticket[]` at runtime. Re-narrow.
+    const tickets = (await query) as Ticket[]
     const resolved = tickets.filter((t) => t.resolvedAt)
     const total = tickets.length
     const resTimes = resolved.map(

@@ -18,7 +18,7 @@ import string from '@adonisjs/core/helpers/string'
 import type ImportJob from '../models/import_job.js'
 import ImportSourceMap from '../models/import_source_map.js'
 import ImportContext from '../support/import_context.js'
-import type { ImportAdapter } from '../contracts/import_adapter.js'
+import type { ImportAdapter, ExtractResult } from '../contracts/import_adapter.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import { escalated_applyFilters, escalated_doAction } from '../support/helpers.js'
 
@@ -140,9 +140,10 @@ export default class ImportService {
     let processed = job.progress?.[entityType]?.processed ?? 0
     let skipped = job.progress?.[entityType]?.skipped ?? 0
     let failed = job.progress?.[entityType]?.failed ?? 0
+    let result: ExtractResult
 
     do {
-      const result = await adapter.extract(entityType, job.credentials ?? {}, cursor)
+      result = await adapter.extract(entityType, job.credentials ?? {}, cursor)
 
       if (result.totalCount !== null) {
         await job.updateEntityProgress(entityType, { total: result.totalCount })

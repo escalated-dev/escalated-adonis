@@ -173,7 +173,7 @@ export default class InboundEmailService {
     }
 
     // Guest ticket
-    const { string: stringHelper } = await import('@adonisjs/core/helpers')
+    const { default: stringHelper } = await import('@adonisjs/core/helpers/string')
 
     const ticket = await Ticket.create({
       reference: await Ticket.generateReference(),

@@ -60,8 +60,10 @@ export default class Department extends BaseModel {
 
   async attachAgent(agentId: number): Promise<void> {
     const { default: db } = await import('@adonisjs/lucid/services/db')
+    // Lucid's `InsertQueryBuilderContract` doesn't expose `onConflict` —
+    // drop into the underlying Knex builder for the upsert-ignore.
     await db
-      .insertQuery()
+      .knexQuery()
       .table('escalated_department_agent')
       .insert({ department_id: this.id, agent_id: agentId })
       .onConflict(['department_id', 'agent_id'])

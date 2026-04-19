@@ -25,7 +25,6 @@
     "configure.ts",
     "stubs",
     "database",
-    "config",
     "start"
   ],
   "scripts": {
