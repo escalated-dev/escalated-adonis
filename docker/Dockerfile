@@ -1,38 +1,42 @@
 # syntax=docker/dockerfile:1.7
+#
+# Adonis demo (placeholder pattern, matching dotnet/spring/phoenix demos).
+#
+# Bootstraps an AdonisJS Inertia starter non-interactively, then overlays a
+# tiny /demo route. The escalated-adonis package is intentionally NOT
+# installed here because of a tracked package-source issue
+# (https://github.com/escalated-dev/escalated-adonis/issues/34) — the
+# package's TypeScript build produces 314 errors and the configure.ts
+# calls publishMigrations which @adonisjs/core@6 no longer exports. Once
+# #34 lands, layering the package back in is a small follow-up.
 
-# ---------- 1. Package tarball ----------
-FROM node:22-alpine AS package
-
-WORKDIR /package
-COPY package.json package-lock.json* ./
-RUN npm install --no-audit --no-fund --no-progress
-COPY tsconfig.json ./
-COPY src ./src
-COPY providers ./providers
-COPY config ./config
-COPY start ./start
-COPY stubs ./stubs
-COPY database ./database
-COPY configure.ts index.ts ./
-RUN npm run build && npm pack && mv *.tgz /package.tgz
-
-# ---------- 2. Host app build ----------
 FROM node:22-alpine AS host
 
 RUN apk add --no-cache git
 
 WORKDIR /host
 
-# Start from the official AdonisJS starter, then layer the package on top.
-RUN npm create adonisjs@latest -- --kit=inertia --db=postgres --auth-guard=session --skip-install --pkg=npm --no-git -y . || \
-    echo "starter create failed — see PR body for known blocker"
+# create-adonisjs is non-interactive when given --kit + --adapter + --no-ssr.
+# --no-git skips git init; we don't need a repo inside the demo container.
+# Use the slim API kit (no Vite/Inertia/SSR setup) — the placeholder demo
+# only serves static HTML, so we keep the host minimal until #34 is fixed.
+RUN npm install -g create-adonisjs --silent && \
+    create-adonisjs \
+        --kit=api \
+        --db=postgres \
+        --auth-guard=session \
+        --pkg=npm \
+        --git-init=false \
+        .
 
-COPY --from=package /package.tgz /package.tgz
-RUN [ -f package.json ] && \
-    npm install /package.tgz --no-audit --no-fund --no-progress || \
-    echo "install failed"
+# Overlay the /demo placeholder route + controller.
+COPY docker/host-app/demo_routes.ts /host/start/demo_routes.ts
+COPY docker/host-app/demo_controller.ts /host/app/controllers/demo_controller.ts
 
-# ---------- 3. Runtime ----------
+# Wire the demo route file into start/routes.ts (idempotent).
+RUN grep -q "demo_routes" /host/start/routes.ts || \
+    echo "import './demo_routes.js'" >> /host/start/routes.ts
+
 FROM node:22-alpine AS runtime
 
 RUN apk add --no-cache postgresql-client
@@ -46,4 +50,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE 3333
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["node", "ace", "serve"]
+CMD ["node", "ace.js", "serve"]

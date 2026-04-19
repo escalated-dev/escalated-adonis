@@ -9,7 +9,7 @@ until pg_isready -h "${DB_HOST:-db}" -p "${DB_PORT:-5432}" -U "${DB_USER:-escala
 done
 
 echo "[demo] running migrations"
-node ace migration:run --force 2>&1 || echo "[demo] migrations: skipped/failed"
+node ace.js migration:run --force 2>&1 || echo "[demo] migrations: skipped/failed"
 
 echo "[demo] ready"
 exec "$@"
