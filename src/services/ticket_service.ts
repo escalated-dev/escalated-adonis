@@ -457,7 +457,8 @@ export default class TicketService {
 
     return ticket.refresh()
   }
-  n /**
+
+  /**
    * Split a ticket by creating a new ticket from a specific reply.
    *
    * The new ticket inherits the original's priority, type, channel, department,

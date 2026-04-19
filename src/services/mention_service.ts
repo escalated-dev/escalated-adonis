@@ -108,12 +108,12 @@ export default class MentionService {
     for (const mention of mentions) {
       await TicketActivity.create({
         ticketId: ticket.id,
-        activityType: 'mention',
-        details: JSON.stringify({
+        type: 'mention',
+        properties: {
           mentioned_user_id: mention.user_id,
           reply_id: reply.id,
           message: `You were mentioned in ticket #${ticket.reference}`,
-        }),
+        },
       })
     }
   }
