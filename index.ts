@@ -12,6 +12,10 @@
 // the package is type-checked standalone.
 import './src/types/augmentations.js'
 
+// Augment ContainerBindings so `container.singleton('escalated.*', ...)` and
+// `container.make('escalated.*')` type-check against the right resolved type.
+import './src/types/container_bindings.js'
+
 export { configure } from './configure.js'
 export { default as EscalatedProvider } from './providers/escalated_provider.js'
 
