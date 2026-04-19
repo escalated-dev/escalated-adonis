@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import emitter from '@adonisjs/core/services/emitter'
-import { string } from '@adonisjs/core/helpers'
+import string from '@adonisjs/core/helpers/string'
 import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
 import Department from '../models/department.js'

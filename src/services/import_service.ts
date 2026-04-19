@@ -14,7 +14,7 @@
 */
 
 import { DateTime } from 'luxon'
-import { string } from '@adonisjs/core/helpers'
+import string from '@adonisjs/core/helpers/string'
 import type ImportJob from '../models/import_job.js'
 import ImportSourceMap from '../models/import_source_map.js'
 import ImportContext from '../support/import_context.js'
