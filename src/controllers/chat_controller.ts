@@ -3,6 +3,7 @@ import ChatSessionService from '../services/chat_session_service.js'
 import type ChatSession from '../models/chat_session.js'
 import AgentProfile from '../models/agent_profile.js'
 import { DateTime } from 'luxon'
+import { requireAuthUser } from '../support/auth_user.js'
 
 /**
  * Agent-facing chat controller.
@@ -16,7 +17,7 @@ export default class ChatController {
    * GET /agent/chats — List active chats for the authenticated agent.
    */
   async index(ctx: HttpContext) {
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const chats = await this.chatService.getAgentChats(user.id)
 
     return ctx.response.json({
@@ -40,7 +41,7 @@ export default class ChatController {
    * POST /agent/chats/:id/accept — Accept a chat from the queue.
    */
   async accept(ctx: HttpContext) {
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const sessionId = ctx.params.id
 
     const session = await this.chatService.assignAgent(sessionId, user.id)
@@ -54,7 +55,7 @@ export default class ChatController {
    * POST /agent/chats/:id/end — End a chat session.
    */
   async end(ctx: HttpContext) {
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const sessionId = ctx.params.id
 
     const session = await this.chatService.endChat(sessionId, user)
@@ -68,7 +69,7 @@ export default class ChatController {
    * POST /agent/chats/:id/transfer — Transfer a chat to another agent.
    */
   async transfer(ctx: HttpContext) {
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const sessionId = ctx.params.id
     const { agent_id: newAgentId } = ctx.request.only(['agent_id'])
 
@@ -87,7 +88,7 @@ export default class ChatController {
    * POST /agent/chats/status — Update the agent's chat availability status.
    */
   async updateStatus(ctx: HttpContext) {
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const { status } = ctx.request.only(['status'])
 
     if (!['online', 'away', 'offline'].includes(status)) {
@@ -117,7 +118,7 @@ export default class ChatController {
    * POST /agent/chats/:id/message — Send a message in a chat.
    */
   async message(ctx: HttpContext) {
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const sessionId = ctx.params.id
     const { body } = ctx.request.only(['body'])
 
@@ -146,7 +147,7 @@ export default class ChatController {
    * POST /agent/chats/:id/typing — Send a typing indicator.
    */
   async typing(ctx: HttpContext) {
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const sessionId = ctx.params.id
     const { is_typing: isTyping } = ctx.request.only(['is_typing'])
 

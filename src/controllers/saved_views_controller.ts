@@ -1,13 +1,14 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import SavedView from '../models/saved_view.js'
 import { t } from '../support/i18n.js'
+import { requireAuthUser } from '../support/auth_user.js'
 
 export default class SavedViewsController {
   /**
    * GET /support/agent/views — List saved views for the current user
    */
   async index(ctx: HttpContext) {
-    const userId = ctx.auth.user!.id
+    const userId = requireAuthUser(ctx.auth).id
 
     const views = await SavedView.query()
       .withScopes((scopes) => scopes.visibleTo(userId))
@@ -21,7 +22,7 @@ export default class SavedViewsController {
    * POST /support/agent/views — Create a new saved view
    */
   async store(ctx: HttpContext) {
-    const userId = ctx.auth.user!.id
+    const userId = requireAuthUser(ctx.auth).id
     const data = ctx.request.only([
       'name',
       'filters',
@@ -57,7 +58,7 @@ export default class SavedViewsController {
    * PUT /support/agent/views/:id — Update a saved view
    */
   async update(ctx: HttpContext) {
-    const userId = ctx.auth.user!.id
+    const userId = requireAuthUser(ctx.auth).id
     const viewId = ctx.params.id
 
     const view = await SavedView.query()
@@ -99,7 +100,7 @@ export default class SavedViewsController {
    * DELETE /support/agent/views/:id — Delete a saved view
    */
   async destroy(ctx: HttpContext) {
-    const userId = ctx.auth.user!.id
+    const userId = requireAuthUser(ctx.auth).id
     const viewId = ctx.params.id
 
     const view = await SavedView.query().where('id', viewId).where('user_id', userId).firstOrFail()
@@ -113,7 +114,7 @@ export default class SavedViewsController {
    * POST /support/agent/views/reorder — Reorder saved views
    */
   async reorder(ctx: HttpContext) {
-    const userId = ctx.auth.user!.id
+    const userId = requireAuthUser(ctx.auth).id
     const { order } = ctx.request.only(['order'])
 
     if (!Array.isArray(order)) {

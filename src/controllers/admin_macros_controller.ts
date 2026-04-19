@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Macro from '../models/macro.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
+import { requireAuthUser } from '../support/auth_user.js'
 
 export default class AdminMacrosController {
   async index(ctx: HttpContext) {
@@ -18,7 +19,7 @@ export default class AdminMacrosController {
       actions: data.actions,
       isShared: data.is_shared !== false,
       order: data.order || 0,
-      createdBy: auth.user!.id,
+      createdBy: requireAuthUser(auth).id,
     })
 
     session.flash('success', t('admin.macro_created'))
