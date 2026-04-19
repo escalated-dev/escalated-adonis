@@ -71,7 +71,9 @@
     "@adonisjs/lucid": "^21.3.0",
     "@adonisjs/mail": "^9.0.0",
     "@adonisjs/prettier-config": "^1.4.5",
+    "@adonisjs/session": "^7.6.0",
     "@japa/runner": "^3.0.0",
+    "@types/luxon": "^3.7.1",
     "eslint": "^9.39.4",
     "prettier": "^3.8.1",
     "typescript": "^5.4.0"

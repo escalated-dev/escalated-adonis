@@ -7,6 +7,11 @@
 |
 */
 
+// Load host-framework type augmentations (ctx.auth, ctx.session, ctx.inertia)
+// at the root so downstream imports see the augmented HttpContext even when
+// the package is type-checked standalone.
+import './src/types/augmentations.js'
+
 export { configure } from './configure.js'
 export { default as EscalatedProvider } from './providers/escalated_provider.js'
 
