@@ -1,7 +1,7 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column, hasMany, scope, beforeCreate } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
-import { string } from '@adonisjs/core/helpers'
+import string from '@adonisjs/core/helpers/string'
 import Ticket from './ticket.js'
 
 export default class Department extends BaseModel {
