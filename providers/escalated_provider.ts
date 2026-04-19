@@ -132,9 +132,6 @@ export default class EscalatedProvider {
     // the core escalated routes.
     await this.bootPluginBridge()
 
-    // Register routes
-    await this.registerRoutes()
-
     // Wire AdonisJS emitter events → plugin bridge action hooks
     await this.wireEventsToBridge()
 
@@ -149,6 +146,25 @@ export default class EscalatedProvider {
 
     // Load active plugins (must happen after config is loaded)
     await this.loadPlugins()
+  }
+
+  /**
+   * Start the provider — runs *after* the app has fully booted.
+   *
+   * Route registration MUST happen here, not in `boot()`. The
+   * `@adonisjs/core/services/router` module assigns its `router` export
+   * inside an `await app.booted(...)` callback — so the value is
+   * `undefined` for any code that runs during `boot()`. Anything that
+   * depends on `router.group()` etc. needs to live in `start()`.
+   *
+   * Skipped outside of the `web` environment (ace/test contexts don't
+   * load the router service at all).
+   */
+  async start() {
+    if (this.app.getEnvironment() !== 'web') {
+      return
+    }
+    await this.registerRoutes()
   }
 
   /**

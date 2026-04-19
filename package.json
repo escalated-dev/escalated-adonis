@@ -28,8 +28,9 @@
     "start"
   ],
   "scripts": {
-    "build": "tsc",
-    "build:emit": "tsc --noEmitOnError false || true",
+    "build": "tsc && npm run copy:stubs",
+    "build:emit": "tsc --noEmitOnError false || true && npm run copy:stubs",
+    "copy:stubs": "node ./scripts/copy-build-assets.mjs",
     "dev": "tsc --watch",
     "clean": "rm -rf build",
     "test": "node --test tests/*.test.js",
