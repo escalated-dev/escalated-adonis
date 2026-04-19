@@ -10,9 +10,9 @@
 */
 
 import { type DateTime } from 'luxon'
-import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
+import { BaseModel, beforeCreate, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
-import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'node:crypto'
+import { createCipheriv, createDecipheriv, randomBytes, randomUUID, createHash } from 'node:crypto'
 import ImportSourceMap from './import_source_map.js'
 
 // --------------------------------------------------------------------------
@@ -145,6 +145,15 @@ export default class ImportJob extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+
+  // ---- Hooks ----
+
+  @beforeCreate()
+  static assignUuid(job: ImportJob) {
+    if (!job.id) {
+      job.id = randomUUID()
+    }
+  }
 
   // ---- Relationships ----
 

@@ -5,15 +5,12 @@ export default class CreateEscalatedImportJobs extends BaseSchema {
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
-      // UUID primary key
-      table
-        .uuid('id')
-        .primary()
-        .defaultTo(
-          this.raw(
-            "(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))"
-          )
-        )
+      // UUID primary key — generated app-side via `crypto.randomUUID()`
+      // in ImportJob's `beforeCreate` hook. App-level generation keeps
+      // the migration portable across sqlite, postgres, and mysql; each
+      // dialect needs a different DB-side default (`gen_random_uuid()`,
+      // `(UUID())`, sqlite has nothing native), so we don't pick one.
+      table.uuid('id').primary()
 
       // Platform slug (e.g. "zendesk", "freshdesk", "intercom")
       table.string('platform').notNullable()
