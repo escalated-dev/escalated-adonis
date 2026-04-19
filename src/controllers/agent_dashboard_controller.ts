@@ -2,14 +2,14 @@ import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { requireAuthUser } from '../support/auth_user.js'
 
 export default class AgentDashboardController {
   /**
    * GET /support/agent — Agent dashboard
    */
   async handle(ctx: HttpContext) {
-    const { auth } = ctx
-    const userId = auth.user!.id
+    const userId = requireAuthUser(ctx.auth).id
     const startOfDay = DateTime.now().startOf('day').toSQL()!
     const startOfWeek = DateTime.now().startOf('week').toSQL()!
 

@@ -12,6 +12,7 @@ import MacroService from '../services/macro_service.js'
 import { getRenderer } from '../rendering/renderer.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
+import { requireAuthUser } from '../support/auth_user.js'
 
 export default class AgentTicketsController {
   protected ticketService = new TicketService()
@@ -61,7 +62,7 @@ export default class AgentTicketsController {
    */
   async show(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
-    const userId = ctx.auth.user!.id
+    const userId = requireAuthUser(ctx.auth).id
 
     await ticket.load('department')
     await ticket.load('tags')
@@ -269,7 +270,7 @@ export default class AgentTicketsController {
    */
   async applyMacro(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const { macro_id: macroId } = ctx.request.only(['macro_id'])
 
     const macro = await Macro.query()
@@ -289,7 +290,7 @@ export default class AgentTicketsController {
    */
   async follow(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
-    const userId = ctx.auth.user!.id
+    const userId = requireAuthUser(ctx.auth).id
 
     if (await ticket.isFollowedBy(userId)) {
       await ticket.unfollow(userId)
@@ -307,8 +308,9 @@ export default class AgentTicketsController {
    */
   async presence(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
-    const userId = ctx.auth.user!.id
-    const userName = (ctx.auth.user as any).name ?? (ctx.auth.user as any).fullName ?? 'Agent'
+    const user = requireAuthUser(ctx.auth)
+    const userId = user.id
+    const userName = (user as any).name ?? (user as any).fullName ?? 'Agent'
 
     // Use a simple in-memory store (in production, use Redis/cache)
     const presenceStore = (globalThis as any).__escalated_presence ?? {}

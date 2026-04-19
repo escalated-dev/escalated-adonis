@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
 import SatisfactionRating from '../models/satisfaction_rating.js'
 import { t } from '../support/i18n.js'
+import { requireAuthUser } from '../support/auth_user.js'
 
 export default class SatisfactionRatingController {
   /**
@@ -9,7 +10,7 @@ export default class SatisfactionRatingController {
    */
   async store(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
-    const user = ctx.auth.user!
+    const user = requireAuthUser(ctx.auth)
     const { rating, comment } = ctx.request.only(['rating', 'comment'])
 
     if (!['resolved', 'closed'].includes(ticket.status)) {
