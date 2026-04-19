@@ -60,7 +60,17 @@
     "@adonisjs/drive": "^3.0.0",
     "@adonisjs/inertia": "^1.0.0",
     "@adonisjs/lucid": "^21.0.0",
-    "@adonisjs/mail": "^9.0.0"
+    "@adonisjs/mail": "^9.0.0",
+    "@adonisjs/transmit": "^2.0.0",
+    "adm-zip": "^0.5.0"
+  },
+  "peerDependenciesMeta": {
+    "@adonisjs/transmit": {
+      "optional": true
+    },
+    "adm-zip": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@adonisjs/auth": "^9.2.0",
@@ -73,8 +83,11 @@
     "@adonisjs/mail": "^9.0.0",
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/session": "^7.6.0",
+    "@adonisjs/transmit": "^2.0.0",
     "@japa/runner": "^3.0.0",
+    "@types/adm-zip": "^0.5.5",
     "@types/luxon": "^3.7.1",
+    "adm-zip": "^0.5.0",
     "eslint": "^9.39.4",
     "prettier": "^3.8.1",
     "typescript": "^5.4.0"
