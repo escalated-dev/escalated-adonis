@@ -181,3 +181,43 @@ export interface EscalatedEventsList {
   [ESCALATED_EVENTS.CHAT_MESSAGE]: ChatMessageData
   [ESCALATED_EVENTS.CHAT_TRANSFERRED]: ChatTransferredData
 }
+
+/*
+|--------------------------------------------------------------------------
+| Module augmentation for @adonisjs/core EventsList
+|--------------------------------------------------------------------------
+|
+| Adonis 6's emitter is strongly typed against the EventsList interface,
+| and any string event name not present in EventsList is rejected at
+| compile time with TS2769 ("not assignable to keyof EventsList").
+|
+| Importing this file (or anything that re-exports from it) registers all
+| escalated:* events with the host application's emitter. Consumers do not
+| need to repeat the augmentation in their own code.
+|
+*/
+declare module '@adonisjs/core/types' {
+  interface EventsList {
+    'escalated:ticket:created': TicketCreatedData
+    'escalated:ticket:updated': TicketUpdatedData
+    'escalated:ticket:statusChanged': TicketStatusChangedData
+    'escalated:ticket:resolved': TicketResolvedData
+    'escalated:ticket:closed': TicketClosedData
+    'escalated:ticket:reopened': TicketReopenedData
+    'escalated:ticket:assigned': TicketAssignedData
+    'escalated:ticket:unassigned': TicketUnassignedData
+    'escalated:ticket:escalated': TicketEscalatedData
+    'escalated:ticket:priorityChanged': TicketPriorityChangedData
+    'escalated:ticket:departmentChanged': DepartmentChangedData
+    'escalated:reply:created': ReplyCreatedData
+    'escalated:reply:noteAdded': InternalNoteAddedData
+    'escalated:sla:breached': SlaBreachedData
+    'escalated:sla:warning': SlaWarningData
+    'escalated:tag:added': TagAddedToTicketData
+    'escalated:tag:removed': TagRemovedFromTicketData
+    'escalated:chat:started': ChatStartedData
+    'escalated:chat:ended': ChatEndedData
+    'escalated:chat:message': ChatMessageData
+    'escalated:chat:transferred': ChatTransferredData
+  }
+}
