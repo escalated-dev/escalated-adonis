@@ -53,31 +53,31 @@ async function publishMigrations(command: ConfigureCommand): Promise<void> {
 
   await mkdir(targetDir, { recursive: true })
 
-  const sourceFiles = (await readdir(sourceDir))
-    .filter((name) => name.endsWith('.ts'))
-    .sort()
+  const sourceEntries = await readdir(sourceDir)
+  const sourceFiles = sourceEntries.filter((name) => name.endsWith('.ts')).sort()
 
-  const existing = new Set(
-    (await readdir(targetDir).catch(() => [])).filter((name) => name.endsWith('.ts'))
-  )
+  const targetEntries = await readdir(targetDir).catch((): string[] => [])
+  const existing = new Set(targetEntries.filter((name) => name.endsWith('.ts')))
 
   const force = !!command.parsedFlags.force
   const baseTimestamp = Date.now()
 
-  for (let i = 0; i < sourceFiles.length; i++) {
-    const sourceName = sourceFiles[i]
+  let offset = 0
+  for (const sourceName of sourceFiles) {
     const cleanBasename = sourceName.replace(/^\d+_/, '')
 
     if (!force) {
       const alreadyPublished = [...existing].some((name) => name.endsWith(`_${cleanBasename}`))
       if (alreadyPublished) {
         command.logger.info(`skip ${cleanBasename} (already published)`)
+        offset += 1
         continue
       }
     }
 
-    const targetName = `${baseTimestamp + i}_${cleanBasename}`
+    const targetName = `${baseTimestamp + offset}_${cleanBasename}`
     await copyFile(join(sourceDir, sourceName), join(targetDir, targetName))
     command.logger.action(`create database/migrations/${targetName}`).succeeded()
+    offset += 1
   }
 }
