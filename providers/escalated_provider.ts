@@ -193,7 +193,14 @@ export default class EscalatedProvider {
    */
   protected async shareInertiaData() {
     try {
-      const inertia = await this.app.container.make('inertia')
+      // `'inertia'` is augmented onto ContainerBindings by
+      // `@adonisjs/inertia` only after the host's inertia provider
+      // has booted; standalone tsc resolves it as `never`. Cast to
+      // the minimal interface the package needs (`share()` accepting
+      // a producer callback).
+      const inertia = (await this.app.container.make('inertia')) as unknown as {
+        share: (producer: () => Record<string, unknown>) => void
+      }
 
       inertia.share(() => {
         return {

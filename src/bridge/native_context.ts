@@ -185,12 +185,15 @@ export default class NativeContext implements PluginContext {
                 case '$ne':
                   query.whereRaw(`${extract} != ?`, [val as any])
                   break
-                case '$in':
-                  query.whereIn(
-                    PluginStoreRecord.knexQuery().client.raw(extract) as any,
-                    val as any[]
-                  )
+                case '$in': {
+                  // Reach into the active Lucid connection for a raw SQL
+                  // column reference (`$in` needs an unquoted column expr,
+                  // not a parameter binding). `knexQuery()` is exposed on
+                  // a query builder instance, not statically on the model.
+                  const knex = PluginStoreRecord.query().knexQuery.client
+                  query.whereIn(knex.raw(extract) as any, val as any[])
                   break
+                }
               }
             }
           } else {

@@ -191,7 +191,11 @@ export default class Ticket extends BaseModel {
 
   @computed()
   get isLiveChat(): boolean {
-    return this.status === 'live' && this.channel === 'chat'
+    // A "live" chat ticket is one whose channel is chat and whose status
+    // hasn't been resolved/closed. (The earlier check for status === 'live'
+    // referred to a non-existent TicketStatus value — chat-session liveness
+    // lives on `ChatSession.status`, not on the ticket itself.)
+    return this.channel === 'chat' && this.status !== 'resolved' && this.status !== 'closed'
   }
 
   @computed()
@@ -313,8 +317,10 @@ export default class Ticket extends BaseModel {
 
   async follow(userId: number): Promise<void> {
     const { default: db } = await import('@adonisjs/lucid/services/db')
+    // Lucid's `InsertQueryBuilderContract` doesn't expose `onConflict` —
+    // drop into the underlying Knex builder for the upsert-ignore.
     await db
-      .insertQuery()
+      .knexQuery()
       .table('escalated_ticket_followers')
       .insert({ ticket_id: this.id, user_id: userId })
       .onConflict(['ticket_id', 'user_id'])

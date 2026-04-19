@@ -68,7 +68,12 @@ export default class RouteRegistrar {
           }
         })
         .prefix(`${prefix}/plugins/${this.slugify(name)}/api`)
-        .use([...adminMiddleware, EnsureIsAdmin])
+        // `.use()` expects `MiddlewareFn | ParsedNamedMiddleware`, but the
+        // host config gives us middleware *names* (e.g. `'auth'`) plus our
+        // own dynamically-imported `EnsureIsAdmin` lazy module. Both are
+        // accepted at runtime by AdonisJS's middleware resolver — the type
+        // is just narrower than reality. Cast to satisfy the signature.
+        .use([...adminMiddleware, EnsureIsAdmin] as never)
     }
 
     // ---- Webhook routes (no authentication) ----
