@@ -1,36 +1,47 @@
-import { createHash } from 'node:crypto'
+import { buildMessageId, buildReplyTo } from './email/message_id_util.js'
 import EscalatedSetting from '../models/escalated_setting.js'
 
 /**
  * Service for generating email threading headers and branded email content.
  *
  * Ensures outbound emails include proper In-Reply-To, References, and
- * Message-ID headers so mail clients group ticket conversations into threads.
+ * Message-ID headers so mail clients group ticket conversations into
+ * threads. Delegates Message-ID generation to `MessageIdUtil` so the
+ * format matches the canonical NestJS reference and inbound Reply-To
+ * verification has something to check against.
  */
 export default class EmailThreadingService {
   /**
-   * Generate a unique Message-ID for an outbound email.
+   * Generate the Message-ID for an outbound email. For initial ticket
+   * notifications pass `replyId = null`; for agent replies pass the
+   * reply id so the Message-ID carries `-reply-{replyId}`.
    */
   generateMessageId(ticketId: number, replyId: number | null, domain: string): string {
-    const unique = replyId ? `reply-${replyId}` : `ticket-${ticketId}`
-    const hash = createHash('sha256')
-      .update(`escalated-${unique}-${Date.now()}`)
-      .digest('hex')
-      .slice(0, 16)
-    return `<escalated-${unique}-${hash}@${domain}>`
+    return buildMessageId(ticketId, replyId, domain)
   }
 
   /**
    * Generate the root Message-ID for a ticket (used as the thread anchor).
    */
   generateTicketMessageId(ticketId: number, domain: string): string {
-    return `<escalated-ticket-${ticketId}@${domain}>`
+    return buildMessageId(ticketId, null, domain)
+  }
+
+  /**
+   * Build a signed Reply-To address (`reply+{id}.{hmac8}@{domain}`) so
+   * inbound provider webhooks can verify ticket identity even when
+   * clients strip our Message-ID / In-Reply-To headers. Returns `null`
+   * when `secret` is blank (signing disabled).
+   */
+  buildSignedReplyTo(ticketId: number, domain: string, secret: string): string | null {
+    if (!secret) return null
+    return buildReplyTo(ticketId, secret, domain)
   }
 
   /**
    * Build threading headers for an outbound reply email.
    *
-   * - Message-ID: unique per email
+   * - Message-ID: canonical `<ticket-{id}(-reply-{replyId})?@{domain}>`
    * - In-Reply-To: the ticket's root Message-ID (or the inbound message-id if replying to one)
    * - References: chain of Message-IDs for the thread
    */
