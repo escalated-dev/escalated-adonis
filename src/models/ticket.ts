@@ -95,7 +95,7 @@ export default class Ticket extends BaseModel {
   })
   declare metadata: Record<string, any> | null
 
-  // Guest ticket fields
+  // Guest ticket fields (Pattern A, preserved for backwards compatibility)
   @column()
   declare guestName: string | null
 
@@ -104,6 +104,10 @@ export default class Ticket extends BaseModel {
 
   @column()
   declare guestToken: string | null
+
+  // First-class Contact FK (Pattern B convergence)
+  @column({ columnName: 'contact_id' })
+  declare contactId: number | null
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
