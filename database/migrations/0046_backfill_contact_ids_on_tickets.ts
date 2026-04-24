@@ -45,10 +45,7 @@ export default class BackfillContactIdsOnTickets extends BaseSchema {
         seen.set(email, contactId as number)
       }
 
-      await this.db
-        .from('escalated_tickets')
-        .where('id', row.id)
-        .update({ contact_id: contactId })
+      await this.db.from('escalated_tickets').where('id', row.id).update({ contact_id: contactId })
     }
   }
 
