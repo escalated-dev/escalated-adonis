@@ -172,13 +172,16 @@ export default class InboundEmailService {
       })
     }
 
-    // Guest ticket
+    // Guest ticket — apply the admin-configured guest policy. Same
+    // helper used by WidgetController#createTicket (see #52).
     const { default: stringHelper } = await import('@adonisjs/core/helpers/string')
+    const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
+    const policy = await resolveGuestPolicy()
 
     const ticket = await Ticket.create({
       reference: await Ticket.generateReference(),
-      requesterType: null,
-      requesterId: null,
+      requesterType: policy.requesterType,
+      requesterId: policy.requesterId,
       guestName: message.fromName || this.nameFromEmail(message.fromEmail),
       guestEmail: message.fromEmail,
       guestToken: stringHelper.random(64),
