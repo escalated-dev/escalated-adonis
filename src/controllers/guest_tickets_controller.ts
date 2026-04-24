@@ -52,10 +52,13 @@ export default class GuestTicketsController {
       'department_id',
     ])
 
+    const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
+    const policy = await resolveGuestPolicy()
+
     const ticket = await Ticket.create({
       reference: await Ticket.generateReference(),
-      requesterType: null,
-      requesterId: null,
+      requesterType: policy.requesterType,
+      requesterId: policy.requesterId,
       guestName: data.guest_name,
       guestEmail: data.guest_email,
       guestToken: string.random(64),
