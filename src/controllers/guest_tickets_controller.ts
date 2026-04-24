@@ -57,10 +57,13 @@ export default class GuestTicketsController {
     // remain populated for the backwards-compat dual-read period.
     const contact = await Contact.findOrCreateByEmail(data.guest_email, data.guest_name)
 
+    const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
+    const policy = await resolveGuestPolicy()
+
     const ticket = await Ticket.create({
       reference: await Ticket.generateReference(),
-      requesterType: null,
-      requesterId: null,
+      requesterType: policy.requesterType,
+      requesterId: policy.requesterId,
       guestName: data.guest_name,
       guestEmail: data.guest_email,
       guestToken: string.random(64),

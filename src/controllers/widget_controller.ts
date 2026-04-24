@@ -91,16 +91,18 @@ export default class WidgetController {
     }
 
     const { randomBytes } = await import('node:crypto')
+    const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
     const guestToken = randomBytes(32).toString('hex')
     const reference = await Ticket.generateReference()
+    const policy = await resolveGuestPolicy()
 
     // Dedupe repeat submitters by email (Pattern B).
     const contact = await Contact.findOrCreateByEmail(data.email, data.name)
 
     const ticket = await Ticket.create({
       reference,
-      requesterType: null,
-      requesterId: null,
+      requesterType: policy.requesterType,
+      requesterId: policy.requesterId,
       guestName: data.name || null,
       guestEmail: data.email,
       guestToken,
