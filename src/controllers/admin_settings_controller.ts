@@ -126,7 +126,8 @@ export default class AdminSettingsController {
    */
   async publicTickets(ctx: HttpContext) {
     const userIdRaw = await EscalatedSetting.get('guest_policy_user_id', '')
-    const parsedUserId = userIdRaw && /^\d+$/.test(userIdRaw) ? Number.parseInt(userIdRaw, 10) : null
+    const parsedUserId =
+      userIdRaw && /^\d+$/.test(userIdRaw) ? Number.parseInt(userIdRaw, 10) : null
 
     return getRenderer().render(ctx, 'Escalated/Admin/Settings/PublicTickets', {
       settings: {
@@ -142,8 +143,7 @@ export default class AdminSettingsController {
 
   async updatePublicTickets({ request, response, session }: HttpContext) {
     const modeRaw = request.input('guest_policy_mode', 'unassigned')
-    const mode =
-      modeRaw === 'guest_user' || modeRaw === 'prompt_signup' ? modeRaw : 'unassigned'
+    const mode = modeRaw === 'guest_user' || modeRaw === 'prompt_signup' ? modeRaw : 'unassigned'
 
     await EscalatedSetting.set('guest_policy_mode', mode)
 
