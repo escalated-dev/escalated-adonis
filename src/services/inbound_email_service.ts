@@ -6,6 +6,7 @@ import Reply from '../models/reply.js'
 import InboundEmail from '../models/inbound_email.js'
 import Attachment from '../models/attachment.js'
 import EscalatedSetting from '../models/escalated_setting.js'
+import { parseTicketIdFromMessageId, verifyReplyTo } from './email/message_id_util.js'
 import TicketService from './ticket_service.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import { BLOCKED_EXTENSIONS, ALLOWED_HTML_TAGS, type InboundMessage } from '../types.js'
@@ -58,30 +59,54 @@ export default class InboundEmailService {
 
   /**
    * Find an existing ticket this email is replying to.
+   *
+   * Resolution order (first match wins):
+   *   1. In-Reply-To parsed via MessageIdUtil — the reply is
+   *      threading off a Message-ID we issued. Cold-start path.
+   *   2. References parsed via MessageIdUtil, each id in order.
+   *   3. Signed Reply-To on `to` (`reply+{id}.{hmac8}@...`) verified
+   *      via MessageIdUtil. Survives clients that strip threading
+   *      headers; forged signatures are rejected.
+   *   4. Subject line reference tag (legacy).
+   *   5. InboundEmail.message_id lookup (weakest fallback).
    */
   protected async findTicketByEmail(message: InboundMessage): Promise<Ticket | null> {
-    // Check subject for reference pattern
+    const headerMessageIds: string[] = []
+    if (message.inReplyTo) {
+      headerMessageIds.push(message.inReplyTo)
+    }
+    if (message.references) {
+      headerMessageIds.push(...message.references.split(/\s+/).filter(Boolean))
+    }
+
+    // 1 + 2: parse our own Message-IDs.
+    for (const raw of headerMessageIds) {
+      const ticketId = parseTicketIdFromMessageId(raw)
+      if (ticketId === null) continue
+      const ticket = await Ticket.find(ticketId)
+      if (ticket) return ticket
+    }
+
+    // 3. Signed Reply-To on the recipient address.
+    const secret = await this.getInboundSecret()
+    if (secret && message.toEmail) {
+      const verified = verifyReplyTo(message.toEmail, secret)
+      if (verified !== null) {
+        const ticket = await Ticket.find(verified)
+        if (ticket) return ticket
+      }
+    }
+
+    // 4. Subject line reference tag.
     const prefix = await EscalatedSetting.get('ticket_reference_prefix', 'ESC')
     const pattern = new RegExp(`\\[(${prefix!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-\\d+)\\]`)
     const match = message.subject.match(pattern)
-
     if (match) {
       const ticket = await Ticket.query().where('reference', match[1]).first()
       if (ticket) return ticket
     }
 
-    // Check In-Reply-To and References headers
-    const headerMessageIds: string[] = []
-
-    if (message.inReplyTo) {
-      headerMessageIds.push(message.inReplyTo)
-    }
-
-    if (message.references) {
-      const refs = message.references.split(/\s+/)
-      headerMessageIds.push(...refs)
-    }
-
+    // 5. Legacy InboundEmail lookup.
     if (headerMessageIds.length > 0) {
       const relatedEmail = await InboundEmail.query()
         .whereIn('message_id', headerMessageIds)
@@ -96,6 +121,19 @@ export default class InboundEmailService {
     }
 
     return null
+  }
+
+  /**
+   * Return the HMAC secret used to sign Reply-To addresses on
+   * outbound mail. Empty string means "Reply-To signing disabled" —
+   * callers should skip the signed-Reply-To verification branch.
+   *
+   * Resolution: EscalatedSetting → ESCALATED_EMAIL_INBOUND_SECRET env.
+   */
+  protected async getInboundSecret(): Promise<string> {
+    const setting = await EscalatedSetting.get('email_inbound_secret', '')
+    if (setting) return setting
+    return process.env.ESCALATED_EMAIL_INBOUND_SECRET ?? ''
   }
 
   /**
