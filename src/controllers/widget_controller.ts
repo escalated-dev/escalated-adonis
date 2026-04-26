@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
+import Contact from '../models/contact.js'
 import EscalatedSetting from '../models/escalated_setting.js'
 import TicketService from '../services/ticket_service.js'
 
@@ -93,6 +94,9 @@ export default class WidgetController {
     const guestToken = randomBytes(32).toString('hex')
     const reference = await Ticket.generateReference()
 
+    // Dedupe repeat submitters by email (Pattern B).
+    const contact = await Contact.findOrCreateByEmail(data.email, data.name)
+
     const ticket = await Ticket.create({
       reference,
       requesterType: null,
@@ -100,6 +104,7 @@ export default class WidgetController {
       guestName: data.name || null,
       guestEmail: data.email,
       guestToken,
+      contactId: contact.id,
       subject: data.subject,
       description: data.description,
       status: 'open',

@@ -3,6 +3,7 @@ import emitter from '@adonisjs/core/services/emitter'
 import string from '@adonisjs/core/helpers/string'
 import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
+import Contact from '../models/contact.js'
 import Department from '../models/department.js'
 import EscalatedSetting from '../models/escalated_setting.js'
 import AttachmentService from '../services/attachment_service.js'
@@ -52,6 +53,10 @@ export default class GuestTicketsController {
       'department_id',
     ])
 
+    // Dedupe repeat guests by email (Pattern B). Inline guest_* fields
+    // remain populated for the backwards-compat dual-read period.
+    const contact = await Contact.findOrCreateByEmail(data.guest_email, data.guest_name)
+
     const ticket = await Ticket.create({
       reference: await Ticket.generateReference(),
       requesterType: null,
@@ -59,6 +64,7 @@ export default class GuestTicketsController {
       guestName: data.guest_name,
       guestEmail: data.guest_email,
       guestToken: string.random(64),
+      contactId: contact.id,
       subject: data.subject,
       description: data.description,
       status: 'open',

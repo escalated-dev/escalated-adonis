@@ -3,6 +3,7 @@ import { extname } from 'node:path'
 import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
+import Contact from '../models/contact.js'
 import InboundEmail from '../models/inbound_email.js'
 import Attachment from '../models/attachment.js'
 import EscalatedSetting from '../models/escalated_setting.js'
@@ -175,13 +176,18 @@ export default class InboundEmailService {
     // Guest ticket
     const { default: stringHelper } = await import('@adonisjs/core/helpers/string')
 
+    // Dedupe inbound senders into a Contact (Pattern B).
+    const guestName = message.fromName || this.nameFromEmail(message.fromEmail)
+    const contact = await Contact.findOrCreateByEmail(message.fromEmail, guestName)
+
     const ticket = await Ticket.create({
       reference: await Ticket.generateReference(),
       requesterType: null,
       requesterId: null,
-      guestName: message.fromName || this.nameFromEmail(message.fromEmail),
+      guestName,
       guestEmail: message.fromEmail,
       guestToken: stringHelper.random(64),
+      contactId: contact.id,
       subject: this.sanitizeSubject(message.subject),
       description: body,
       status: 'open',
