@@ -117,6 +117,54 @@ export default class AdminSettingsController {
     }
   }
 
+  /**
+   * Public-ticket guest policy settings page.
+   *
+   * Controls the identity assigned to tickets submitted via the public widget
+   * or inbound email. Read at request time by the widget controller, so
+   * admins can switch modes at runtime without a redeploy.
+   */
+  async publicTickets(ctx: HttpContext) {
+    const userIdRaw = await EscalatedSetting.get('guest_policy_user_id', '')
+    const parsedUserId =
+      userIdRaw && /^\d+$/.test(userIdRaw) ? Number.parseInt(userIdRaw, 10) : null
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Settings/PublicTickets', {
+      settings: {
+        guest_policy_mode: await EscalatedSetting.get('guest_policy_mode', 'unassigned'),
+        guest_policy_user_id: parsedUserId,
+        guest_policy_signup_url_template: await EscalatedSetting.get(
+          'guest_policy_signup_url_template',
+          ''
+        ),
+      },
+    })
+  }
+
+  async updatePublicTickets({ request, response, session }: HttpContext) {
+    const modeRaw = request.input('guest_policy_mode', 'unassigned')
+    const mode = modeRaw === 'guest_user' || modeRaw === 'prompt_signup' ? modeRaw : 'unassigned'
+
+    await EscalatedSetting.set('guest_policy_mode', mode)
+
+    if (mode === 'guest_user') {
+      const userId = Number.parseInt(String(request.input('guest_policy_user_id', '')), 10)
+      await EscalatedSetting.set('guest_policy_user_id', userId > 0 ? String(userId) : '')
+    } else {
+      await EscalatedSetting.set('guest_policy_user_id', '')
+    }
+
+    if (mode === 'prompt_signup') {
+      const template = String(request.input('guest_policy_signup_url_template', '')).slice(0, 500)
+      await EscalatedSetting.set('guest_policy_signup_url_template', template)
+    } else {
+      await EscalatedSetting.set('guest_policy_signup_url_template', '')
+    }
+
+    session.flash('success', t('admin.settings_updated'))
+    return response.redirect().back()
+  }
+
   protected isMaskedValue(value: string | null): boolean {
     if (!value) return false
     return /^.{0,3}\*{3,}$/.test(value)

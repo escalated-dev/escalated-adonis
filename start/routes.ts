@@ -381,6 +381,14 @@ function registerUiRoutes(config: any) {
         .post('/settings', [AdminSettingsController, 'update'])
         .as('escalated.admin.settings.update')
 
+      // Public-ticket (guest policy) settings
+      router
+        .get('/settings/public-tickets', [AdminSettingsController, 'publicTickets'])
+        .as('escalated.admin.settings.public-tickets')
+      router
+        .put('/settings/public-tickets', [AdminSettingsController, 'updatePublicTickets'])
+        .as('escalated.admin.settings.public-tickets.update')
+
       // Departments CRUD
       router
         .get('/departments', [AdminDepartmentsController, 'index'])
