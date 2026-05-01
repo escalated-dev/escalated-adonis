@@ -84,7 +84,7 @@
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/session": "^7.6.0",
     "@adonisjs/transmit": "^2.0.0",
-    "@japa/runner": "^3.0.0",
+    "@japa/runner": "^5.3.0",
     "@types/adm-zip": "^0.5.5",
     "@types/luxon": "^3.7.1",
     "adm-zip": "^0.5.0",
