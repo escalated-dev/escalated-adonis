@@ -3,6 +3,7 @@ import Department from '../models/department.js'
 import TicketService from '../services/ticket_service.js'
 import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { redirectToRoute } from '../support/routing.js'
 import { t } from '../support/i18n.js'
 
 export default class CustomerTicketsController {
@@ -56,9 +57,9 @@ export default class CustomerTicketsController {
     })
 
     session.flash('success', t('ticket.created'))
-    return response
-      .redirect()
-      .toRoute('escalated.customer.tickets.show', { ticket: ticket.reference })
+    return redirectToRoute(response, 'escalated.customer.tickets.show', {
+      ticket: ticket.reference,
+    })
   }
 
   /**

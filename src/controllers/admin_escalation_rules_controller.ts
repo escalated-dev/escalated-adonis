@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import EscalationRule from '../models/escalation_rule.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { redirectToRoute } from '../support/routing.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminEscalationRulesController {
@@ -35,7 +36,7 @@ export default class AdminEscalationRulesController {
     })
 
     session.flash('success', t('admin.rule_created'))
-    return response.redirect().toRoute('escalated.admin.escalation-rules.index')
+    return redirectToRoute(response, 'escalated.admin.escalation-rules.index')
   }
 
   async edit(ctx: HttpContext) {
@@ -67,13 +68,13 @@ export default class AdminEscalationRulesController {
     await rule.save()
 
     session.flash('success', t('admin.rule_updated'))
-    return response.redirect().toRoute('escalated.admin.escalation-rules.index')
+    return redirectToRoute(response, 'escalated.admin.escalation-rules.index')
   }
 
   async destroy({ params, response, session }: HttpContext) {
     const rule = await EscalationRule.findOrFail(params.id)
     await rule.delete()
     session.flash('success', t('admin.rule_deleted'))
-    return response.redirect().toRoute('escalated.admin.escalation-rules.index')
+    return redirectToRoute(response, 'escalated.admin.escalation-rules.index')
   }
 }

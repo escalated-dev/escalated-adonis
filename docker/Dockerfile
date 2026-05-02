@@ -9,7 +9,7 @@
 # package's models and schema work end-to-end. Mirrors the pattern shipped
 # in dotnet #16, spring #18, and phoenix #28.
 
-FROM node:22-alpine AS host
+FROM node:24-alpine AS host
 
 RUN apk add --no-cache git
 
@@ -47,11 +47,11 @@ RUN npm install -g create-adonisjs --silent && \
 RUN cp /pkg-out/escalated-dev-escalated-adonis-*.tgz /host/escalated-adonis.tgz && \
     npm install --no-audit --no-fund --legacy-peer-deps \
         ./escalated-adonis.tgz \
-        @adonisjs/auth@^9 \
-        @adonisjs/cache@^1 \
-        @adonisjs/drive@^3 \
-        @adonisjs/inertia@^1 \
-        @adonisjs/mail@^9 \
+        @adonisjs/auth@^10 \
+        @adonisjs/cache@^2 \
+        @adonisjs/drive@^4 \
+        @adonisjs/inertia@^4 \
+        @adonisjs/mail@^10 \
         luxon
 
 # 4) Configure the package — publishes config + migrations into the host.
@@ -66,7 +66,7 @@ RUN node ace.js configure @escalated-dev/escalated-adonis --force
 COPY docker/host-app/demo_controller.ts /host/app/controllers/demo_controller.ts
 COPY docker/host-app/demo_routes.ts /host/start/routes.ts
 
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 RUN apk add --no-cache postgresql-client
 

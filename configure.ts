@@ -33,7 +33,7 @@ export async function configure(command: ConfigureCommand) {
   /**
    * Publish migrations
    *
-   * AdonisJS 6 removed `command.publishMigrations`. Replicate its behaviour
+   * AdonisJS 6+ removed `command.publishMigrations`. Replicate its behaviour
    * with `node:fs/promises`: copy every shipped migration into the host
    * app's `database/migrations/` directory with a unique timestamp prefix so
    * the migrator runs them after the host's own migrations.
