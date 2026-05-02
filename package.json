@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@escalated-dev/plugin-sdk": "https://codeload.github.com/escalated-dev/escalated-plugin-sdk/tar.gz/refs/tags/v0.1.2",
-    "@xmldom/xmldom": "^0.8.13",
+    "@xmldom/xmldom": "^0.9.10",
     "luxon": "^3.7.2"
   },
   "prettier": "@adonisjs/prettier-config",
