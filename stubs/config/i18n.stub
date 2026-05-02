@@ -1,0 +1,56 @@
+{{{
+  exports({
+    to: app.configPath('i18n.ts')
+  })
+}}}
+/*
+|--------------------------------------------------------------------------
+| @adonisjs/i18n configuration with central Escalated translations
+|--------------------------------------------------------------------------
+|
+| Chains two filesystem loaders so translations from the central
+| `@escalated-dev/locale` package are used as the canonical base, and your
+| host app's `resources/lang/` directory layers on top as overrides.
+|
+| `@adonisjs/i18n` v3+ merges loaders in array order — the LAST loader
+| wins on key conflict. Keep `app.languageFilesPath()` last so your local
+| translations override the central package.
+|
+*/
+
+import { defineConfig, formatters, loaders } from '@adonisjs/i18n'
+import app from '@adonisjs/core/services/app'
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
+
+const require = createRequire(import.meta.url)
+const centralPkgJson = require.resolve('@escalated-dev/locale/package.json')
+const centralLocalesDir = join(dirname(centralPkgJson), 'locales')
+
+const i18nConfig = defineConfig({
+  formatter: formatters.icu(),
+  defaultLocale: 'en',
+  fallback: { /* perLocaleFallbacks */ },
+
+  loaders: [
+    /**
+     * Base layer: canonical Escalated translations shared across every
+     * host framework plugin. Provided by the `@escalated-dev/locale`
+     * npm package.
+     */
+    loaders.fs({
+      location: centralLocalesDir,
+    }),
+
+    /**
+     * Override layer: this app's own `resources/lang/{locale}/` directory.
+     * Last loader wins, so any keys you add here will replace the
+     * matching keys from the central package on a per-key basis.
+     */
+    loaders.fs({
+      location: app.languageFilesPath(),
+    }),
+  ],
+})
+
+export default i18nConfig
