@@ -10,6 +10,7 @@ import AttachmentService from '../services/attachment_service.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { redirectToRoute } from '../support/routing.js'
 import type { TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
 
@@ -86,7 +87,9 @@ export default class GuestTicketsController {
     await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
 
     session.flash('success', t('guest.created'))
-    return response.redirect().toRoute('escalated.guest.tickets.show', { token: ticket.guestToken })
+    return redirectToRoute(response, 'escalated.guest.tickets.show', {
+      token: ticket.guestToken,
+    })
   }
 
   /**

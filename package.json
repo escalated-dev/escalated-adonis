@@ -1,7 +1,10 @@
 {
   "name": "@escalated-dev/escalated-adonis",
-  "description": "An embeddable support ticket system for AdonisJS v6 applications",
+  "description": "An embeddable support ticket system for AdonisJS v7 applications",
   "version": "0.5.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "type": "module",
   "license": "MIT",
   "main": "build/index.js",
@@ -54,14 +57,14 @@
     "plugins"
   ],
   "peerDependencies": {
-    "@adonisjs/auth": "^9.0.0",
-    "@adonisjs/cache": "^1.0.0",
-    "@adonisjs/core": "^6.0.0",
-    "@adonisjs/drive": "^3.0.0",
-    "@adonisjs/inertia": "^1.0.0",
-    "@adonisjs/lucid": "^21.0.0",
-    "@adonisjs/mail": "^9.0.0",
-    "@adonisjs/transmit": "^2.0.0",
+    "@adonisjs/auth": "^10.0.0",
+    "@adonisjs/cache": "^2.0.0",
+    "@adonisjs/core": "^7.0.0",
+    "@adonisjs/drive": "^4.0.0",
+    "@adonisjs/inertia": "^4.0.0",
+    "@adonisjs/lucid": "^22.0.0",
+    "@adonisjs/mail": "^10.0.0",
+    "@adonisjs/transmit": "^3.0.0",
     "adm-zip": "^0.5.0"
   },
   "peerDependenciesMeta": {
@@ -73,17 +76,17 @@
     }
   },
   "devDependencies": {
-    "@adonisjs/auth": "^9.2.0",
-    "@adonisjs/cache": "^1.0.0",
-    "@adonisjs/core": "^6.14.0",
-    "@adonisjs/drive": "^3.0.0",
+    "@adonisjs/auth": "^10.1.0",
+    "@adonisjs/cache": "^2.1.0",
+    "@adonisjs/core": "^7.3.2",
+    "@adonisjs/drive": "^4.0.0",
     "@adonisjs/eslint-config": "^3.0.0",
-    "@adonisjs/inertia": "^1.2.0",
-    "@adonisjs/lucid": "^21.3.0",
-    "@adonisjs/mail": "^9.0.0",
+    "@adonisjs/inertia": "^4.2.0",
+    "@adonisjs/lucid": "^22.4.2",
+    "@adonisjs/mail": "^10.2.0",
     "@adonisjs/prettier-config": "^1.4.5",
-    "@adonisjs/session": "^7.6.0",
-    "@adonisjs/transmit": "^2.0.0",
+    "@adonisjs/session": "^8.1.0",
+    "@adonisjs/transmit": "^3.0.1",
     "@japa/runner": "^5.3.0",
     "@types/adm-zip": "^0.5.5",
     "@types/luxon": "^3.7.1",

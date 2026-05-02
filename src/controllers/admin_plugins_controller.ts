@@ -12,6 +12,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import PluginService from '../services/plugin_service.js'
 import type HookManager from '../support/hook_manager.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { redirectToRoute } from '../support/routing.js'
 
 export default class AdminPluginsController {
   protected getPluginService(): PluginService {
@@ -50,7 +51,7 @@ export default class AdminPluginsController {
       await pluginService.uploadPlugin(file)
 
       ctx.session.flash('success', 'Plugin uploaded successfully. You can now activate it.')
-      return ctx.response.redirect().toRoute('escalated.admin.plugins.index')
+      return redirectToRoute(ctx.response, 'escalated.admin.plugins.index')
     } catch (error: any) {
       console.error('[Escalated] Plugin upload failed:', error)
       ctx.session.flash('error', `Failed to upload plugin: ${error.message}`)

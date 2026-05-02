@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Department from '../models/department.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { redirectToRoute } from '../support/routing.js'
 import { t } from '../support/i18n.js'
 
 export default class AdminDepartmentsController {
@@ -34,7 +35,7 @@ export default class AdminDepartmentsController {
       isActive: data.is_active !== false,
     })
     session.flash('success', t('admin.department_created'))
-    return response.redirect().toRoute('escalated.admin.departments.index')
+    return redirectToRoute(response, 'escalated.admin.departments.index')
   }
 
   async edit(ctx: HttpContext) {
@@ -53,13 +54,13 @@ export default class AdminDepartmentsController {
     })
     await department.save()
     session.flash('success', t('admin.department_updated'))
-    return response.redirect().toRoute('escalated.admin.departments.index')
+    return redirectToRoute(response, 'escalated.admin.departments.index')
   }
 
   async destroy({ params, response, session }: HttpContext) {
     const department = await Department.findOrFail(params.id)
     await department.delete()
     session.flash('success', t('admin.department_deleted'))
-    return response.redirect().toRoute('escalated.admin.departments.index')
+    return redirectToRoute(response, 'escalated.admin.departments.index')
   }
 }

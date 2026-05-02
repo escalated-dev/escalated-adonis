@@ -23,6 +23,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import ImportJob from '../models/import_job.js'
 import ImportService from '../services/import_service.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { redirectToRoute } from '../support/routing.js'
 
 export default class AdminImportController {
   protected importService = new ImportService()
@@ -105,7 +106,7 @@ export default class AdminImportController {
 
     await job.transitionTo('mapping')
 
-    return ctx.response.redirect().toRoute('escalated.admin.import.mapping', { id: job.id })
+    return redirectToRoute(ctx.response, 'escalated.admin.import.mapping', { id: job.id })
   }
 
   // --------------------------------------------------------------------------
@@ -123,7 +124,7 @@ export default class AdminImportController {
 
     if (!adapter) {
       ctx.session.flash('error', `Adapter for '${job.platform}' is no longer available.`)
-      return ctx.response.redirect().toRoute('escalated.admin.import.index')
+      return redirectToRoute(ctx.response, 'escalated.admin.import.index')
     }
 
     // Fetch available source fields for each entity type
@@ -165,7 +166,7 @@ export default class AdminImportController {
     await job.save()
 
     ctx.session.flash('success', 'Field mappings saved. You can now start the import.')
-    return ctx.response.redirect().toRoute('escalated.admin.import.show', { id: job.id })
+    return redirectToRoute(ctx.response, 'escalated.admin.import.show', { id: job.id })
   }
 
   // --------------------------------------------------------------------------
@@ -207,7 +208,7 @@ export default class AdminImportController {
     })
 
     ctx.session.flash('success', 'Import started. Refresh this page to track progress.')
-    return ctx.response.redirect().toRoute('escalated.admin.import.show', { id: job.id })
+    return redirectToRoute(ctx.response, 'escalated.admin.import.show', { id: job.id })
   }
 
   // --------------------------------------------------------------------------
@@ -229,7 +230,7 @@ export default class AdminImportController {
     await job.transitionTo('paused')
 
     ctx.session.flash('success', 'Import will pause after the current batch completes.')
-    return ctx.response.redirect().toRoute('escalated.admin.import.show', { id: job.id })
+    return redirectToRoute(ctx.response, 'escalated.admin.import.show', { id: job.id })
   }
 
   // --------------------------------------------------------------------------
@@ -251,7 +252,7 @@ export default class AdminImportController {
     await job.delete()
 
     ctx.session.flash('success', 'Import job deleted.')
-    return ctx.response.redirect().toRoute('escalated.admin.import.index')
+    return redirectToRoute(ctx.response, 'escalated.admin.import.index')
   }
 
   // --------------------------------------------------------------------------
@@ -263,7 +264,7 @@ export default class AdminImportController {
 
     if (!job) {
       ctx.session.flash('error', 'Import job not found.')
-      ctx.response.redirect().toRoute('escalated.admin.import.index')
+      redirectToRoute(ctx.response, 'escalated.admin.import.index')
       return null
     }
 
