@@ -130,7 +130,7 @@ authorization: {
 - **SSO:** SAML and JWT-based single sign-on
 - **RBAC:** Role-based access control with granular permissions
 - **Automation:** Configurable automation rules with conditions and actions
-- **i18n:** Multi-language support (EN, ES, FR, DE)
+- **i18n:** Multi-language support sourced from the central `@escalated-dev/locale` npm package, with optional per-host overrides under `resources/lang/overrides/`
 - **Plugin System:** Extensible via TypeScript SDK plugins
 - **REST API:** Token-authenticated API with rate limiting
 - **Import Framework:** Bulk data import support
@@ -442,6 +442,26 @@ const ticket = await ticketService.create({
 const assignmentService = await app.container.make('escalated.assignmentService')
 await assignmentService.autoAssign(ticket)
 ```
+
+## Translations (i18n)
+
+Translations are sourced from the central [`@escalated-dev/locale`](https://github.com/escalated-dev/escalated-locale)
+npm package and shared with every Escalated host plugin (Laravel, Rails,
+Django, Spring, etc.). Three layers are merged at runtime, with later
+layers winning on key conflict:
+
+1. **Central package** — `@escalated-dev/locale/locales/{locale}/`
+2. **Bundled local** — `resources/lang/{locale}/messages.json` (this package)
+3. **Host overrides** — `resources/lang/overrides/{locale}/messages.json`
+
+To override a single string in your host app, create a file under
+`resources/lang/overrides/{locale}/messages.json` containing only the keys
+you want to change — everything else falls through to the central package.
+
+If your host app uses `@adonisjs/i18n` v3+ directly (in addition to the
+plugin's own `t()` helper), see `resources/lang/overrides/README.md` for a
+sample `config/i18n.ts` that chains `loaders.fs()` against the central
+package and your host's `app.languageFilesPath()`.
 
 ## Frontend Package
 
