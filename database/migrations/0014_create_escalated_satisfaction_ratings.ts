@@ -20,7 +20,7 @@ export default class CreateEscalatedSatisfactionRatings extends BaseSchema {
       table.integer('rated_by_id').unsigned().nullable()
       table.timestamp('created_at', { useTz: true }).nullable()
 
-      table.index(['rated_by_type', 'rated_by_id'])
+      table.index(['rated_by_type', 'rated_by_id'], 'satisfaction_ratings_rated_by_idx')
     })
   }
 
