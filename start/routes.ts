@@ -41,6 +41,7 @@ const AdminApiTokensController = () => import('../src/controllers/admin_api_toke
 const AdminImportController = () => import('../src/controllers/admin_import_controller.js')
 const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
+const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
 
 // Lazy-load controllers (core — non-UI)
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
@@ -537,6 +538,12 @@ function registerUiRoutes(config: any) {
       router
         .delete('/automations/:id', [AdminAutomationsController, 'destroy'])
         .as('escalated.admin.automations.destroy')
+
+      // Users (host User model: list + grant/revoke admin/agent)
+      router.get('/users', [AdminUsersController, 'index']).as('escalated.admin.users.index')
+      router
+        .patch('/users/:user/role', [AdminUsersController, 'updateRole'])
+        .as('escalated.admin.users.role')
 
       // Plugins
       router.get('/plugins', [AdminPluginsController, 'index']).as('escalated.admin.plugins.index')

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Admin Users management page (`GET /support/admin/users`) and role-toggle endpoint (`PATCH /support/admin/users/:user/role`) that mirror the Laravel reference (escalated-laravel#94). Admins can grant or revoke the `is_admin` / `is_agent` flags on host users; admins cannot demote themselves, and revoking the agent flag from a user who is also admin cascades to clear admin too. Renders the shared `Escalated/Admin/Users/Index` Inertia page.
 - Consume translations from the central `@escalated-dev/locale` npm package. The package is loaded as the base layer, this package's `resources/lang/{locale}/messages.json` files are deep-merged on top as overrides, and host apps can drop further overrides into `resources/lang/overrides/{locale}/messages.json`. See `resources/lang/overrides/README.md` for the layering rules and a sample `config/i18n.ts` chain for `@adonisjs/i18n` v3+.
 
 ### Changed

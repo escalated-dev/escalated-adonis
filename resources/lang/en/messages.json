@@ -51,7 +51,9 @@
     "tag_created": "Tag created.",
     "tag_updated": "Tag updated.",
     "tag_deleted": "Tag deleted.",
-    "settings_updated": "Settings updated."
+    "settings_updated": "Settings updated.",
+    "user_updated": "User updated.",
+    "cannot_remove_own_admin": "You cannot remove your own admin role."
   },
   "middleware": {
     "not_admin": "You are not authorized as a support administrator.",
