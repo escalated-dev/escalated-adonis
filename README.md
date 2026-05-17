@@ -322,6 +322,12 @@ escalated.admin.macros.index
 escalated.admin.macros.store
 escalated.admin.macros.update
 escalated.admin.macros.destroy
+escalated.admin.skills.index
+escalated.admin.skills.create
+escalated.admin.skills.store
+escalated.admin.skills.edit
+escalated.admin.skills.update
+escalated.admin.skills.destroy
 
 # Guest (no auth)
 escalated.guest.tickets.create
@@ -367,6 +373,8 @@ All tables use the `escalated_` prefix by default (configurable):
 12. `escalated_macros`
 13. `escalated_ticket_followers`
 14. `escalated_satisfaction_ratings`
+
+**Skills (admin routing parity):** `escalated_skills`, `escalated_agent_skills`, `escalated_skill_routing_tags`, `escalated_skill_routing_departments`
 
 ## Shared Inertia Data
 
