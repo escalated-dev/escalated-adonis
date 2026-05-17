@@ -7,12 +7,7 @@ import assert from 'node:assert/strict'
  * so `npm test` does not require a prior `npm run build`.
  */
 
-function explicitRequiredSkillIds(
-  ticketTagIds,
-  ticketDepartmentId,
-  tagEdges,
-  deptEdges
-) {
+function explicitRequiredSkillIds(ticketTagIds, ticketDepartmentId, tagEdges, deptEdges) {
   const tagSet = new Set(
     (ticketTagIds ?? []).filter((id) => Number.isFinite(id) && id > 0).map((id) => Number(id))
   )
