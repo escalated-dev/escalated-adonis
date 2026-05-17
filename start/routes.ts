@@ -42,6 +42,7 @@ const AdminImportController = () => import('../src/controllers/admin_import_cont
 const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
+const AdminSkillController = () => import('../src/controllers/admin_skill_controller.js')
 
 // Lazy-load controllers (core — non-UI)
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
@@ -457,6 +458,22 @@ function registerUiRoutes(config: any) {
       router
         .delete('/tags/:tag', [AdminTagsController, 'destroy'])
         .as('escalated.admin.tags.destroy')
+
+      // Skills CRUD
+      router.get('/skills', [AdminSkillController, 'index']).as('escalated.admin.skills.index')
+      router
+        .get('/skills/create', [AdminSkillController, 'create'])
+        .as('escalated.admin.skills.create')
+      router.post('/skills', [AdminSkillController, 'store']).as('escalated.admin.skills.store')
+      router
+        .get('/skills/:id/edit', [AdminSkillController, 'edit'])
+        .as('escalated.admin.skills.edit')
+      router
+        .put('/skills/:id', [AdminSkillController, 'update'])
+        .as('escalated.admin.skills.update')
+      router
+        .delete('/skills/:id', [AdminSkillController, 'destroy'])
+        .as('escalated.admin.skills.destroy')
 
       // Canned Responses
       router
