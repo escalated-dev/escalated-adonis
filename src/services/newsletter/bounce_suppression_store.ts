@@ -12,7 +12,8 @@ export default class BounceSuppressionStore {
   }
 
   async isBounced(email: string): Promise<boolean> {
-    return (await this.load()).includes(email.toLowerCase())
+    const list = await this.load()
+    return list.includes(email.toLowerCase())
   }
 
   async filterSendable(emails: string[]): Promise<string[]> {
@@ -27,7 +28,7 @@ export default class BounceSuppressionStore {
     list.push(lower)
     await EscalatedSetting.updateOrCreate(
       { key: BounceSuppressionStore.KEY },
-      { value: JSON.stringify(list) },
+      { value: JSON.stringify(list) }
     )
   }
 

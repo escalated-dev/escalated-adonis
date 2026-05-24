@@ -1,10 +1,10 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import NewsletterDelivery from '../../models/newsletter/newsletter_delivery.js'
+import type NewsletterDelivery from '../../models/newsletter/newsletter_delivery.js'
 
 const ALLOWED_SCHEMES = ['http', 'https', 'mailto', 'tel']
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const moduleDirname = dirname(fileURLToPath(import.meta.url))
 
 export interface RendererOptions {
   baseUrl?: string
@@ -29,14 +29,16 @@ export default class NewsletterRenderer {
     const newsletter = delivery.newsletter
     const contact = delivery.contact
     const baseUrl = (this.options.baseUrl ?? 'http://localhost').replace(/\/+$/, '')
-    const themeSlug = newsletter.theme ?? newsletter.template?.theme ?? this.options.defaultTheme ?? 'default'
+    const themeSlug =
+      newsletter.theme ?? newsletter.template?.theme ?? this.options.defaultTheme ?? 'default'
     const bodyMd = newsletter.bodyMarkdown ?? newsletter.template?.bodyMarkdown ?? ''
     const md = this.options.markdownToHtml ?? this.defaultMarkdown
 
     let body = md(bodyMd)
     body = this.resolveMergeFields(body, contact, delivery, baseUrl)
 
-    const themesDir = this.options.themesDir ?? join(__dirname, '../../../resources/views/newsletter_themes')
+    const themesDir =
+      this.options.themesDir ?? join(moduleDirname, '../../../resources/views/newsletter_themes')
     const themed = this.renderTheme(themeSlug, themesDir, {
       subject: newsletter.subject,
       body,
@@ -65,10 +67,7 @@ export default class NewsletterRenderer {
   }
 
   private defaultMarkdown(md: string): string {
-    const escaped = md
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
+    const escaped = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     return '<p>' + escaped.split(/\n{2,}/).join('</p><p>') + '</p>'
   }
 
@@ -76,7 +75,7 @@ export default class NewsletterRenderer {
     html: string,
     contact: any,
     delivery: NewsletterDelivery,
-    baseUrl: string,
+    baseUrl: string
   ): string {
     return html.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_, path: string) => {
       const v = this.resolvePath(path.trim(), contact, delivery, baseUrl)
@@ -84,7 +83,12 @@ export default class NewsletterRenderer {
     })
   }
 
-  private resolvePath(path: string, contact: any, delivery: NewsletterDelivery, baseUrl: string): string {
+  private resolvePath(
+    path: string,
+    contact: any,
+    delivery: NewsletterDelivery,
+    baseUrl: string
+  ): string {
     if (path === 'contact.name') return String(contact.name ?? '')
     if (path === 'contact.first_name') return String(contact.name ?? '').split(' ')[0] ?? ''
     if (path === 'contact.email') return String(contact.email ?? '')
@@ -94,7 +98,7 @@ export default class NewsletterRenderer {
       const key = path.slice('contact.metadata.'.length)
       const meta = (contact.metadata ?? {}) as Record<string, unknown>
       const v = meta[key]
-      return v == null ? '' : String(v)
+      return v === null || v === undefined ? '' : String(v)
     }
     return ''
   }
@@ -108,25 +112,38 @@ export default class NewsletterRenderer {
     // their own renderer; this keeps the package's runtime dependency-free.
     return source
       .replace(/\{\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}\}/g, (_, key) => String(this.lookup(locals, key)))
-      .replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_, key) => this.escape(String(this.lookup(locals, key))))
+      .replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_, key) =>
+        this.escape(String(this.lookup(locals, key)))
+      )
   }
 
   private lookup(locals: Record<string, unknown>, path: string): unknown {
-    return path.split('.').reduce<any>((acc, k) => (acc == null ? acc : acc[k]), locals) ?? ''
+    return (
+      path
+        .split('.')
+        .reduce<any>((acc, k) => (acc === null || acc === undefined ? acc : acc[k]), locals) ?? ''
+    )
   }
 
   private rewriteLinks(html: string, delivery: NewsletterDelivery, baseUrl: string): string {
     const unsubPrefix = this.unsubscribeUrl(delivery, baseUrl)
     const viewPrefix = this.viewInBrowserUrl(delivery, baseUrl)
-    return html.replace(/(<a\s[^>]*\bhref=)(["'])(.*?)\2/gi, (match, prefix, quote, href: string) => {
-      if (!href || href.startsWith('#')) return match
-      const scheme = (href.split(':')[0] ?? '').toLowerCase()
-      if (!ALLOWED_SCHEMES.includes(scheme)) return `${prefix}${quote}#${quote}`
-      if (scheme === 'mailto' || scheme === 'tel') return match
-      if (href.startsWith(unsubPrefix) || href.startsWith(viewPrefix)) return match
-      const encoded = Buffer.from(href).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-      return `${prefix}${quote}${baseUrl}/escalated/n/c/${delivery.trackingToken}?u=${encoded}${quote}`
-    })
+    return html.replace(
+      /(<a\s[^>]*\bhref=)(["'])(.*?)\2/gi,
+      (match, prefix, quote, href: string) => {
+        if (!href || href.startsWith('#')) return match
+        const scheme = (href.split(':')[0] ?? '').toLowerCase()
+        if (!ALLOWED_SCHEMES.includes(scheme)) return `${prefix}${quote}#${quote}`
+        if (scheme === 'mailto' || scheme === 'tel') return match
+        if (href.startsWith(unsubPrefix) || href.startsWith(viewPrefix)) return match
+        const encoded = Buffer.from(href)
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '')
+        return `${prefix}${quote}${baseUrl}/escalated/n/c/${delivery.trackingToken}?u=${encoded}${quote}`
+      }
+    )
   }
 
   private injectPixel(html: string, delivery: NewsletterDelivery, baseUrl: string): string {

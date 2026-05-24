@@ -32,8 +32,14 @@ export default class CreateEscalatedNewsletters extends BaseSchema {
       table.index('scheduled_at')
       table.index(['status', 'scheduled_at'])
       table.index('created_by')
-      table.foreign('target_list_id').references('escalated_newsletter_lists.id').onDelete('RESTRICT')
-      table.foreign('template_id').references('escalated_newsletter_templates.id').onDelete('SET NULL')
+      table
+        .foreign('target_list_id')
+        .references('escalated_newsletter_lists.id')
+        .onDelete('RESTRICT')
+      table
+        .foreign('template_id')
+        .references('escalated_newsletter_templates.id')
+        .onDelete('SET NULL')
     })
   }
 

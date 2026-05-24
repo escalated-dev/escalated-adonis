@@ -3,7 +3,7 @@ import { DateTime } from 'luxon'
 import mail from '@adonisjs/mail/services/main'
 import Newsletter from '../../models/newsletter/newsletter.js'
 import NewsletterDelivery from '../../models/newsletter/newsletter_delivery.js'
-import NewsletterRenderer, { RendererOptions } from './newsletter_renderer.js'
+import NewsletterRenderer, { type RendererOptions } from './newsletter_renderer.js'
 
 export interface DispatcherOptions {
   enableNewsletters?: boolean
@@ -38,7 +38,10 @@ export default class NewsletterDispatcher {
     }
 
     await NewsletterDelivery.query()
-      .whereIn('id', pending.map((d) => d.id))
+      .whereIn(
+        'id',
+        pending.map((d) => d.id)
+      )
       .update({ status: 'queued', claimed_at: DateTime.now().toSQL() })
 
     for (const d of pending) {
@@ -88,7 +91,7 @@ export default class NewsletterDispatcher {
       await Newsletter.query().where('id', full.newsletterId).increment('summary_sent', 1)
     } catch (error) {
       logger.warn(
-        `Newsletter delivery ${full.id} failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Newsletter delivery ${full.id} failed: ${error instanceof Error ? error.message : String(error)}`
       )
       const attempts = full.attemptCount + 1
       if (attempts >= 3) {

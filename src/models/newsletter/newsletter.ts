@@ -5,13 +5,7 @@ import NewsletterList from './newsletter_list.js'
 import NewsletterTemplate from './newsletter_template.js'
 import NewsletterDelivery from './newsletter_delivery.js'
 
-export type NewsletterStatus =
-  | 'draft'
-  | 'scheduled'
-  | 'sending'
-  | 'sent'
-  | 'paused'
-  | 'failed'
+export type NewsletterStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'failed'
 
 export default class Newsletter extends BaseModel {
   static table = 'escalated_newsletters'
