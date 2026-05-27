@@ -36,6 +36,12 @@ export default class AdminSettingsController {
     ])
 
     const sensitiveKeys = ['mailgun_signing_key', 'postmark_inbound_token', 'imap_password']
+    const prefix = String(data.ticket_reference_prefix ?? '')
+
+    if (data.ticket_reference_prefix !== undefined && !this.isValidTicketReferencePrefix(prefix)) {
+      session.flash('error', 'Ticket reference prefix cannot contain hyphens.')
+      return response.redirect().back()
+    }
 
     for (const [key, value] of Object.entries(data)) {
       // Skip sensitive fields that contain masked placeholder
@@ -168,6 +174,10 @@ export default class AdminSettingsController {
   protected isMaskedValue(value: string | null): boolean {
     if (!value) return false
     return /^.{0,3}\*{3,}$/.test(value)
+  }
+
+  protected isValidTicketReferencePrefix(value: string): boolean {
+    return !value.includes('-')
   }
 
   protected maskSecret(value: string | null): string {
