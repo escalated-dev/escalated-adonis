@@ -130,6 +130,14 @@ export interface ChatTransferredData {
   toAgentId: number
 }
 
+export interface TicketCustomActionTriggeredData {
+  ticket: Ticket
+  action: string
+  user: any
+  payload?: Record<string, any>
+  metadata?: Record<string, any>
+}
+
 // ---- Event Names ----
 
 export const ESCALATED_EVENTS = {
@@ -154,6 +162,7 @@ export const ESCALATED_EVENTS = {
   CHAT_ENDED: 'escalated:chat:ended',
   CHAT_MESSAGE: 'escalated:chat:message',
   CHAT_TRANSFERRED: 'escalated:chat:transferred',
+  TICKET_CUSTOM_ACTION_TRIGGERED: 'escalated:ticket:customActionTriggered',
 } as const
 
 // ---- Event type map for Adonis Emitter ----
@@ -180,6 +189,7 @@ export interface EscalatedEventsList {
   [ESCALATED_EVENTS.CHAT_ENDED]: ChatEndedData
   [ESCALATED_EVENTS.CHAT_MESSAGE]: ChatMessageData
   [ESCALATED_EVENTS.CHAT_TRANSFERRED]: ChatTransferredData
+  [ESCALATED_EVENTS.TICKET_CUSTOM_ACTION_TRIGGERED]: TicketCustomActionTriggeredData
 }
 
 /*
@@ -219,5 +229,6 @@ declare module '@adonisjs/core/types' {
     'escalated:chat:ended': ChatEndedData
     'escalated:chat:message': ChatMessageData
     'escalated:chat:transferred': ChatTransferredData
+    'escalated:ticket:customActionTriggered': TicketCustomActionTriggeredData
   }
 }

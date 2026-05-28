@@ -243,6 +243,9 @@ function registerUiRoutes(config: any) {
             .post('/tickets/:ticket/macro', [AgentTicketsController, 'applyMacro'])
             .as('escalated.agent.tickets.macro')
           router
+            .post('/tickets/:ticket/actions/:action', [AgentTicketsController, 'customAction'])
+            .as('escalated.agent.tickets.custom-action')
+          router
             .post('/tickets/:ticket/follow', [AgentTicketsController, 'follow'])
             .as('escalated.agent.tickets.follow')
           router
@@ -646,6 +649,9 @@ export function registerApiRoutes(config: any) {
           router
             .post('/tickets/:ticket/macro', [ApiTicketController, 'applyMacro'])
             .as('escalated.api.tickets.macro')
+          router
+            .post('/tickets/:ticket/actions/:action', [ApiTicketController, 'customAction'])
+            .as('escalated.api.tickets.custom-action')
           router
             .post('/tickets/:ticket/tags', [ApiTicketController, 'tags'])
             .as('escalated.api.tickets.tags')

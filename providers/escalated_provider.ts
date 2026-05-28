@@ -135,6 +135,9 @@ export default class EscalatedProvider {
     // Wire AdonisJS emitter events → plugin bridge action hooks
     await this.wireEventsToBridge()
 
+    // Record an internal note whenever a custom ticket action is triggered
+    await this.registerCustomActionInternalNote()
+
     // Reset the cached renderer so it picks up the freshly-loaded config
     resetRenderer()
 
@@ -255,6 +258,33 @@ export default class EscalatedProvider {
       })
     } catch {
       // Inertia may not be available
+    }
+  }
+
+  /**
+   * Record an internal note on the ticket whenever a custom action is
+   * triggered, giving an audit trail of who ran which action. The note is
+   * authored by the triggering agent, so the body need not repeat their name.
+   */
+  protected async registerCustomActionInternalNote() {
+    try {
+      const { default: emitter } = await import('@adonisjs/core/services/emitter')
+      const { ESCALATED_EVENTS } = await import('../src/events/index.js')
+
+      emitter.on(ESCALATED_EVENTS.TICKET_CUSTOM_ACTION_TRIGGERED, async (data) => {
+        try {
+          const { default: TicketService } = await import('../src/services/ticket_service.js')
+          await new TicketService().addNote(
+            data.ticket,
+            data.user,
+            `Custom action "${data.action}" was triggered.`
+          )
+        } catch (err) {
+          console.warn('[Escalated] recording custom action note failed:', (err as Error).message)
+        }
+      })
+    } catch {
+      // Emitter unavailable — skip.
     }
   }
 
