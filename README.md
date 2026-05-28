@@ -414,6 +414,53 @@ The package emits the following events that you can listen to:
 | `escalated:note:created` | Internal note added |
 | `escalated:sla:breached` | SLA target breached |
 | `escalated:rating:created` | CSAT rating submitted |
+| `escalated:ticket:customActionTriggered` | Agent triggered a custom ticket action |
+
+## Custom Ticket Actions
+
+Host applications can add custom buttons to the agent ticket screen and handle
+clicks with a normal event listener. Register actions in `config/escalated.ts`:
+
+```ts
+const escalatedConfig: EscalatedConfig = {
+  // ...
+  ticketActions: {
+    actions: [
+      {
+        key: 'sync-crm',
+        label: 'Sync CRM',
+        variant: 'primary',                // primary | secondary | danger
+        confirmation: 'Sync this ticket to the CRM?',
+        metadata: { icon: 'refresh-cw' },
+        // visible / enabled may be a boolean or (ticket, user) => boolean
+        enabled: (ticket) => !ticket.metadata?.crm_synced,
+      },
+    ],
+  },
+}
+```
+
+For richer logic, an entry may instead be an object implementing the
+`TicketAction` contract (`src/contracts/ticket_action.ts`).
+
+Visible actions are exposed on the agent ticket show page as `customActions`
+and on the API ticket detail response as `custom_actions` (each with a `url`
+and `method`). Triggering one (`POST /<prefix>/agent/tickets/:ticket/actions/:action`
+or the API equivalent) validates the action is visible (404) and enabled (403),
+then emits `escalated:ticket:customActionTriggered`:
+
+```ts
+import emitter from '@adonisjs/core/services/emitter'
+import { ESCALATED_EVENTS } from '@escalated-dev/escalated-adonis'
+
+emitter.on(ESCALATED_EVENTS.TICKET_CUSTOM_ACTION_TRIGGERED, async (data) => {
+  if (data.action !== 'sync-crm') return
+  // data.ticket, data.user, data.payload, data.metadata
+})
+```
+
+Escalated also records an internal note on the ticket whenever an action fires,
+for auditability.
 
 ## Inbound Email
 

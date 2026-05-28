@@ -79,6 +79,20 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | Custom Ticket Actions
+  |--------------------------------------------------------------------------
+  |
+  | Host-defined action buttons shown on the agent ticket screen. Each may be
+  | a plain object ({ key, label, variant, visible, enabled, confirmation,
+  | metadata }) or an object implementing the TicketAction contract. Triggering
+  | one emits the `escalated:ticket:customActionTriggered` event.
+  */
+  ticketActions: {
+    actions: [],
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Priorities
   |--------------------------------------------------------------------------
   */

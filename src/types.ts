@@ -5,6 +5,7 @@
 */
 
 import { t } from './support/i18n.js'
+import type { TicketAction, TicketActionConfig } from './contracts/ticket_action.js'
 
 /**
  * Ticket statuses
@@ -247,6 +248,15 @@ export interface EscalatedConfig {
 
   ui: {
     enabled: boolean
+  }
+
+  /**
+   * Host-defined custom ticket actions. Each visible action renders as a button
+   * on the agent ticket screen and, when triggered, emits the
+   * `escalated:ticket:customActionTriggered` event.
+   */
+  ticketActions?: {
+    actions?: (TicketAction | TicketActionConfig)[]
   }
 
   api?: {

@@ -6,8 +6,12 @@ import ChatSession from '../../models/chat_session.js'
 import TicketService from '../../services/ticket_service.js'
 import AssignmentService from '../../services/assignment_service.js'
 import MacroService from '../../services/macro_service.js'
+import TicketActionRegistry from '../../services/ticket_action_registry.js'
+import { getConfig } from '../../helpers/config.js'
 import { STATUS_LABELS, PRIORITY_LABELS } from '../../types.js'
 import type { TicketStatus, TicketPriority } from '../../types.js'
+import emitter from '@adonisjs/core/services/emitter'
+import { ESCALATED_EVENTS } from '../../events/index.js'
 
 export default class ApiTicketController {
   protected ticketService = new TicketService()
@@ -86,14 +90,58 @@ export default class ApiTicketController {
     // Load related tickets (from split metadata links)
     const relatedTickets = await this.loadRelatedTickets(ticket)
 
-    return ctx.response.json({
-      data: await this.formatTicketDetail(ticket, {
-        chatSession,
-        chatMessages,
-        requesterTicketCount,
-        relatedTickets,
-      }),
+    const data = await this.formatTicketDetail(ticket, {
+      chatSession,
+      chatMessages,
+      requesterTicketCount,
+      relatedTickets,
     })
+    data.custom_actions = this.customActionsForTicket(ticket, (ctx as any).auth?.user)
+
+    return ctx.response.json({ data })
+  }
+
+  /**
+   * Serialize the visible custom actions for a ticket, adding url + method.
+   */
+  protected customActionsForTicket(ticket: Ticket, user: any): Array<Record<string, any>> {
+    const apiPrefix = getConfig().api?.prefix ?? 'support/api/v1'
+    return new TicketActionRegistry().forTicket(ticket, user).map((action) => ({
+      ...action,
+      url: `/${apiPrefix}/tickets/${ticket.reference}/actions/${action.key}`,
+      method: 'post',
+    }))
+  }
+
+  /**
+   * POST /tickets/:ticket/actions/:action — Trigger a custom ticket action
+   */
+  async customAction(ctx: HttpContext) {
+    const ticket = (ctx as any).escalatedTicket as Ticket
+    const user = (ctx as any).auth.user
+    const actionKey = ctx.params.action
+
+    const registry = new TicketActionRegistry()
+    const action = registry.find(actionKey)
+
+    if (!action || !action.visible(ticket, user)) {
+      return ctx.response.notFound({ message: 'Custom action not found.' })
+    }
+    if (!action.enabled(ticket, user)) {
+      return ctx.response.forbidden({ message: 'Custom action is not enabled.' })
+    }
+
+    const { payload } = ctx.request.only(['payload'])
+
+    await emitter.emit(ESCALATED_EVENTS.TICKET_CUSTOM_ACTION_TRIGGERED, {
+      ticket,
+      action: action.key(),
+      user,
+      payload: payload ?? {},
+      metadata: action.metadata(ticket, user),
+    })
+
+    return ctx.response.json({ message: 'Custom action dispatched.', action: action.key() })
   }
 
   /**
