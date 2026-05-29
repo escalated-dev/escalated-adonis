@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { userKeyType } from '../../build/src/helpers/user_id_column.js'
+import { userKeyType } from '../../src/helpers/user_id_column.ts'
 
 describe('user_id_column', () => {
   const envKey = 'ESCALATED_USER_KEY_TYPE'
