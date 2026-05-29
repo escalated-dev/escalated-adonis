@@ -26,7 +26,7 @@ export default class MacroService {
           await this.ticketService.changePriority(ticket, value as TicketPriority, causer)
           break
         case 'assign':
-          await this.assignmentService.assign(ticket, Number(value), causer)
+          await this.assignmentService.assign(ticket, value as string | number, causer)
           break
         case 'tags':
           await this.ticketService.addTags(ticket, Array.isArray(value) ? value : [value], causer)

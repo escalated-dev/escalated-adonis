@@ -1,6 +1,7 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column, belongsTo, scope } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import type { UserId } from '../helpers/user_id_column.js'
 import Ticket from './ticket.js'
 
 export type ChatSessionStatus = 'waiting' | 'active' | 'ended' | 'abandoned'
@@ -15,7 +16,7 @@ export default class ChatSession extends BaseModel {
   declare ticketId: number
 
   @column()
-  declare agentId: number | null
+  declare agentId: UserId | null
 
   @column()
   declare visitorId: number | null
@@ -81,7 +82,7 @@ export default class ChatSession extends BaseModel {
     query.where('status', 'active')
   })
 
-  static forAgent = scope((query, agentId: number) => {
+  static forAgent = scope((query, agentId: UserId) => {
     query.where('agent_id', agentId)
   })
 

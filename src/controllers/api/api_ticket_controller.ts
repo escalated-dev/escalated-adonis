@@ -286,7 +286,7 @@ export default class ApiTicketController {
       })
     }
 
-    await this.assignmentService.assign(ticket, Number(agentId), user)
+    await this.assignmentService.assign(ticket, agentId, user)
 
     return ctx.response.json({ message: 'Ticket assigned.' })
   }

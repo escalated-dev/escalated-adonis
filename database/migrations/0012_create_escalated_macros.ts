@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedMacros extends BaseSchema {
   protected tableName = 'escalated_macros'
@@ -9,7 +10,7 @@ export default class CreateEscalatedMacros extends BaseSchema {
       table.string('name').notNullable()
       table.string('description').nullable()
       table.json('actions').notNullable()
-      table.integer('created_by').unsigned().nullable()
+      userIdColumn(table, 'created_by').nullable()
       table.boolean('is_shared').defaultTo(true)
       table.integer('order').defaultTo(0)
       table.timestamp('created_at', { useTz: true }).notNullable()

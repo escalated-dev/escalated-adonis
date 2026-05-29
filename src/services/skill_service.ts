@@ -6,6 +6,7 @@ import SkillRoutingTag from '../models/skill_routing_tag.js'
 import SkillRoutingDepartment from '../models/skill_routing_department.js'
 import Tag from '../models/tag.js'
 import Department from '../models/department.js'
+import type { UserId } from '../helpers/user_id_column.js'
 
 export type SkillStorePayload = {
   name: string
@@ -13,7 +14,7 @@ export type SkillStorePayload = {
   description?: string | null
   routing_tag_ids: number[]
   routing_department_ids: number[]
-  agents: { user_id: number; proficiency: number }[]
+  agents: { user_id: UserId; proficiency: number }[]
 }
 
 export type SkillListRow = {
@@ -30,11 +31,11 @@ export type SkillEditShape = {
   name: string
   routing_tag_ids: number[]
   routing_department_ids: number[]
-  agents: { user_id: number; proficiency: number }[]
+  agents: { user_id: UserId; proficiency: number }[]
 }
 
 export type SkillFormContext = {
-  available_agents: { id: number; name: string | null; email: string }[]
+  available_agents: { id: UserId; name: string | null; email: string }[]
   available_tags: { id: number; name: string }[]
   available_departments: { id: number; name: string }[]
 }

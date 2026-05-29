@@ -1,5 +1,11 @@
 import db from '@adonisjs/lucid/services/db'
 import type Ticket from '../models/ticket.js'
+import type { UserId } from '../helpers/user_id_column.js'
+
+function compareUserId(a: UserId, b: UserId): number {
+  if (typeof a === 'number' && typeof b === 'number') return a - b
+  return String(a).localeCompare(String(b))
+}
 
 /**
  * Pure ADR routing step 1: union of skills matched by explicit tag edges
@@ -33,19 +39,19 @@ export function explicitRequiredSkillIds(
  */
 export function orderAgentsByProficiency(
   requiredSkillIds: number[],
-  assignments: { userId: number; skillId: number; proficiency: number }[]
-): number[] {
+  assignments: { userId: UserId; skillId: number; proficiency: number }[]
+): UserId[] {
   const needed = new Set(requiredSkillIds.map((id) => Number(id)))
   if (needed.size === 0) return []
 
-  const byUser = new Map<number, Map<number, number>>()
+  const byUser = new Map<UserId, Map<number, number>>()
   for (const a of assignments) {
     if (!needed.has(a.skillId)) continue
     if (!byUser.has(a.userId)) byUser.set(a.userId, new Map())
     byUser.get(a.userId)!.set(a.skillId, a.proficiency)
   }
 
-  const eligible: { userId: number; sum: number }[] = []
+  const eligible: { userId: UserId; sum: number }[] = []
   for (const [userId, skills] of byUser.entries()) {
     let sum = 0
     let ok = true
@@ -60,7 +66,7 @@ export function orderAgentsByProficiency(
     if (ok) eligible.push({ userId, sum })
   }
 
-  eligible.sort((a, b) => b.sum - a.sum || a.userId - b.userId)
+  eligible.sort((a, b) => b.sum - a.sum || compareUserId(a.userId, b.userId))
   return eligible.map((e) => e.userId)
 }
 
@@ -96,9 +102,10 @@ export default class SkillRoutingService {
     }
 
     if (Number.isFinite(Number(ticketDepartmentId)) && Number(ticketDepartmentId) > 0) {
+      const deptId = Number(ticketDepartmentId)
       const rows = await db
         .from('escalated_skill_routing_departments')
-        .where('department_id', ticketDepartmentId)
+        .where('department_id', deptId)
         .select('skill_id')
       for (const r of rows) {
         required.add(Number(r.skill_id))
@@ -108,7 +115,7 @@ export default class SkillRoutingService {
     return [...required].sort((a, b) => a - b)
   }
 
-  static async findMatchingAgents(ticket: Ticket): Promise<number[]> {
+  static async findMatchingAgents(ticket: Ticket): Promise<UserId[]> {
     await ticket.load('tags')
     const tagIds = ticket.tags.map((t) => t.id)
     const deptId = ticket.departmentId
@@ -124,7 +131,7 @@ export default class SkillRoutingService {
       .select('user_id', 'skill_id', 'proficiency')
 
     const assignments = rows.map((r: any) => ({
-      userId: Number(r.user_id),
+      userId: r.user_id as UserId,
       skillId: Number(r.skill_id),
       proficiency: Number(r.proficiency),
     }))

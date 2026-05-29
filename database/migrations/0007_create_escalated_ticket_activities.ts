@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedTicketActivities extends BaseSchema {
   protected tableName = 'escalated_ticket_activities'
@@ -14,7 +15,7 @@ export default class CreateEscalatedTicketActivities extends BaseSchema {
         .onDelete('CASCADE')
         .notNullable()
       table.string('causer_type').nullable()
-      table.integer('causer_id').unsigned().nullable()
+      userIdColumn(table, 'causer_id').nullable()
       table.string('type').notNullable()
       table.json('properties').nullable()
       table.timestamp('created_at', { useTz: true }).notNullable()

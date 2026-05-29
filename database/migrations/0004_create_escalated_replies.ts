@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedReplies extends BaseSchema {
   protected tableName = 'escalated_replies'
@@ -14,7 +15,7 @@ export default class CreateEscalatedReplies extends BaseSchema {
         .onDelete('CASCADE')
         .notNullable()
       table.string('author_type').nullable()
-      table.integer('author_id').unsigned().nullable()
+      userIdColumn(table, 'author_id').nullable()
       table.text('body').notNullable()
       table.boolean('is_internal_note').defaultTo(false)
       table.boolean('is_pinned').defaultTo(false)

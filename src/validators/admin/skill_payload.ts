@@ -2,6 +2,7 @@ import Tag from '../../models/tag.js'
 import Department from '../../models/department.js'
 import Skill from '../../models/skill.js'
 import type { SkillStorePayload } from '../../services/skill_service.js'
+import type { UserId } from '../../helpers/user_id_column.js'
 
 export type SkillPayloadResult =
   | { ok: true; data: SkillStorePayload }
@@ -18,15 +19,26 @@ function asUniquePositiveInts(value: unknown): number[] {
   return [...out]
 }
 
-function parseAgentRows(value: unknown): { user_id: number; proficiency: number }[] | null {
+function parseHostUserId(raw: unknown): UserId | null {
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    return trimmed.length > 0 ? trimmed : null
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) {
+    return raw
+  }
+  return null
+}
+
+function parseAgentRows(value: unknown): { user_id: UserId; proficiency: number }[] | null {
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) return null
-  const rows: { user_id: number; proficiency: number }[] = []
+  const rows: { user_id: UserId; proficiency: number }[] = []
   for (const item of value) {
     if (!item || typeof item !== 'object') continue
     const rec = item as Record<string, unknown>
-    const uid = Number(rec.user_id ?? rec.userId)
-    if (!Number.isFinite(uid) || uid <= 0) continue
+    const uid = parseHostUserId(rec.user_id ?? rec.userId)
+    if (uid === null) continue
     let prof = 3
     if (rec.proficiency !== undefined && rec.proficiency !== null) {
       prof = Number(rec.proficiency)
@@ -34,7 +46,7 @@ function parseAgentRows(value: unknown): { user_id: number; proficiency: number 
     if (!Number.isFinite(prof) || prof < 1 || prof > 5) {
       return null
     }
-    rows.push({ user_id: Math.trunc(uid), proficiency: Math.trunc(prof) })
+    rows.push({ user_id: uid, proficiency: Math.trunc(prof) })
   }
   return rows
 }
@@ -46,7 +58,7 @@ async function loadUserModel(): Promise<any> {
   return mod.default
 }
 
-async function userIsEligibleAgent(userId: number): Promise<boolean> {
+async function userIsEligibleAgent(userId: UserId): Promise<boolean> {
   const UserModel = await loadUserModel()
   const user = await UserModel.find(userId)
   if (!user) return false
@@ -105,12 +117,13 @@ export async function validateSkillStorePayload(
     return { ok: false, message: 'Each proficiency must be between 1 and 5.' }
   }
 
-  const seenUsers = new Set<number>()
+  const seenUsers = new Set<string>()
   for (const row of agentsRaw) {
-    if (seenUsers.has(row.user_id)) {
+    const userKey = String(row.user_id)
+    if (seenUsers.has(userKey)) {
       return { ok: false, message: 'Duplicate agent entries are not allowed.' }
     }
-    seenUsers.add(row.user_id)
+    seenUsers.add(userKey)
     if (!(await userIsEligibleAgent(row.user_id))) {
       return {
         ok: false,

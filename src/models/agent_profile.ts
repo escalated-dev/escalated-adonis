@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
+import type { UserId } from '../helpers/user_id_column.js'
 
 export type AgentChatStatus = 'online' | 'away' | 'offline'
 
@@ -10,7 +11,7 @@ export default class AgentProfile extends BaseModel {
   declare id: number
 
   @column()
-  declare userId: number
+  declare userId: UserId
 
   @column()
   declare chatStatus: AgentChatStatus

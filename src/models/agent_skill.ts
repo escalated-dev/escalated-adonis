@@ -1,6 +1,7 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import type { UserId } from '../helpers/user_id_column.js'
 import Skill from './skill.js'
 
 export default class AgentSkill extends BaseModel {
@@ -10,7 +11,7 @@ export default class AgentSkill extends BaseModel {
   declare id: number
 
   @column()
-  declare userId: number
+  declare userId: UserId
 
   @column()
   declare skillId: number

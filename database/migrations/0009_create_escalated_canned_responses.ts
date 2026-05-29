@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedCannedResponses extends BaseSchema {
   protected tableName = 'escalated_canned_responses'
@@ -9,7 +10,7 @@ export default class CreateEscalatedCannedResponses extends BaseSchema {
       table.string('title').notNullable()
       table.text('body').notNullable()
       table.string('category').nullable()
-      table.integer('created_by').unsigned().nullable()
+      userIdColumn(table, 'created_by').nullable()
       table.boolean('is_shared').defaultTo(true)
       table.timestamp('created_at', { useTz: true }).notNullable()
       table.timestamp('updated_at', { useTz: true }).notNullable()

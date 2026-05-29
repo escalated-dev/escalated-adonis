@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class AddSnoozeFieldsToEscalatedTickets extends BaseSchema {
   protected tableName = 'escalated_tickets'
@@ -6,7 +7,7 @@ export default class AddSnoozeFieldsToEscalatedTickets extends BaseSchema {
   async up() {
     this.schema.alterTable(this.tableName, (table) => {
       table.timestamp('snoozed_until', { useTz: true }).nullable()
-      table.integer('snoozed_by').unsigned().nullable()
+      userIdColumn(table, 'snoozed_by').nullable()
       table.string('status_before_snooze').nullable()
     })
   }

@@ -6,6 +6,7 @@ import ChatSession from '../models/chat_session.js'
 import type { ChatSessionStatus } from '../models/chat_session.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import type { TicketStatus } from '../types.js'
+import type { UserId } from '../helpers/user_id_column.js'
 
 export default class ChatSessionService {
   /**
@@ -76,7 +77,7 @@ export default class ChatSessionService {
   /**
    * Assign an agent to a chat session.
    */
-  async assignAgent(sessionId: number, agentId: number): Promise<ChatSession> {
+  async assignAgent(sessionId: number, agentId: UserId): Promise<ChatSession> {
     const session = await ChatSession.findOrFail(sessionId)
     session.agentId = agentId
     session.status = 'active'
@@ -121,7 +122,7 @@ export default class ChatSessionService {
   /**
    * Transfer a chat to another agent.
    */
-  async transfer(sessionId: number, newAgentId: number, _causer?: any): Promise<ChatSession> {
+  async transfer(sessionId: number, newAgentId: UserId, _causer?: any): Promise<ChatSession> {
     const session = await ChatSession.findOrFail(sessionId)
     const previousAgentId = session.agentId
 
@@ -182,7 +183,7 @@ export default class ChatSessionService {
    */
   updateTyping(
     sessionId: number,
-    userId: number,
+    userId: UserId,
     isTyping: boolean
   ): { channel: string; event: string; data: Record<string, any> } {
     return {
@@ -211,7 +212,7 @@ export default class ChatSessionService {
   /**
    * Get active chat sessions for an agent.
    */
-  async getAgentChats(agentId: number): Promise<ChatSession[]> {
+  async getAgentChats(agentId: UserId): Promise<ChatSession[]> {
     return ChatSession.query()
       .where('agent_id', agentId)
       .where('status', 'active')

@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedRolesAndPermissions extends BaseSchema {
   async up() {
@@ -45,7 +46,7 @@ export default class CreateEscalatedRolesAndPermissions extends BaseSchema {
         .references('id')
         .inTable('escalated_roles')
         .onDelete('CASCADE')
-      table.integer('user_id').unsigned().notNullable()
+      userIdColumn(table, 'user_id').notNullable()
       table.primary(['role_id', 'user_id'])
     })
   }

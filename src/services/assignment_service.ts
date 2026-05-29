@@ -3,12 +3,13 @@ import Ticket from '../models/ticket.js'
 import TicketActivity from '../models/ticket_activity.js'
 import Department from '../models/department.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
+import type { UserId } from '../helpers/user_id_column.js'
 
 export default class AssignmentService {
   /**
    * Assign a ticket to an agent.
    */
-  async assign(ticket: Ticket, agentId: number, causer?: any): Promise<Ticket> {
+  async assign(ticket: Ticket, agentId: UserId, causer?: any): Promise<Ticket> {
     ticket.assignedTo = agentId
     await ticket.save()
 
@@ -95,7 +96,7 @@ export default class AssignmentService {
   /**
    * Get agent workload stats.
    */
-  async getAgentWorkload(agentId: number): Promise<{
+  async getAgentWorkload(agentId: UserId): Promise<{
     open: number
     resolvedToday: number
     slaBreached: number

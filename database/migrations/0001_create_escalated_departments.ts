@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedDepartments extends BaseSchema {
   protected tableName = 'escalated_departments'
@@ -22,7 +23,7 @@ export default class CreateEscalatedDepartments extends BaseSchema {
         .references('id')
         .inTable('escalated_departments')
         .onDelete('CASCADE')
-      table.integer('agent_id').unsigned().notNullable()
+      userIdColumn(table, 'agent_id').notNullable()
       table.primary(['department_id', 'agent_id'])
     })
   }

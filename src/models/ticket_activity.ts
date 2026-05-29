@@ -1,6 +1,7 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column, belongsTo, computed } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import type { UserId } from '../helpers/user_id_column.js'
 import type { ActivityType } from '../types.js'
 import Ticket from './ticket.js'
 
@@ -17,7 +18,7 @@ export default class TicketActivity extends BaseModel {
   declare causerType: string | null
 
   @column()
-  declare causerId: number | null
+  declare causerId: UserId | null
 
   @column()
   declare type: ActivityType

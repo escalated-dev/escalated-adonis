@@ -1,6 +1,7 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column, belongsTo, hasMany, scope } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import type { UserId } from '../helpers/user_id_column.js'
 import Ticket from './ticket.js'
 import Attachment from './attachment.js'
 
@@ -17,7 +18,7 @@ export default class Reply extends BaseModel {
   declare authorType: string | null
 
   @column()
-  declare authorId: number | null
+  declare authorId: UserId | null
 
   @column()
   declare body: string

@@ -2,6 +2,7 @@ import ChatSession from '../models/chat_session.js'
 import ChatRoutingRule from '../models/chat_routing_rule.js'
 import AgentProfile from '../models/agent_profile.js'
 import type { ChatRoutingCondition } from '../models/chat_routing_rule.js'
+import type { UserId } from '../helpers/user_id_column.js'
 
 export default class ChatRoutingService {
   /**
@@ -11,7 +12,7 @@ export default class ChatRoutingService {
   async findAvailableAgent(context: {
     departmentId?: number | null
     metadata?: Record<string, any> | null
-  }): Promise<number | null> {
+  }): Promise<UserId | null> {
     // First, evaluate routing rules to see if any override applies
     const rule = await this.evaluateRouting(context)
 
@@ -35,7 +36,7 @@ export default class ChatRoutingService {
     const maxPerAgent = rule?.maxChatsPerAgent ?? 5
 
     // Find the agent with the fewest active chats who is under the limit
-    let bestAgentId: number | null = null
+    let bestAgentId: UserId | null = null
     let minChats = Infinity
 
     for (const agent of onlineAgents) {

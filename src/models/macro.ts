@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
+import type { UserId } from '../helpers/user_id_column.js'
 import type { MacroAction } from '../types.js'
 
 export default class Macro extends BaseModel {
@@ -22,7 +23,7 @@ export default class Macro extends BaseModel {
   declare actions: MacroAction[]
 
   @column()
-  declare createdBy: number | null
+  declare createdBy: UserId | null
 
   @column()
   declare isShared: boolean
@@ -42,7 +43,7 @@ export default class Macro extends BaseModel {
     query.where('is_shared', true)
   })
 
-  static forAgent = scope((query, agentId: number) => {
+  static forAgent = scope((query, agentId: UserId) => {
     query.where((q) => {
       q.where('is_shared', true).orWhere('created_by', agentId)
     })

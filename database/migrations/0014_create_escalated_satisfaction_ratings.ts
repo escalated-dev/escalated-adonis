@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedSatisfactionRatings extends BaseSchema {
   protected tableName = 'escalated_satisfaction_ratings'
@@ -17,7 +18,7 @@ export default class CreateEscalatedSatisfactionRatings extends BaseSchema {
       table.tinyint('rating').notNullable()
       table.text('comment').nullable()
       table.string('rated_by_type').nullable()
-      table.integer('rated_by_id').unsigned().nullable()
+      userIdColumn(table, 'rated_by_id').nullable()
       table.timestamp('created_at', { useTz: true }).nullable()
 
       table.index(['rated_by_type', 'rated_by_id'], 'satisfaction_ratings_rated_by_idx')

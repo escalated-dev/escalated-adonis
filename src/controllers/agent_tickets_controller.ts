@@ -244,7 +244,7 @@ export default class AgentTicketsController {
     const user = ctx.auth.user!
     const { agent_id: agentId } = ctx.request.only(['agent_id'])
 
-    await this.assignmentService.assign(ticket, Number(agentId), user as any)
+    await this.assignmentService.assign(ticket, agentId, user as any)
 
     ctx.session.flash('success', t('ticket.assigned'))
     return ctx.response.redirect().back()
@@ -381,7 +381,7 @@ export default class AgentTicketsController {
     for (const [uid, data] of Object.entries(presenceStore[ticketKey])) {
       if ((data as any).timestamp < cutoff) {
         delete presenceStore[ticketKey][uid]
-      } else if (Number(uid) !== userId) {
+      } else if (String(uid) !== String(userId)) {
         viewers.push(data)
       }
     }
