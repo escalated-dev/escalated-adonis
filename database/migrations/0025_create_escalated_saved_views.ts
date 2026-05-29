@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedSavedViews extends BaseSchema {
   protected tableName = 'escalated_saved_views'
@@ -8,7 +9,7 @@ export default class CreateEscalatedSavedViews extends BaseSchema {
       table.increments('id')
       table.string('name').notNullable()
       table.string('slug').notNullable()
-      table.integer('user_id').unsigned().nullable().index()
+      userIdColumn(table, 'user_id').nullable().index()
       table.boolean('is_shared').defaultTo(false)
       table.boolean('is_default').defaultTo(false)
       table.json('filters').notNullable()

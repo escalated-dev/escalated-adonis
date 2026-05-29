@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo, beforeCreate } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import type { UserId } from '../helpers/user_id_column.js'
 import Ticket from './ticket.js'
 
 export default class SatisfactionRating extends BaseModel {
@@ -25,7 +26,7 @@ export default class SatisfactionRating extends BaseModel {
   declare ratedByType: string | null
 
   @column()
-  declare ratedById: number | null
+  declare ratedById: UserId | null
 
   @column.dateTime()
   declare createdAt: DateTime | null

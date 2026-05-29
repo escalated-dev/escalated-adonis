@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
 import Ticket from '../models/ticket.js'
+import type { UserId } from '../helpers/user_id_column.js'
 import Tag from '../models/tag.js'
 import Department from '../models/department.js'
 import SatisfactionRating from '../models/satisfaction_rating.js'
@@ -93,7 +94,7 @@ export default class AdvancedReportingService {
       .whereBetween('created_at', [this.from.toSQL()!, this.to.toSQL()!])
       .whereNotNull('first_response_at')
       .whereNotNull('assigned_to')
-    const grouped = new Map<number, number[]>()
+    const grouped = new Map<UserId, number[]>()
     for (const t of tickets) {
       const frt = DateTime.fromJSDate(t.firstResponseAt as any).diff(
         DateTime.fromJSDate(t.createdAt as any),
@@ -161,7 +162,7 @@ export default class AdvancedReportingService {
     const tickets = await Ticket.query()
       .whereBetween('created_at', [this.from.toSQL()!, this.to.toSQL()!])
       .whereNotNull('assigned_to')
-    const agentMap = new Map<number, typeof tickets>()
+    const agentMap = new Map<UserId, typeof tickets>()
     for (const t of tickets) {
       if (!agentMap.has(t.assignedTo!)) agentMap.set(t.assignedTo!, [])
       agentMap.get(t.assignedTo!)!.push(t)

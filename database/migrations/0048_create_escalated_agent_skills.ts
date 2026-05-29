@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedAgentSkills extends BaseSchema {
   protected tableName = 'escalated_agent_skills'
@@ -6,7 +7,7 @@ export default class CreateEscalatedAgentSkills extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
-      table.integer('user_id').unsigned().notNullable()
+      userIdColumn(table, 'user_id').notNullable()
       table
         .integer('skill_id')
         .unsigned()

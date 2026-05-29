@@ -12,6 +12,7 @@ import type Ticket from '../models/ticket.js'
 import type Reply from '../models/reply.js'
 import type Tag from '../models/tag.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
+import type { UserId } from '../helpers/user_id_column.js'
 
 // ---- Event Data Interfaces ----
 
@@ -47,13 +48,13 @@ export interface TicketReopenedData {
 
 export interface TicketAssignedData {
   ticket: Ticket
-  agentId: number
+  agentId: UserId
   causer?: any
 }
 
 export interface TicketUnassignedData {
   ticket: Ticket
-  previousAgentId: number | null
+  previousAgentId: UserId | null
   causer?: any
 }
 

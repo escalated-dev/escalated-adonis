@@ -11,6 +11,7 @@ import {
 } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany, HasOne, ManyToMany } from '@adonisjs/lucid/types/relations'
 import type { TicketStatus, TicketPriority } from '../types.js'
+import type { UserId } from '../helpers/user_id_column.js'
 import { canTransitionTo, isOpenStatus } from '../types.js'
 import Reply from './reply.js'
 import Department from './department.js'
@@ -38,10 +39,10 @@ export default class Ticket extends BaseModel {
   declare requesterType: string | null
 
   @column()
-  declare requesterId: number | null
+  declare requesterId: UserId | null
 
   @column()
-  declare assignedTo: number | null
+  declare assignedTo: UserId | null
 
   @column()
   declare subject: string
@@ -119,7 +120,7 @@ export default class Ticket extends BaseModel {
   declare snoozedUntil: DateTime | null
 
   @column()
-  declare snoozedBy: number | null
+  declare snoozedBy: UserId | null
 
   @column()
   declare statusBeforeSnooze: string | null
@@ -249,7 +250,7 @@ export default class Ticket extends BaseModel {
     query.whereNull('assigned_to')
   })
 
-  static assignedToAgent = scope((query, agentId: number) => {
+  static assignedToAgent = scope((query, agentId: UserId) => {
     query.where('assigned_to', agentId)
   })
 
@@ -309,7 +310,7 @@ export default class Ticket extends BaseModel {
     return `${prefix}-${String(nextId).padStart(5, '0')}`
   }
 
-  async isFollowedBy(userId: number): Promise<boolean> {
+  async isFollowedBy(userId: UserId): Promise<boolean> {
     const { default: db } = await import('@adonisjs/lucid/services/db')
     const row = await db
       .from('escalated_ticket_followers')
@@ -319,7 +320,7 @@ export default class Ticket extends BaseModel {
     return !!row
   }
 
-  async follow(userId: number): Promise<void> {
+  async follow(userId: UserId): Promise<void> {
     const { default: db } = await import('@adonisjs/lucid/services/db')
     // Lucid's `InsertQueryBuilderContract` doesn't expose `onConflict` —
     // drop into the underlying Knex builder for the upsert-ignore.
@@ -331,7 +332,7 @@ export default class Ticket extends BaseModel {
       .ignore()
   }
 
-  async unfollow(userId: number): Promise<void> {
+  async unfollow(userId: UserId): Promise<void> {
     const { default: db } = await import('@adonisjs/lucid/services/db')
     await db
       .from('escalated_ticket_followers')

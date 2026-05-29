@@ -252,7 +252,7 @@ export default class WorkflowEngine {
           await ticket.save()
           break
         case 'assign_agent':
-          ticket.assignedTo = Number(action.value)
+          ticket.assignedTo = action.value as string | number
           await ticket.save()
           break
         case 'change_priority':
@@ -303,7 +303,7 @@ export default class WorkflowEngine {
           return 'delayed'
         }
         case 'add_follower':
-          await ticket.related('followers' as any).attach([Number(action.value)])
+          await ticket.related('followers' as any).attach([action.value as string | number])
           break
         case 'send_notification':
           console.log(

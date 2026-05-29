@@ -352,7 +352,7 @@ export default class ImportService {
     ticket.status = (record['status'] as TicketStatus) ?? 'open'
     ticket.priority = (record['priority'] as TicketPriority) ?? 'medium'
     ticket.channel = record['channel'] ?? 'import'
-    ticket.assignedTo = assigneeId ? Number(assigneeId) : null
+    ticket.assignedTo = assigneeId ?? null
     ticket.departmentId = departmentId ? Number(departmentId) : null
     ticket.metadata = record['metadata'] ?? null
     ticket.slaFirstResponseBreached = false
@@ -360,7 +360,7 @@ export default class ImportService {
 
     if (requesterId) {
       ticket.requesterType = userModelName
-      ticket.requesterId = Number(requesterId)
+      ticket.requesterId = requesterId
     }
 
     if (record['created_at']) {

@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedChatSessions extends BaseSchema {
   protected tableName = 'escalated_chat_sessions'
@@ -13,7 +14,7 @@ export default class CreateEscalatedChatSessions extends BaseSchema {
         .references('id')
         .inTable('escalated_tickets')
         .onDelete('CASCADE')
-      table.integer('agent_id').unsigned().nullable().index()
+      userIdColumn(table, 'agent_id').nullable().index()
       table.integer('visitor_id').unsigned().nullable()
       table.string('visitor_name').nullable()
       table.string('visitor_email').nullable()

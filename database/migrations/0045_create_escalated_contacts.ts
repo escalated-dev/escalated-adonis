@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 /**
  * Adds a first-class Contact entity for guest requesters (Pattern B
@@ -18,9 +19,7 @@ export default class CreateEscalatedContacts extends BaseSchema {
       table.increments('id')
       table.string('email', 320).notNullable().unique()
       table.string('name').nullable()
-      table
-        .integer('user_id')
-        .unsigned()
+      userIdColumn(table, 'user_id')
         .nullable()
         .comment('Linked host-app user id once the contact creates an account')
       table.json('metadata').nullable()

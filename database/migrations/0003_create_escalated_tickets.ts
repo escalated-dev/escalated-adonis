@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedTickets extends BaseSchema {
   protected tableName = 'escalated_tickets'
@@ -8,11 +9,11 @@ export default class CreateEscalatedTickets extends BaseSchema {
       table.increments('id')
       table.string('reference').unique().notNullable()
       table.string('requester_type').nullable()
-      table.integer('requester_id').unsigned().nullable()
+      userIdColumn(table, 'requester_id').nullable()
       table.string('guest_name').nullable()
       table.string('guest_email').nullable()
       table.string('guest_token', 64).nullable().unique()
-      table.integer('assigned_to').unsigned().nullable().index()
+      userIdColumn(table, 'assigned_to').nullable().index()
       table.string('subject').notNullable()
       table.text('description').notNullable()
       table.string('status').defaultTo('open').index().notNullable()

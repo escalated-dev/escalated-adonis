@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto'
-import { DOMParser } from '@xmldom/xmldom'
+import { DOMParser, type Document, type Element } from '@xmldom/xmldom'
 import EscalatedSetting from '../models/escalated_setting.js'
 
 export class SsoValidationError extends Error {
@@ -175,7 +175,7 @@ export default class SsoService {
   private extractSamlAttributes(doc: Document): Record<string, string> {
     const attributes: Record<string, string> = {}
     const attrEls = doc.getElementsByTagNameNS('urn:oasis:names:tc:SAML:2.0:assertion', 'Attribute')
-    for (const attrEl of Array.from(attrEls)) {
+    for (const attrEl of Array.from(attrEls) as Element[]) {
       const name = attrEl.getAttribute('Name')
       if (!name) continue
       const valueEls = attrEl.getElementsByTagNameNS(

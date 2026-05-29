@@ -29,7 +29,7 @@ export default class BulkActionsController {
             await this.ticketService.changePriority(ticket, value as TicketPriority, causer as any)
             break
           case 'assign':
-            await this.assignmentService.assign(ticket, Number(value), causer as any)
+            await this.assignmentService.assign(ticket, value, causer as any)
             break
           case 'tags':
             await this.ticketService.addTags(

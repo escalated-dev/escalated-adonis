@@ -1,6 +1,7 @@
 import type Ticket from '../models/ticket.js'
 import type Reply from '../models/reply.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
+import type { UserId } from '../helpers/user_id_column.js'
 
 /**
  * Configuration for the broadcast service.
@@ -114,7 +115,7 @@ export default class BroadcastService {
   /**
    * Get the channel for a specific user's personal notifications.
    */
-  userChannel(userId: number): string {
+  userChannel(userId: UserId): string {
     return `escalated.user.${userId}`
   }
 
@@ -227,7 +228,7 @@ export default class BroadcastService {
   /**
    * Broadcast a ticket assigned event.
    */
-  async broadcastTicketAssigned(ticket: Ticket, agentId: number): Promise<void> {
+  async broadcastTicketAssigned(ticket: Ticket, agentId: UserId): Promise<void> {
     if (!this.isEventEnabled('ticketAssigned')) return
 
     const data = { ...this.serializeTicket(ticket), assigned_to: agentId }

@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class extends BaseSchema {
   protected tableName = 'escalated_mentions'
@@ -12,7 +13,7 @@ export default class extends BaseSchema {
         .references('id')
         .inTable('escalated_replies')
         .onDelete('CASCADE')
-      table.integer('user_id').unsigned().notNullable()
+      userIdColumn(table, 'user_id').notNullable()
       table.timestamp('read_at').nullable()
       table.timestamp('created_at')
       table.unique(['reply_id', 'user_id'])

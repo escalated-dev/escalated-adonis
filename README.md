@@ -89,6 +89,25 @@ const escalatedConfig: EscalatedConfig = {
 }
 ```
 
+### Host user key type (UUID / string users)
+
+Escalated stores references to your app's users (ticket requester, assignee,
+reply author, etc.). By default those columns are integers. If your `User`
+model's primary key is a **UUID or other string**, set
+`ESCALATED_USER_KEY_TYPE` before running the Escalated migrations so the FK
+columns are created as `varchar(255)` instead of `integer`:
+
+```dotenv
+# .env — one of: int (default) | bigint | uuid | string
+ESCALATED_USER_KEY_TYPE=uuid
+```
+
+It is read from the environment (not the config object) because Lucid
+migrations run before app config is fully available. Existing integer-keyed
+installs need no change — the default (`int`) produces the same schema as
+before. All Escalated code paths accept a host user id as either a `number` or
+a `string` (`UserId`).
+
 ### Authorization
 
 The `isAgent` and `isAdmin` callbacks determine role-based access. You can use boolean properties, methods, or any async logic:

@@ -107,7 +107,7 @@ export default class AutomationRunner {
             break
 
           case 'assign':
-            ticket.assignedTo = Number(value)
+            ticket.assignedTo = value as string | number
             await ticket.save()
             break
 

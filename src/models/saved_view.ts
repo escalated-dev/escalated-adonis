@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
+import type { UserId } from '../helpers/user_id_column.js'
 
 export default class SavedView extends BaseModel {
   static table = 'escalated_saved_views'
@@ -14,7 +15,7 @@ export default class SavedView extends BaseModel {
   declare slug: string
 
   @column()
-  declare userId: number | null
+  declare userId: UserId | null
 
   @column()
   declare isShared: boolean
@@ -61,7 +62,7 @@ export default class SavedView extends BaseModel {
   /**
    * Views visible to a specific user: their own views + shared views.
    */
-  static visibleTo = scope((query, userId: number) => {
+  static visibleTo = scope((query, userId: UserId) => {
     query.where((q) => {
       q.where('user_id', userId).orWhere('is_shared', true)
     })
@@ -77,7 +78,7 @@ export default class SavedView extends BaseModel {
   /**
    * Views owned by a specific user.
    */
-  static ownedBy = scope((query, userId: number) => {
+  static ownedBy = scope((query, userId: UserId) => {
     query.where('user_id', userId)
   })
 

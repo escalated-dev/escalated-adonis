@@ -1,6 +1,7 @@
 import { type DateTime } from 'luxon'
 import { BaseModel, column, hasMany, beforeSave } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
+import type { UserId } from '../helpers/user_id_column.js'
 import Ticket from './ticket.js'
 
 /**
@@ -25,7 +26,7 @@ export default class Contact extends BaseModel {
   declare name: string | null
 
   @column({ columnName: 'user_id' })
-  declare userId: number | null
+  declare userId: UserId | null
 
   @column({
     prepare: (value: unknown) => JSON.stringify(value ?? {}),
@@ -71,7 +72,7 @@ export default class Contact extends BaseModel {
     return this.create({ email: normalized, name: name ?? null, userId: null, metadata: {} })
   }
 
-  async linkToUser(userId: number): Promise<this> {
+  async linkToUser(userId: UserId): Promise<this> {
     this.userId = userId
     await this.save()
     return this
@@ -82,7 +83,7 @@ export default class Contact extends BaseModel {
    * owned by this contact. userType matches host-app polymorphic target
    * convention.
    */
-  async promoteToUser(userId: number, userType: string = 'User'): Promise<this> {
+  async promoteToUser(userId: UserId, userType: string = 'User'): Promise<this> {
     await this.linkToUser(userId)
     await Ticket.query().where('contactId', this.id).update({
       requesterId: userId,

@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class AddChatStatusToAgentProfiles extends BaseSchema {
   protected tableName = 'escalated_agent_profiles'
@@ -6,7 +7,7 @@ export default class AddChatStatusToAgentProfiles extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
-      table.integer('user_id').unsigned().notNullable().unique()
+      userIdColumn(table, 'user_id').notNullable().unique()
       table.string('chat_status').defaultTo('offline').notNullable()
       table.integer('max_concurrent_chats').unsigned().defaultTo(5)
       table.timestamp('last_seen_at', { useTz: true }).nullable()
