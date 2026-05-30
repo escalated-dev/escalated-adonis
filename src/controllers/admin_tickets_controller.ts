@@ -13,6 +13,7 @@ import { getRenderer } from '../rendering/renderer.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
 import { requireAuthUser } from '../support/auth_user.js'
+import TicketSubjectService from '../services/ticket_subject_service.js'
 
 export default class AdminTicketsController {
   protected ticketService = new TicketService()
@@ -125,8 +126,11 @@ export default class AdminTicketsController {
     // Load related tickets via split metadata
     const relatedTickets = await this.loadRelatedTickets(ticket)
 
+    const subjects = await new TicketSubjectService().serializeForTicket(ticket)
+
     return getRenderer().render(ctx, 'Escalated/Admin/Tickets/Show', {
       ticket,
+      subjects,
       departments,
       tags,
       cannedResponses,

@@ -21,6 +21,9 @@ import TicketActivity from './ticket_activity.js'
 import Attachment from './attachment.js'
 import SatisfactionRating from './satisfaction_rating.js'
 import EscalatedSetting from './escalated_setting.js'
+import TicketSubjectLink from './ticket_subject_link.js'
+import { assertTicketSubjectTypeAllowed } from '../services/ticket_subject_service.js'
+import type { TicketSubjectSyncItem } from '../contracts/ticket_subject.js'
 
 export default class Ticket extends BaseModel {
   static table = 'escalated_tickets'
@@ -161,6 +164,9 @@ export default class Ticket extends BaseModel {
 
   @hasOne(() => SatisfactionRating, { foreignKey: 'ticketId' })
   declare satisfactionRating: HasOne<typeof SatisfactionRating>
+
+  @hasMany(() => TicketSubjectLink, { foreignKey: 'ticketId' })
+  declare subjects: HasMany<typeof TicketSubjectLink>
 
   // Note: "requester" and "assignee" are polymorphic / dynamic user model
   // references. We handle these by manually loading via the user model.
@@ -349,5 +355,78 @@ export default class Ticket extends BaseModel {
       .count('* as total')
       .first()
     return Number(result?.total ?? 0)
+  }
+
+  /**
+   * Attach a host entity as a subject (idempotent on ticket+type+id).
+   * Rejects types outside the configured allowlist when one is set.
+   */
+  async attachSubject(
+    subjectType: string,
+    subjectId: string | number,
+    role: string | null = null,
+    position?: number
+  ): Promise<TicketSubjectLink> {
+    assertTicketSubjectTypeAllowed(subjectType)
+
+    const id = String(subjectId)
+    const existing = await TicketSubjectLink.query()
+      .where('ticket_id', this.id)
+      .where('subject_type', subjectType)
+      .where('subject_id', id)
+      .first()
+
+    if (existing) {
+      existing.role = role
+      if (position !== undefined) {
+        existing.position = position
+      }
+      await existing.save()
+      return existing
+    }
+
+    let nextPosition = position
+    if (nextPosition === undefined) {
+      const maxRow = await TicketSubjectLink.query()
+        .where('ticket_id', this.id)
+        .max('position as max_position')
+        .first()
+      const maxPosition = Number((maxRow as any)?.$extras?.max_position ?? -1)
+      nextPosition = maxPosition + 1
+    }
+
+    return TicketSubjectLink.create({
+      ticketId: this.id,
+      subjectType,
+      subjectId: id,
+      role,
+      position: nextPosition,
+    })
+  }
+
+  /**
+   * Detach a subject by type+id. Returns the number of links removed (0 or 1).
+   */
+  async detachSubject(subjectType: string, subjectId: string | number): Promise<number> {
+    const deleted = await TicketSubjectLink.query()
+      .where('ticket_id', this.id)
+      .where('subject_type', subjectType)
+      .where('subject_id', String(subjectId))
+      .delete()
+
+    return Number(deleted[0] ?? 0)
+  }
+
+  /**
+   * Replace this ticket's subjects, preserving order.
+   */
+  async syncSubjects(items: TicketSubjectSyncItem[]): Promise<void> {
+    await TicketSubjectLink.query().where('ticket_id', this.id).delete()
+
+    let position = 0
+    for (const entry of items) {
+      const [type, id, role] = Array.isArray(entry) ? entry : [entry.type, entry.id, entry.role]
+      await this.attachSubject(type, id, role ?? null, position++)
+    }
   }
 }

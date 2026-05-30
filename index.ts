@@ -78,6 +78,14 @@ export { default as ImportService } from './src/services/import_service.js'
 export { default as ImportContext } from './src/support/import_context.js'
 export { ExtractResult } from './src/contracts/import_adapter.js'
 export type { ImportAdapter, CredentialField } from './src/contracts/import_adapter.js'
+export type {
+  TicketSubject,
+  SerializedTicketSubject,
+  TicketSubjectSyncItem,
+} from './src/contracts/ticket_subject.js'
+export { default as TicketSubjectLink } from './src/models/ticket_subject_link.js'
+export { default as TicketSubjectService } from './src/services/ticket_subject_service.js'
+export { TicketSubjectNotAllowedError } from './src/services/ticket_subject_service.js'
 export type { ImportJobStatus, EntityProgress, ErrorLogEntry } from './src/models/import_job.js'
 
 // Live Chat

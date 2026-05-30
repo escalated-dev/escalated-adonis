@@ -15,6 +15,7 @@ import { getConfig } from '../helpers/config.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
 import { requireAuthUser } from '../support/auth_user.js'
+import TicketSubjectService from '../services/ticket_subject_service.js'
 import emitter from '@adonisjs/core/services/emitter'
 import { ESCALATED_EVENTS } from '../events/index.js'
 
@@ -125,8 +126,11 @@ export default class AgentTicketsController {
     // Load related tickets via split metadata
     const relatedTickets = await this.loadRelatedTickets(ticket)
 
+    const subjects = await new TicketSubjectService().serializeForTicket(ticket)
+
     return getRenderer().render(ctx, 'Escalated/Agent/TicketShow', {
       ticket,
+      subjects,
       departments,
       tags,
       cannedResponses,

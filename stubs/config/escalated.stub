@@ -200,6 +200,24 @@ const escalatedConfig: EscalatedConfig = {
   | Inbound Email
   |--------------------------------------------------------------------------
   */
+  /*
+  |--------------------------------------------------------------------------
+  | Ticket subjects
+  |--------------------------------------------------------------------------
+  |
+  | Host-app models a ticket can be *about* (Project, Customer, asset, …),
+  | distinct from the requester. List allowed morph types for the attach API
+  | and provide a resolver for UI serialization.
+  |
+  */
+  ticketSubjects: {
+    types: [
+      // 'Project',
+      // 'Customer',
+    ],
+    // resolver: async (type, id) => { ... return presentation or null },
+  },
+
   inboundEmail: {
     enabled: false,
     adapter: 'mailgun',

@@ -7,6 +7,7 @@ import TicketService from '../../services/ticket_service.js'
 import AssignmentService from '../../services/assignment_service.js'
 import MacroService from '../../services/macro_service.js'
 import TicketActionRegistry from '../../services/ticket_action_registry.js'
+import TicketSubjectService from '../../services/ticket_subject_service.js'
 import { getConfig } from '../../helpers/config.js'
 import { STATUS_LABELS, PRIORITY_LABELS } from '../../types.js'
 import type { TicketStatus, TicketPriority } from '../../types.js'
@@ -16,6 +17,7 @@ import { ESCALATED_EVENTS } from '../../events/index.js'
 export default class ApiTicketController {
   protected ticketService = new TicketService()
   protected assignmentService = new AssignmentService()
+  protected ticketSubjectService = new TicketSubjectService()
 
   /**
    * GET /tickets — List tickets with pagination and filtering
@@ -452,6 +454,7 @@ export default class ApiTicketController {
           name: tag.name,
           color: tag.color,
         })) ?? [],
+      subjects: await this.ticketSubjectService.serializeForTicket(ticket),
       replies: await Promise.all(
         (ticket.replies ?? []).map(async (r: any) => ({
           id: r.id,

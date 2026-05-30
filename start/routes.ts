@@ -43,6 +43,7 @@ const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
 const AdminSkillController = () => import('../src/controllers/admin_skill_controller.js')
+const TicketSubjectsController = () => import('../src/controllers/ticket_subjects_controller.js')
 
 // Lazy-load controllers (core — non-UI)
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
@@ -237,6 +238,12 @@ function registerUiRoutes(config: any) {
             .post('/tickets/:ticket/tags', [AgentTicketsController, 'tags'])
             .as('escalated.agent.tickets.tags')
           router
+            .post('/tickets/:ticket/subjects', [TicketSubjectsController, 'store'])
+            .as('escalated.agent.tickets.subjects.store')
+          router
+            .delete('/tickets/:ticket/subjects/:subject', [TicketSubjectsController, 'destroy'])
+            .as('escalated.agent.tickets.subjects.destroy')
+          router
             .post('/tickets/:ticket/department', [AgentTicketsController, 'department'])
             .as('escalated.agent.tickets.department')
           router
@@ -362,6 +369,12 @@ function registerUiRoutes(config: any) {
           router
             .post('/tickets/:ticket/tags', [AdminTicketsController, 'tags'])
             .as('escalated.admin.tickets.tags')
+          router
+            .post('/tickets/:ticket/subjects', [TicketSubjectsController, 'store'])
+            .as('escalated.admin.tickets.subjects.store')
+          router
+            .delete('/tickets/:ticket/subjects/:subject', [TicketSubjectsController, 'destroy'])
+            .as('escalated.admin.tickets.subjects.destroy')
           router
             .post('/tickets/:ticket/department', [AdminTicketsController, 'department'])
             .as('escalated.admin.tickets.department')
