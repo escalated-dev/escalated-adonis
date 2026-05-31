@@ -240,18 +240,34 @@ export default class BroadcastService {
   /**
    * Broadcast a reply created event.
    */
-  async broadcastReplyCreated(reply: Reply, ticket: Ticket): Promise<void> {
+  async broadcastReplyCreated(reply: Reply, ticket: Ticket, author?: any): Promise<void> {
     if (reply.isInternalNote) {
       if (!this.isEventEnabled('internalNoteAdded')) return
     } else {
       if (!this.isEventEnabled('replyCreated')) return
     }
 
+    // The polymorphic author is resolved by the host app (see the Reply model
+    // note). Prefer an explicitly passed author, falling back to one the host
+    // preloaded onto the reply. Without a resolved name the payload carries
+    // only author_type/author_id and a real-time consumer renders "Unknown"
+    // until it refetches the reply. Mirrors the api_ticket_controller shape:
+    // name = user.name ?? user.fullName.
+    const resolvedAuthor = author ?? (reply as any).author ?? null
+    const authorName = resolvedAuthor
+      ? (resolvedAuthor.name ?? resolvedAuthor.fullName ?? null)
+      : null
+    const hasAuthor = reply.authorId !== null && reply.authorId !== undefined
+
     const data = {
       ticket_id: ticket.id,
       reply_id: reply.id,
       author_type: reply.authorType,
       author_id: reply.authorId,
+      author_name: authorName,
+      // Nested shape mirrors escalated-laravel / escalated-nestjs so a consumer
+      // can render reply.author.name without a server round-trip.
+      author: hasAuthor ? { id: reply.authorId, type: reply.authorType, name: authorName } : null,
       is_internal_note: reply.isInternalNote,
       body_preview: reply.body.slice(0, 100),
     }
