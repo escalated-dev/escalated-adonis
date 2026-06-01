@@ -14,6 +14,7 @@ import { join, resolve } from 'node:path'
 import { getConfig } from '../helpers/config.js'
 import Plugin from '../models/plugin.js'
 import type HookManager from '../support/hook_manager.js'
+import { collectSafeArchiveRootFolder, resolveWithinBasePath } from '../support/plugin_archive.js'
 import type { PluginManifest, PluginInfo } from '../types.js'
 
 export default class PluginService {
@@ -306,7 +307,8 @@ export default class PluginService {
     const uploadedPath = join(tempDir, file.clientName)
 
     // Extract ZIP using dynamic import of adm-zip (or similar)
-    let rootFolder: string
+    let extractPath: string | null = null
+    let createdExtractPath = false
 
     try {
       // Attempt dynamic import of adm-zip
@@ -314,27 +316,18 @@ export default class PluginService {
       const zip = new AdmZip(uploadedPath)
       const entries = zip.getEntries()
 
-      // Determine root folder
-      rootFolder = ''
-      for (const entry of entries) {
-        const name = entry.entryName
-        if (name.includes('/')) {
-          rootFolder = name.substring(0, name.indexOf('/'))
-          break
-        }
-      }
-
-      if (!rootFolder) {
-        throw new Error('Invalid plugin structure: no root folder found in ZIP')
-      }
-
-      const extractPath = join(this.pluginsPath, rootFolder)
+      const rootFolder = collectSafeArchiveRootFolder(
+        entries.map((entry) => entry.entryName),
+        this.pluginsPath
+      )
+      extractPath = resolveWithinBasePath(this.pluginsPath, rootFolder)
       if (existsSync(extractPath)) {
         throw new Error(`Plugin "${rootFolder}" already exists`)
       }
 
       // Extract to plugins directory
       zip.extractAllTo(this.pluginsPath, true)
+      createdExtractPath = true
 
       // Validate plugin.json exists
       const manifestPath = join(extractPath, 'plugin.json')
@@ -344,6 +337,12 @@ export default class PluginService {
       }
 
       return { slug: rootFolder, path: extractPath }
+    } catch (error) {
+      if (createdExtractPath && extractPath && existsSync(extractPath)) {
+        rmSync(extractPath, { recursive: true, force: true })
+      }
+
+      throw error
     } finally {
       // Clean up temp file
       try {
