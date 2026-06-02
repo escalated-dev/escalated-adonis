@@ -124,6 +124,64 @@ authorization: {
 }
 ```
 
+### Ticket subjects
+
+A ticket has a **requester** (who raised it) and a **subject line** (free text). Tickets can also be *about* host-app entities — a Project, Customer, asset — that are not people. Attach them as ticket **subjects** so agents see what the ticket concerns and can jump into your app.
+
+Implement the `TicketSubject` contract on any host model (or resolve presentation via config):
+
+```typescript
+import type { TicketSubject } from '@escalated-dev/escalated-adonis'
+
+export class Project implements TicketSubject {
+  ticketSubjectTitle() {
+    return this.name
+  }
+  ticketSubjectSubtitle() {
+    return `Project · ${this.customerName}`
+  }
+  ticketSubjectUrl() {
+    return `/projects/${this.id}`
+  }
+  ticketSubjectColor() {
+    return '#2563eb'
+  }
+  ticketSubjectIcon() {
+    return 'folder'
+  }
+}
+```
+
+Attach, detach, or sync on a ticket (several subjects allowed; `subject_id` is stored as a string):
+
+```typescript
+await ticket.attachSubject('Project', project.id, 'project')
+await ticket.detachSubject('Project', project.id)
+await ticket.syncSubjects([
+  { type: 'Project', id: project.id, role: 'primary' },
+  ['Customer', customer.id, 'account'],
+])
+```
+
+Configure allowed types and a resolver for API/UI serialization:
+
+```typescript
+ticketSubjects: {
+  types: ['Project', 'Customer'],
+  resolver: async (type, id) => {
+    if (type === 'Project') {
+      const row = await Project.find(id)
+      return row ?? null
+    }
+    return null
+  },
+},
+```
+
+Agent/admin routes: `POST …/tickets/:ticket/subjects` (`type`, `id`, optional `role`) and `DELETE …/tickets/:ticket/subjects/:linkId`. The API only accepts allowlisted types; programmatic `attachSubject()` allows any type when the allowlist is empty.
+
+Each subject is serialized as `{ type, id, role, title, subtitle, url, color, icon, missing }` (fallback title `type#id` when the resolver is absent or returns null).
+
 ## Features
 
 - **Tickets:** Create, view, update, close, reopen tickets with status machine

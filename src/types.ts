@@ -6,6 +6,7 @@
 
 import { t } from './support/i18n.js'
 import type { TicketAction, TicketActionConfig } from './contracts/ticket_action.js'
+import type { TicketSubject } from './contracts/ticket_subject.js'
 
 /**
  * Ticket statuses
@@ -273,6 +274,16 @@ export interface EscalatedConfig {
 
   activityLog: {
     retentionDays: number
+  }
+
+  /**
+   * Host entities a ticket can be *about* (Project, Customer, asset, …).
+   * `types` allowlists morph types for the agent/admin attach API.
+   * `resolver` maps type/id to presentation data for serialization.
+   */
+  ticketSubjects?: {
+    types?: string[] | Record<string, string>
+    resolver?: (type: string, id: string) => Promise<TicketSubject | null>
   }
 
   inboundEmail: {
