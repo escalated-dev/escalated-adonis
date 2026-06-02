@@ -3,3 +3,6 @@ node_modules
 package-lock.json
 *.md
 docker
+# Edge email templates: prettier-plugin-edge formatting is non-idempotent on
+# these (--write output is re-flagged by --check), so they can't pass the gate.
+resources/views/newsletter_themes/

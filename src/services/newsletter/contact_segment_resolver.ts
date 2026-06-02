@@ -16,7 +16,7 @@ export default class ContactSegmentResolver {
   }
 
   async resolveSendable(list: NewsletterList): Promise<number[]> {
-    let q = Contact.query().whereNull('marketingOptOutAt' as never)
+    let q = Contact.query().whereNull('marketingOptOutAt')
     if (list.kind === 'static') {
       const memberRows = await NewsletterListMember.query()
         .where('listId', list.id)

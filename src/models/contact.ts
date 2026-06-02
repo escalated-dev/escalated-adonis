@@ -49,6 +49,13 @@ export default class Contact extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 
+  // Set when the contact one-click unsubscribes from marketing newsletters.
+  // Null = sendable. Backed by the 0055 migration; the segment resolver filters
+  // on it. Was missing from the model, so the resolver query referenced a
+  // nonexistent column and threw.
+  @column.dateTime()
+  declare marketingOptOutAt: DateTime | null
+
   @hasMany(() => Ticket, { foreignKey: 'contactId' })
   declare tickets: HasMany<typeof Ticket>
 
