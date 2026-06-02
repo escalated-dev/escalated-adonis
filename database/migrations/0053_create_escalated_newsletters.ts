@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedNewsletters extends BaseSchema {
   protected tableName = 'escalated_newsletters'
@@ -17,8 +18,8 @@ export default class CreateEscalatedNewsletters extends BaseSchema {
       table.string('status', 16).notNullable().defaultTo('draft')
       table.timestamp('scheduled_at', { useTz: true }).nullable()
       table.timestamp('sent_at', { useTz: true }).nullable()
-      table.integer('created_by').unsigned().nullable()
-      table.integer('sent_by').unsigned().nullable()
+      userIdColumn(table, 'created_by').nullable()
+      userIdColumn(table, 'sent_by').nullable()
       table.integer('summary_total').notNullable().defaultTo(0)
       table.integer('summary_sent').notNullable().defaultTo(0)
       table.integer('summary_opened').notNullable().defaultTo(0)

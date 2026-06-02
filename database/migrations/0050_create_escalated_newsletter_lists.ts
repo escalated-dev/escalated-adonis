@@ -1,4 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
+import { userIdColumn } from '../../src/helpers/user_id_column.js'
 
 export default class CreateEscalatedNewsletterLists extends BaseSchema {
   protected tableName = 'escalated_newsletter_lists'
@@ -10,7 +11,7 @@ export default class CreateEscalatedNewsletterLists extends BaseSchema {
       table.text('description').nullable()
       table.string('kind', 16).notNullable()
       table.json('filter_json').nullable()
-      table.integer('created_by').unsigned().nullable()
+      userIdColumn(table, 'created_by').nullable()
       table.timestamp('created_at', { useTz: true }).notNullable()
       table.timestamp('updated_at', { useTz: true }).notNullable()
 
