@@ -34,9 +34,7 @@ function assertTicketSubjectTypeAllowed(subjectType) {
 
 function isTicketSubjectPresentable(value) {
   return (
-    value !== null &&
-    typeof value === 'object' &&
-    typeof value.ticketSubjectTitle === 'function'
+    value !== null && typeof value === 'object' && typeof value.ticketSubjectTitle === 'function'
   )
 }
 
