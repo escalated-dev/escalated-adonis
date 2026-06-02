@@ -104,16 +104,24 @@ function createBroadcastService(configOverrides = {}, transport = null) {
       await this.broadcast(this.ticketChannel(ticket.id), 'ticket.assigned', data)
       await this.broadcast(this.userChannel(agentId), 'ticket.assigned', data)
     },
-    async broadcastReplyCreated(reply, ticket) {
+    async broadcastReplyCreated(reply, ticket, author) {
       if (reply.isInternalNote) {
         if (!this.isEventEnabled('internalNoteAdded')) return
       } else {
         if (!this.isEventEnabled('replyCreated')) return
       }
+      const resolvedAuthor = author ?? reply.author ?? null
+      const authorName = resolvedAuthor
+        ? (resolvedAuthor.name ?? resolvedAuthor.fullName ?? null)
+        : null
+      const hasAuthor = reply.authorId !== null && reply.authorId !== undefined
       const data = {
         ticket_id: ticket.id,
         reply_id: reply.id,
         author_type: reply.authorType,
+        author_id: reply.authorId,
+        author_name: authorName,
+        author: hasAuthor ? { id: reply.authorId, type: reply.authorType, name: authorName } : null,
         is_internal_note: reply.isInternalNote,
         body_preview: reply.body.slice(0, 100),
       }
@@ -354,6 +362,40 @@ describe('Broadcasting', () => {
       await svc.broadcastReplyCreated(reply, ticket)
 
       assert.equal(svc.dispatched[0].data.body_preview.length, 100)
+    })
+
+    it('includes a nested author when one is passed', async () => {
+      const svc = createBroadcastService({ enabled: true })
+      const ticket = buildMockTicket({ id: 1 })
+      const reply = buildMockReply({ authorType: 'User', authorId: 5 })
+      await svc.broadcastReplyCreated(reply, ticket, { id: 5, name: 'Dana Agent' })
+
+      const data = svc.dispatched[0].data
+      assert.deepEqual(data.author, { id: 5, type: 'User', name: 'Dana Agent' })
+      assert.equal(data.author_name, 'Dana Agent')
+    })
+
+    it('falls back to an author preloaded onto the reply', async () => {
+      const svc = createBroadcastService({ enabled: true })
+      const ticket = buildMockTicket({ id: 1 })
+      const reply = buildMockReply({
+        authorType: 'User',
+        authorId: 7,
+        author: { fullName: 'Sam Smith' },
+      })
+      await svc.broadcastReplyCreated(reply, ticket)
+
+      assert.equal(svc.dispatched[0].data.author.name, 'Sam Smith')
+    })
+
+    it('emits a null author for an unauthored (system) reply', async () => {
+      const svc = createBroadcastService({ enabled: true })
+      const ticket = buildMockTicket({ id: 1 })
+      const reply = buildMockReply({ authorType: null, authorId: null })
+      await svc.broadcastReplyCreated(reply, ticket)
+
+      assert.equal(svc.dispatched[0].data.author, null)
+      assert.equal(svc.dispatched[0].data.author_name, null)
     })
   })
 
