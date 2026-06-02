@@ -25,3 +25,4 @@ function copyTree(srcRel, dstRel, label) {
 
 copyTree('stubs', 'stubs', 'stubs')
 copyTree('database/migrations', 'database/migrations', 'migrations')
+copyTree('resources/views/newsletter_themes', 'resources/views/newsletter_themes', 'newsletter_themes')
