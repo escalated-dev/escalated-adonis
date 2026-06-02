@@ -285,6 +285,19 @@ const PERMISSIONS = [
     group: 'Custom Objects',
     description: 'Manage custom object records',
   },
+  // Newsletters
+  {
+    slug: 'newsletters.manage',
+    name: 'Manage newsletters',
+    group: 'Newsletters',
+    description: 'Create, edit, delete drafts and lists/templates; send test emails.',
+  },
+  {
+    slug: 'newsletters.send',
+    name: 'Send newsletters',
+    group: 'Newsletters',
+    description: 'Schedule or send newsletters now.',
+  },
 ] as const
 
 const ROLES = [
