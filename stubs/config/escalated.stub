@@ -218,6 +218,27 @@ const escalatedConfig: EscalatedConfig = {
     // resolver: async (type, id) => { ... return presentation or null },
   },
 
+  /*
+  |--------------------------------------------------------------------------
+  | Newsletters
+  |--------------------------------------------------------------------------
+  */
+  enableNewsletters: false,
+
+  appUrl: process.env.APP_URL ?? 'http://localhost',
+
+  newsletters: {
+    defaultFrom: process.env.ESCALATED_NEWSLETTER_DEFAULT_FROM ?? null,
+    defaultReplyTo: process.env.ESCALATED_NEWSLETTER_DEFAULT_REPLY_TO ?? null,
+    defaultTheme: process.env.ESCALATED_NEWSLETTER_DEFAULT_THEME ?? 'default',
+    rateLimitPerMinute: Number(process.env.ESCALATED_NEWSLETTER_RATE_LIMIT ?? 60),
+    batchSize: Number(process.env.ESCALATED_NEWSLETTER_BATCH_SIZE ?? 50),
+    trackingEnabled: process.env.ESCALATED_NEWSLETTER_TRACKING_ENABLED !== 'false',
+    brandAccent: process.env.ESCALATED_NEWSLETTER_BRAND_ACCENT ?? '#2563eb',
+    brandLogoUrl: process.env.ESCALATED_NEWSLETTER_BRAND_LOGO_URL ?? null,
+    brandPhysicalAddress: process.env.ESCALATED_NEWSLETTER_BRAND_PHYSICAL_ADDRESS ?? null,
+  },
+
   inboundEmail: {
     enabled: false,
     adapter: 'mailgun',

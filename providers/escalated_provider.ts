@@ -252,6 +252,10 @@ export default class EscalatedProvider {
               // Settings table may not exist yet
             }
 
+            data.features = {
+              newsletters: Boolean((config as any).enableNewsletters),
+            }
+
             return data
           },
         }
