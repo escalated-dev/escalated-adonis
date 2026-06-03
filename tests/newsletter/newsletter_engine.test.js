@@ -1,10 +1,13 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import ContactSegmentResolver from '../../build/src/services/newsletter/contact_segment_resolver.js'
 
 /**
  * Newsletter engine behaviour (bounce store, segment resolver, tracker rules)
  * without booting Adonis — mirrors contract test surface.
  */
+
+const BACKOFF_MINUTES = [1, 5, 30]
 
 function filterSendable(emails, suppressedSet) {
   return emails.filter((e) => !suppressedSet.has(e.toLowerCase()))
@@ -28,11 +31,34 @@ function recordClickState(row) {
   return { firstClick }
 }
 
+function computeClaimLimit(batchSize, rateLimitPerMinute, sentThisMinute) {
+  const allowance = Math.max(0, rateLimitPerMinute - sentThisMinute)
+  if (allowance === 0) return 0
+  return Math.min(batchSize, allowance)
+}
+
+function isPendingClaimable(status, nextAttemptAt, now = new Date()) {
+  if (status !== 'pending') return false
+  if (!nextAttemptAt) return true
+  return nextAttemptAt <= now
+}
+
+function scheduleRetryBackoff(attemptCount, now = new Date()) {
+  const minutes = BACKOFF_MINUTES[attemptCount - 1] ?? 30
+  return new Date(now.getTime() + minutes * 60_000)
+}
+
 function shouldAutoPause(terminalRows, threshold, rate) {
   if (terminalRows.length < threshold) return false
   const sample = terminalRows.slice(0, threshold)
   const bounced = sample.filter((r) => r.status === 'bounced').length
   return bounced / threshold >= rate
+}
+
+function cumulativeBounceWouldPause(terminalRows, threshold, rate) {
+  if (terminalRows.length < threshold) return false
+  const bounced = terminalRows.filter((r) => r.status === 'bounced').length
+  return bounced / terminalRows.length >= rate
 }
 
 describe('BounceSuppressionStore logic', () => {
@@ -69,6 +95,30 @@ describe('NewsletterTracker logic', () => {
   })
 })
 
+describe('NewsletterDispatcher rate limit', () => {
+  it('caps claim batch to remaining per-minute allowance', () => {
+    assert.equal(computeClaimLimit(50, 60, 58), 2)
+    assert.equal(computeClaimLimit(50, 60, 60), 0)
+    assert.equal(computeClaimLimit(10, 60, 0), 10)
+  })
+})
+
+describe('NewsletterDispatcher retry backoff', () => {
+  it('schedules future next_attempt_at after a failed send', () => {
+    const now = new Date('2026-06-03T12:00:00.000Z')
+    const next = scheduleRetryBackoff(1, now)
+    assert.equal(next.getTime(), now.getTime() + 60_000)
+    assert.equal(scheduleRetryBackoff(2, now).getTime(), now.getTime() + 5 * 60_000)
+  })
+
+  it('does not reclaim pending rows until next_attempt_at', () => {
+    const future = new Date(Date.now() + 300_000)
+    assert.equal(isPendingClaimable('pending', future), false)
+    assert.equal(isPendingClaimable('pending', null), true)
+    assert.equal(isPendingClaimable('pending', new Date(Date.now() - 1_000)), true)
+  })
+})
+
 describe('NewsletterDispatcher auto-pause logic', () => {
   it('pauses when first-N terminal sample exceeds bounce rate', () => {
     const rows = [
@@ -83,6 +133,15 @@ describe('NewsletterDispatcher auto-pause logic', () => {
   it('does not pause before threshold terminal rows exist', () => {
     const rows = [{ id: 1, status: 'bounced' }]
     assert.equal(shouldAutoPause(rows, 4, 0.05), false)
+  })
+
+  it('does not pause on diluted cumulative bounce rate when first-N is healthy', () => {
+    const rows = [
+      ...Array.from({ length: 100 }, (_, i) => ({ id: i + 1, status: 'sent' })),
+      ...Array.from({ length: 10 }, (_, i) => ({ id: 101 + i, status: 'bounced' })),
+    ]
+    assert.equal(shouldAutoPause(rows, 100, 0.05), false)
+    assert.equal(cumulativeBounceWouldPause(rows, 100, 0.05), true)
   })
 })
 
@@ -100,6 +159,14 @@ describe('ContactSegmentResolver static lists', () => {
     ]
     const sendable = members.filter((m) => m.marketing_opt_out_at == null).map((m) => m.contact_id)
     assert.deepEqual(sendable, [1])
+  })
+
+  it('skips unknown field and operator rules', () => {
+    assert.equal(ContactSegmentResolver.isAllowedFilterRule('email', '='), true)
+    assert.equal(ContactSegmentResolver.isAllowedFilterRule('password', '='), false)
+    assert.equal(ContactSegmentResolver.isAllowedFilterRule('email', 'drop table'), false)
+    assert.equal(ContactSegmentResolver.isAllowedFilterRule('metadata.tier', '='), true)
+    assert.equal(ContactSegmentResolver.isAllowedFilterRule('metadata.bad-key', '='), false)
   })
 })
 

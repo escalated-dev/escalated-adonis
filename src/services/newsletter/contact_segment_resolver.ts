@@ -24,6 +24,18 @@ export default class ContactSegmentResolver {
 
   private static readonly ALLOWED_OPS = new Set(['=', '!=', '<>', '<', '<=', '>', '>=', 'like'])
 
+  /** Whether a dynamic-list filter rule passes the field/op allowlist (for tests and callers). */
+  static isAllowedFilterRule(field: string | undefined, op: string): boolean {
+    if (!field) return false
+    const normalizedOp = (op || '=').toLowerCase()
+    if (!ContactSegmentResolver.ALLOWED_OPS.has(normalizedOp)) return false
+    if (field.startsWith('metadata.')) {
+      const key = field.slice('metadata.'.length)
+      return /^[a-zA-Z0-9_]+$/.test(key)
+    }
+    return ContactSegmentResolver.ALLOWED_FIELDS.has(field)
+  }
+
   async resolve(list: NewsletterList): Promise<number[]> {
     if (list.kind === 'static') {
       const rows = await NewsletterListMember.query().where('listId', list.id).select('contact_id')
@@ -65,20 +77,13 @@ export default class ContactSegmentResolver {
       const field = rule.field
       const op = (rule.op || '=').toLowerCase()
       const value = rule.value
-      if (!field) continue
-      // Operator is interpolated into SQL by Lucid, so it MUST be allowlisted.
-      if (!ContactSegmentResolver.ALLOWED_OPS.has(op)) continue
-      if (field.startsWith('metadata.')) {
-        const key = field.slice('metadata.'.length)
-        // key/value are bound inside the `?` parameter, but reject non-identifier
-        // keys for safety + predictable matching.
-        if (!/^[a-zA-Z0-9_]+$/.test(key)) continue
+      if (!ContactSegmentResolver.isAllowedFilterRule(field, op)) continue
+      if (field!.startsWith('metadata.')) {
+        const key = field!.slice('metadata.'.length)
         q = q.whereRaw('metadata LIKE ?', [`%"${key}":${JSON.stringify(value)}%`])
         continue
       }
-      // Field (column name) is interpolated into SQL by Lucid — allowlist it.
-      if (!ContactSegmentResolver.ALLOWED_FIELDS.has(field)) continue
-      q = q.where(field, op, value as any)
+      q = q.where(field!, op, value as any)
     }
     return q
   }
