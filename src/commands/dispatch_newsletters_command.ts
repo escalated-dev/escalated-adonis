@@ -59,6 +59,7 @@ export default class DispatchNewslettersCommand extends BaseCommand {
       const dispatcher = new NewsletterDispatcher({
         enableNewsletters: true,
         batchSize: (config.newsletters as any)?.batchSize ?? 50,
+        rateLimitPerMinute: (config.newsletters as any)?.rateLimitPerMinute ?? 60,
         claimTimeoutMinutes: (config.newsletters as any)?.claimTimeoutMinutes ?? 10,
         autoPauseBounceRate: (config.newsletters as any)?.autoPauseBounceRate ?? 0.05,
         autoPauseThreshold: (config.newsletters as any)?.autoPauseThreshold ?? 100,
