@@ -6,6 +6,24 @@ type FilterRule = { field: string; op: string; value: unknown }
 type Filter = { rules?: FilterRule[] }
 
 export default class ContactSegmentResolver {
+  /** Columns a dynamic-list rule may filter on (snake_case + model camelCase). */
+  private static readonly ALLOWED_FIELDS = new Set([
+    'id',
+    'email',
+    'name',
+    'user_id',
+    'userId',
+    'metadata',
+    'created_at',
+    'createdAt',
+    'updated_at',
+    'updatedAt',
+    'marketing_opt_out_at',
+    'marketingOptOutAt',
+  ])
+
+  private static readonly ALLOWED_OPS = new Set(['=', '!=', '<>', '<', '<=', '>', '>=', 'like'])
+
   async resolve(list: NewsletterList): Promise<number[]> {
     if (list.kind === 'static') {
       const rows = await NewsletterListMember.query().where('listId', list.id).select('contact_id')
@@ -45,14 +63,21 @@ export default class ContactSegmentResolver {
   private appendFilter(q: any, filter: Filter) {
     for (const rule of filter.rules ?? []) {
       const field = rule.field
-      const op = rule.op || '='
+      const op = (rule.op || '=').toLowerCase()
       const value = rule.value
       if (!field) continue
+      // Operator is interpolated into SQL by Lucid, so it MUST be allowlisted.
+      if (!ContactSegmentResolver.ALLOWED_OPS.has(op)) continue
       if (field.startsWith('metadata.')) {
         const key = field.slice('metadata.'.length)
+        // key/value are bound inside the `?` parameter, but reject non-identifier
+        // keys for safety + predictable matching.
+        if (!/^[a-zA-Z0-9_]+$/.test(key)) continue
         q = q.whereRaw('metadata LIKE ?', [`%"${key}":${JSON.stringify(value)}%`])
         continue
       }
+      // Field (column name) is interpolated into SQL by Lucid — allowlist it.
+      if (!ContactSegmentResolver.ALLOWED_FIELDS.has(field)) continue
       q = q.where(field, op, value as any)
     }
     return q
