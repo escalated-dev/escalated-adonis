@@ -37,6 +37,20 @@ export default class NewsletterPermissionService {
     return false
   }
 
+  /** All permission slugs granted to the user via their roles ([] if none). */
+  async userPermissions(userId: UserId): Promise<string[]> {
+    const roleRows = await db.from('escalated_role_users').where('user_id', userId).select('role_id')
+    if (roleRows.length === 0) return []
+
+    const roleIds = roleRows.map((r) => r.role_id)
+    const roles = await Role.query().whereIn('id', roleIds).preload('permissions')
+    const slugs = new Set<string>()
+    for (const role of roles) {
+      for (const permission of role.permissions ?? []) slugs.add(permission.slug)
+    }
+    return [...slugs]
+  }
+
   /** Wildcard-aware check used in tests. */
   async roleHasPermission(roleId: number, permission: NewsletterPermission): Promise<boolean> {
     const role = await Role.query().where('id', roleId).preload('permissions').first()
