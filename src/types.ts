@@ -286,6 +286,32 @@ export interface EscalatedConfig {
     resolver?: (type: string, id: string) => Promise<TicketSubject | null>
   }
 
+  /**
+   * Master switch for newsletter routes, dispatch command, and shared UI feature flag.
+   */
+  enableNewsletters?: boolean
+
+  /** Public app URL used in tracking links (defaults to APP_URL). */
+  appUrl?: string
+
+  appName?: string
+
+  newsletters?: {
+    defaultFrom?: string | null
+    defaultReplyTo?: string | null
+    defaultTheme?: string
+    rateLimitPerMinute?: number
+    batchSize?: number
+    trackingEnabled?: boolean
+    autoPauseBounceRate?: number
+    autoPauseThreshold?: number
+    claimTimeoutMinutes?: number
+    brandAccent?: string
+    brandLogoUrl?: string | null
+    brandPhysicalAddress?: string | null
+    themesDir?: string
+  }
+
   inboundEmail: {
     enabled: boolean
     adapter: string

@@ -36,7 +36,8 @@
     "copy:stubs": "node ./scripts/copy-build-assets.mjs",
     "dev": "tsc --watch",
     "clean": "rm -rf build",
-    "test": "node --test tests/*.test.js tests/unit/*.spec.ts",
+    "pretest": "npm run build",
+    "test": "node --test tests/*.test.js tests/unit/*.spec.ts tests/newsletter/*.test.js && node --import=tsx bin/test.ts",
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "prepublishOnly": "npm run build"
@@ -88,12 +89,14 @@
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/session": "^8.1.0",
     "@adonisjs/transmit": "^3.0.1",
+    "@japa/assert": "^4.2.0",
     "@japa/runner": "^5.3.0",
     "@types/adm-zip": "^0.5.5",
     "@types/luxon": "^3.7.1",
     "adm-zip": "^0.5.0",
     "eslint": "^10.5.0",
     "prettier": "^3.8.3",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
   "repository": {

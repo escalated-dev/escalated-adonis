@@ -58,6 +58,9 @@ export default class NewsletterDelivery extends BaseModel {
   @column.dateTime({ columnName: 'claimed_at' })
   declare claimedAt: DateTime | null
 
+  @column.dateTime({ columnName: 'next_attempt_at' })
+  declare nextAttemptAt: DateTime | null
+
   @column({ columnName: 'is_test' })
   declare isTest: boolean
 

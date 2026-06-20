@@ -60,6 +60,18 @@ const ApiResourceController = () => import('../src/controllers/api/api_resource_
 // Middleware imports
 const EnsureIsAgent = () => import('../src/middleware/ensure_is_agent.js')
 const EnsureIsAdmin = () => import('../src/middleware/ensure_is_admin.js')
+const EnsureNewslettersEnabled = () => import('../src/middleware/ensure_newsletters_enabled.js')
+const AdminNewsletterController = () => import('../src/controllers/admin_newsletter_controller.js')
+const AdminNewsletterListController = () =>
+  import('../src/controllers/admin_newsletter_list_controller.js')
+const AdminNewsletterTemplateController = () =>
+  import('../src/controllers/admin_newsletter_template_controller.js')
+const AdminNewsletterSettingsController = () =>
+  import('../src/controllers/admin_newsletter_settings_controller.js')
+const NewsletterPublicController = () =>
+  import('../src/controllers/newsletter_public_controller.js')
+const NewsletterEspWebhookController = () =>
+  import('../src/controllers/newsletter_esp_webhook_controller.js')
 const ResolveTicket = () => import('../src/middleware/resolve_ticket.js')
 const AuthenticateApiToken = () => import('../src/middleware/authenticate_api_token.js')
 const ApiRateLimit = () => import('../src/middleware/api_rate_limit.js')
@@ -69,6 +81,11 @@ export function registerRoutes() {
 
   // Always register core (non-UI) routes: API, inbound webhooks, plugin endpoints
   registerCoreRoutes(config)
+
+  // Newsletter public + ESP webhooks (when feature enabled)
+  if ((config as any).enableNewsletters) {
+    registerNewsletterPublicRoutes()
+  }
 
   // Only register Inertia UI routes when ui.enabled is true (default)
   if (isUiEnabled()) {
@@ -592,6 +609,10 @@ function registerUiRoutes(config: any) {
       router
         .delete('/plugins/:slug', [AdminPluginsController, 'destroy'])
         .as('escalated.admin.plugins.destroy')
+
+      if ((config as any).enableNewsletters) {
+        registerNewsletterAdminRoutes()
+      }
     })
     .prefix(`${prefix}/admin`)
     .use([...adminMiddleware, EnsureIsAdmin])
@@ -615,6 +636,136 @@ function registerUiRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/guest`)
+}
+
+/**
+ * Newsletter admin routes (mounted inside the admin group).
+ * Static segments must be registered before the :newsletter catch-all.
+ */
+function registerNewsletterAdminRoutes() {
+  router
+    .group(() => {
+      router.get('/', [AdminNewsletterController, 'index']).as('escalated.admin.newsletters.index')
+      router
+        .get('/new', [AdminNewsletterController, 'create'])
+        .as('escalated.admin.newsletters.create')
+      router.post('/', [AdminNewsletterController, 'store']).as('escalated.admin.newsletters.store')
+      router
+        .post('/preview', [AdminNewsletterController, 'preview'])
+        .as('escalated.admin.newsletters.preview')
+      router
+        .post('/test', [AdminNewsletterController, 'testSend'])
+        .as('escalated.admin.newsletters.testSend')
+
+      router
+        .get('/lists', [AdminNewsletterListController, 'index'])
+        .as('escalated.admin.newsletters.lists.index')
+      router
+        .get('/lists/new', [AdminNewsletterListController, 'create'])
+        .as('escalated.admin.newsletters.lists.create')
+      router
+        .post('/lists', [AdminNewsletterListController, 'store'])
+        .as('escalated.admin.newsletters.lists.store')
+      router
+        .get('/lists/:list', [AdminNewsletterListController, 'show'])
+        .as('escalated.admin.newsletters.lists.show')
+      router
+        .put('/lists/:list', [AdminNewsletterListController, 'update'])
+        .as('escalated.admin.newsletters.lists.update')
+      router
+        .delete('/lists/:list', [AdminNewsletterListController, 'destroy'])
+        .as('escalated.admin.newsletters.lists.destroy')
+      router
+        .post('/lists/:list/members', [AdminNewsletterListController, 'addMember'])
+        .as('escalated.admin.newsletters.lists.members.add')
+      router
+        .delete('/lists/:list/members/:contactId', [AdminNewsletterListController, 'removeMember'])
+        .as('escalated.admin.newsletters.lists.members.remove')
+      router
+        .post('/lists/:list/import', [AdminNewsletterListController, 'importCsv'])
+        .as('escalated.admin.newsletters.lists.import')
+
+      router
+        .get('/templates', [AdminNewsletterTemplateController, 'index'])
+        .as('escalated.admin.newsletters.templates.index')
+      router
+        .get('/templates/new', [AdminNewsletterTemplateController, 'create'])
+        .as('escalated.admin.newsletters.templates.create')
+      router
+        .post('/templates', [AdminNewsletterTemplateController, 'store'])
+        .as('escalated.admin.newsletters.templates.store')
+      router
+        .get('/templates/:template', [AdminNewsletterTemplateController, 'show'])
+        .as('escalated.admin.newsletters.templates.show')
+      router
+        .put('/templates/:template', [AdminNewsletterTemplateController, 'update'])
+        .as('escalated.admin.newsletters.templates.update')
+      router
+        .delete('/templates/:template', [AdminNewsletterTemplateController, 'destroy'])
+        .as('escalated.admin.newsletters.templates.destroy')
+
+      router
+        .get('/settings', [AdminNewsletterSettingsController, 'show'])
+        .as('escalated.admin.newsletters.settings.show')
+      router
+        .put('/settings', [AdminNewsletterSettingsController, 'update'])
+        .as('escalated.admin.newsletters.settings.update')
+
+      router
+        .get('/:newsletter', [AdminNewsletterController, 'show'])
+        .as('escalated.admin.newsletters.show')
+      router
+        .get('/:newsletter/edit', [AdminNewsletterController, 'edit'])
+        .as('escalated.admin.newsletters.edit')
+      router
+        .put('/:newsletter', [AdminNewsletterController, 'update'])
+        .as('escalated.admin.newsletters.update')
+      router
+        .delete('/:newsletter', [AdminNewsletterController, 'destroy'])
+        .as('escalated.admin.newsletters.destroy')
+    })
+    .prefix('/newsletters')
+}
+
+/**
+ * Public newsletter tracking routes (no auth; per-request enabled gate).
+ */
+function registerNewsletterPublicRoutes() {
+  router
+    .group(() => {
+      router
+        .get('/o/:token', [NewsletterPublicController, 'open'])
+        .as('escalated.newsletters.public.open')
+        .where('token', /^[A-Za-z0-9._-]+$/)
+      router
+        .get('/c/:token', [NewsletterPublicController, 'click'])
+        .as('escalated.newsletters.public.click')
+        .where('token', /^[A-Za-z0-9_-]+$/)
+      router
+        .get('/u/:token', [NewsletterPublicController, 'unsubscribeShow'])
+        .as('escalated.newsletters.public.unsubscribe.show')
+        .where('token', /^[A-Za-z0-9_-]+$/)
+      router
+        .post('/u/:token', [NewsletterPublicController, 'unsubscribeStore'])
+        .as('escalated.newsletters.public.unsubscribe.store')
+        .where('token', /^[A-Za-z0-9_-]+$/)
+      router
+        .get('/v/:token', [NewsletterPublicController, 'view'])
+        .as('escalated.newsletters.public.view')
+        .where('token', /^[A-Za-z0-9_-]+$/)
+    })
+    .prefix('escalated/n')
+    .use([EnsureNewslettersEnabled])
+
+  router
+    .group(() => {
+      router.post('/postmark', [NewsletterEspWebhookController, 'postmark'])
+      router.post('/mailgun', [NewsletterEspWebhookController, 'mailgun'])
+      router.post('/ses', [NewsletterEspWebhookController, 'ses'])
+      router.post('/sendgrid', [NewsletterEspWebhookController, 'sendgrid'])
+    })
+    .prefix('escalated/webhooks/newsletter')
+    .use([EnsureNewslettersEnabled])
 }
 
 /**

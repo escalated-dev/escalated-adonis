@@ -6,6 +6,36 @@ type FilterRule = { field: string; op: string; value: unknown }
 type Filter = { rules?: FilterRule[] }
 
 export default class ContactSegmentResolver {
+  /** Columns a dynamic-list rule may filter on (snake_case + model camelCase). */
+  private static readonly ALLOWED_FIELDS = new Set([
+    'id',
+    'email',
+    'name',
+    'user_id',
+    'userId',
+    'metadata',
+    'created_at',
+    'createdAt',
+    'updated_at',
+    'updatedAt',
+    'marketing_opt_out_at',
+    'marketingOptOutAt',
+  ])
+
+  private static readonly ALLOWED_OPS = new Set(['=', '!=', '<>', '<', '<=', '>', '>=', 'like'])
+
+  /** Whether a dynamic-list filter rule passes the field/op allowlist (for tests and callers). */
+  static isAllowedFilterRule(field: string | undefined, op: string): boolean {
+    if (!field) return false
+    const normalizedOp = (op || '=').toLowerCase()
+    if (!ContactSegmentResolver.ALLOWED_OPS.has(normalizedOp)) return false
+    if (field.startsWith('metadata.')) {
+      const key = field.slice('metadata.'.length)
+      return /^[a-zA-Z0-9_]+$/.test(key)
+    }
+    return ContactSegmentResolver.ALLOWED_FIELDS.has(field)
+  }
+
   async resolve(list: NewsletterList): Promise<number[]> {
     if (list.kind === 'static') {
       const rows = await NewsletterListMember.query().where('listId', list.id).select('contact_id')
@@ -45,15 +75,15 @@ export default class ContactSegmentResolver {
   private appendFilter(q: any, filter: Filter) {
     for (const rule of filter.rules ?? []) {
       const field = rule.field
-      const op = rule.op || '='
+      const op = (rule.op || '=').toLowerCase()
       const value = rule.value
-      if (!field) continue
-      if (field.startsWith('metadata.')) {
-        const key = field.slice('metadata.'.length)
+      if (!ContactSegmentResolver.isAllowedFilterRule(field, op)) continue
+      if (field!.startsWith('metadata.')) {
+        const key = field!.slice('metadata.'.length)
         q = q.whereRaw('metadata LIKE ?', [`%"${key}":${JSON.stringify(value)}%`])
         continue
       }
-      q = q.where(field, op, value as any)
+      q = q.where(field!, op, value as any)
     }
     return q
   }

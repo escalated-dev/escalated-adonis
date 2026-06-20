@@ -231,6 +231,7 @@ export default class EscalatedProvider {
               prefix: config.routes?.prefix ?? 'support',
               is_agent: false,
               is_admin: false,
+              permissions: [],
             }
 
             if (user) {
@@ -239,6 +240,15 @@ export default class EscalatedProvider {
               }
               if (config.authorization?.isAdmin) {
                 data.is_admin = await config.authorization.isAdmin(user)
+              }
+              try {
+                const { default: NewsletterPermissionService } =
+                  await import('../src/services/newsletter/newsletter_permission_service.js')
+                data.permissions = await new NewsletterPermissionService().userPermissions(
+                  (user as { id: any }).id
+                )
+              } catch {
+                // permission tables may not exist yet
               }
             }
 
@@ -250,6 +260,10 @@ export default class EscalatedProvider {
               data.show_powered_by = await EscalatedSetting.getBool('show_powered_by', true)
             } catch {
               // Settings table may not exist yet
+            }
+
+            data.features = {
+              newsletters: Boolean((config as any).enableNewsletters),
             }
 
             return data
