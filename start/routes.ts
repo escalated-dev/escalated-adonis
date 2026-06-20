@@ -611,7 +611,7 @@ function registerUiRoutes(config: any) {
         .as('escalated.admin.plugins.destroy')
 
       if ((config as any).enableNewsletters) {
-        registerNewsletterAdminRoutes(router)
+        registerNewsletterAdminRoutes()
       }
     })
     .prefix(`${prefix}/admin`)
@@ -642,7 +642,7 @@ function registerUiRoutes(config: any) {
  * Newsletter admin routes (mounted inside the admin group).
  * Static segments must be registered before the :newsletter catch-all.
  */
-function registerNewsletterAdminRoutes(router: any) {
+function registerNewsletterAdminRoutes() {
   router
     .group(() => {
       router.get('/', [AdminNewsletterController, 'index']).as('escalated.admin.newsletters.index')
@@ -759,8 +759,7 @@ function registerNewsletterPublicRoutes() {
 
   router
     .group(() => {
-      router
-        .post('/postmark', [NewsletterEspWebhookController, 'postmark'])
+      router.post('/postmark', [NewsletterEspWebhookController, 'postmark'])
       router.post('/mailgun', [NewsletterEspWebhookController, 'mailgun'])
       router.post('/ses', [NewsletterEspWebhookController, 'ses'])
       router.post('/sendgrid', [NewsletterEspWebhookController, 'sendgrid'])

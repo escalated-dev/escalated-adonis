@@ -33,9 +33,7 @@ export default class NewsletterEspWebhookController {
   async mailgun(ctx: HttpContext) {
     const body = ctx.request.all()
     const eventData = body['event-data'] ?? {}
-    const token = this.tokenFromMessageId(
-      String(eventData?.message?.headers?.['message-id'] ?? '')
-    )
+    const token = this.tokenFromMessageId(String(eventData?.message?.headers?.['message-id'] ?? ''))
     switch (String(eventData.event ?? '')) {
       case 'opened':
         await this.tracker.recordOpen(token)

@@ -242,9 +242,8 @@ export default class EscalatedProvider {
                 data.is_admin = await config.authorization.isAdmin(user)
               }
               try {
-                const { default: NewsletterPermissionService } = await import(
-                  '../src/services/newsletter/newsletter_permission_service.js'
-                )
+                const { default: NewsletterPermissionService } =
+                  await import('../src/services/newsletter/newsletter_permission_service.js')
                 data.permissions = await new NewsletterPermissionService().userPermissions(
                   (user as { id: any }).id
                 )

@@ -48,9 +48,11 @@ export function requiredString(body: any, key: string, max?: number): string {
 
 export function optionalString(body: any, key: string, max?: number): string | null {
   const value = body?.[key]
-  if (value == null || value === '') return null
+  if (value === null || value === undefined || value === '') return null
   if (typeof value !== 'string') {
-    throw new NewsletterValidationError(`${key} must be a string`, { [key]: `${key} must be a string` })
+    throw new NewsletterValidationError(`${key} must be a string`, {
+      [key]: `${key} must be a string`,
+    })
   }
   if (max && value.length > max) {
     throw new NewsletterValidationError(`${key} may not be greater than ${max} characters`, {
@@ -63,14 +65,16 @@ export function optionalString(body: any, key: string, max?: number): string | n
 export function requiredInteger(body: any, key: string, min?: number, max?: number): number {
   const value = Number(body?.[key])
   if (!Number.isInteger(value)) {
-    throw new NewsletterValidationError(`${key} must be an integer`, { [key]: `${key} must be an integer` })
+    throw new NewsletterValidationError(`${key} must be an integer`, {
+      [key]: `${key} must be an integer`,
+    })
   }
-  if (min != null && value < min) {
+  if (min !== null && min !== undefined && value < min) {
     throw new NewsletterValidationError(`${key} must be at least ${min}`, {
       [key]: `${key} must be at least ${min}`,
     })
   }
-  if (max != null && value > max) {
+  if (max !== null && max !== undefined && value > max) {
     throw new NewsletterValidationError(`${key} must be at most ${max}`, {
       [key]: `${key} must be at most ${max}`,
     })
@@ -79,7 +83,7 @@ export function requiredInteger(body: any, key: string, min?: number, max?: numb
 }
 
 export function optionalInteger(body: any, key: string): number | null {
-  if (body?.[key] == null || body?.[key] === '') return null
+  if (body?.[key] === null || body?.[key] === undefined || body?.[key] === '') return null
   return requiredInteger(body, key)
 }
 
@@ -88,14 +92,12 @@ export function requiredBoolean(body: any, key: string): boolean {
   if (typeof value === 'boolean') return value
   if (value === 'true' || value === '1' || value === 1) return true
   if (value === 'false' || value === '0' || value === 0) return false
-  throw new NewsletterValidationError(`${key} must be a boolean`, { [key]: `${key} must be a boolean` })
+  throw new NewsletterValidationError(`${key} must be a boolean`, {
+    [key]: `${key} must be a boolean`,
+  })
 }
 
-export function assertEmail(
-  value: string | null,
-  key: string,
-  required = false
-): string | null {
+export function assertEmail(value: string | null, key: string, required = false): string | null {
   if (!value) {
     if (required) {
       throw new NewsletterValidationError(`${key} must be a valid email`, {
@@ -123,7 +125,7 @@ export function assertOneOf<T extends string>(value: unknown, key: string, allow
 
 export function optionalDateAfterNow(body: any, key: string): Date | null {
   const value = body?.[key]
-  if (value == null || value === '') return null
+  if (value === null || value === undefined || value === '') return null
   const date = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(date.getTime()) || date <= new Date()) {
     throw new NewsletterValidationError(`${key} must be a future date`, {
@@ -137,11 +139,13 @@ export function assertArrayOrNull(
   value: unknown,
   key: string
 ): Record<string, unknown> | { rules: unknown[] } | null {
-  if (value == null || value === '') return null
+  if (value === null || value === undefined || value === '') return null
   if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
     return value as Record<string, unknown>
   }
-  throw new NewsletterValidationError(`${key} must be an array`, { [key]: `${key} must be an array` })
+  throw new NewsletterValidationError(`${key} must be an array`, {
+    [key]: `${key} must be an array`,
+  })
 }
 
 export function abort422(message: string): never {

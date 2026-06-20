@@ -25,7 +25,10 @@ export default class NewsletterPermissionService {
   }
 
   async userHasPermission(userId: UserId, permission: NewsletterPermission): Promise<boolean> {
-    const roleRows = await db.from('escalated_role_users').where('user_id', userId).select('role_id')
+    const roleRows = await db
+      .from('escalated_role_users')
+      .where('user_id', userId)
+      .select('role_id')
     if (roleRows.length === 0) return false
 
     const roleIds = roleRows.map((r) => r.role_id)
@@ -39,7 +42,10 @@ export default class NewsletterPermissionService {
 
   /** All permission slugs granted to the user via their roles ([] if none). */
   async userPermissions(userId: UserId): Promise<string[]> {
-    const roleRows = await db.from('escalated_role_users').where('user_id', userId).select('role_id')
+    const roleRows = await db
+      .from('escalated_role_users')
+      .where('user_id', userId)
+      .select('role_id')
     if (roleRows.length === 0) return []
 
     const roleIds = roleRows.map((r) => r.role_id)

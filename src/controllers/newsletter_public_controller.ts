@@ -55,7 +55,9 @@ export default class NewsletterPublicController {
   async unsubscribeStore(ctx: HttpContext) {
     const ip =
       ctx.request.ip() ??
-      String(ctx.request.header('x-forwarded-for') ?? 'unknown').split(',')[0]?.trim()
+      String(ctx.request.header('x-forwarded-for') ?? 'unknown')
+        .split(',')[0]
+        ?.trim()
     if (this.tooManyUnsubscribes(ip)) {
       return ctx.response.status(429).send('Too Many Requests')
     }
@@ -72,9 +74,7 @@ export default class NewsletterPublicController {
     return ctx.response
       .header('Content-Type', 'text/html; charset=utf-8')
       .status(200)
-      .send(
-        this.unsubscribeHtml(String(ctx.params.token), delivery?.emailAtSend ?? null, true)
-      )
+      .send(this.unsubscribeHtml(String(ctx.params.token), delivery?.emailAtSend ?? null, true))
   }
 
   async view(ctx: HttpContext) {

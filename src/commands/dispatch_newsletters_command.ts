@@ -32,7 +32,10 @@ export default class DispatchNewslettersCommand extends BaseCommand {
   }
 
   async run() {
-    const config = getConfig() as { enableNewsletters?: boolean; newsletters?: Record<string, unknown> }
+    const config = getConfig() as {
+      enableNewsletters?: boolean
+      newsletters?: Record<string, unknown>
+    }
     if (!config.enableNewsletters) {
       this.logger.info('Newsletter feature disabled — skipping.')
       return

@@ -36,7 +36,7 @@ export default class AdminNewsletterSettingsController {
       settings[key] = row?.value ?? this.configFallback(key)
       if (key === 'tracking_enabled') {
         settings[key] =
-          row?.value != null
+          row?.value !== null && row?.value !== undefined
             ? row.value === '1' || row.value === 'true'
             : this.configFallback(key)
       } else if (key === 'rate_limit_per_minute' || key === 'batch_size') {
@@ -66,8 +66,7 @@ export default class AdminNewsletterSettingsController {
 
       for (const key of Object.keys(SETTING_KEYS) as SettingKey[]) {
         const value = data[key]
-        const stored =
-          typeof value === 'boolean' ? String(Number(value)) : String(value ?? '')
+        const stored = typeof value === 'boolean' ? String(Number(value)) : String(value ?? '')
         await EscalatedSetting.updateOrCreate({ key: `newsletter.${key}` }, { value: stored })
       }
 

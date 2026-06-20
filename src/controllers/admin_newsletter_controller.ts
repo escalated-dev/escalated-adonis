@@ -54,7 +54,11 @@ export default class AdminNewsletterController {
 
   async create(ctx: HttpContext) {
     if (!(await this.permissions.require(ctx, 'newsletters.manage'))) return
-    return getRenderer().render(ctx, 'Escalated/Admin/Newsletters/Compose', await this.composeProps())
+    return getRenderer().render(
+      ctx,
+      'Escalated/Admin/Newsletters/Compose',
+      await this.composeProps()
+    )
   }
 
   async store(ctx: HttpContext) {
@@ -79,7 +83,9 @@ export default class AdminNewsletterController {
         await this.planner.plan(newsletter)
       }
 
-      redirectToRoute(ctx.response, 'escalated.admin.newsletters.show', { newsletter: newsletter.id })
+      redirectToRoute(ctx.response, 'escalated.admin.newsletters.show', {
+        newsletter: newsletter.id,
+      })
     } catch (error) {
       return this.handleValidation(ctx, error)
     }
@@ -226,7 +232,9 @@ export default class AdminNewsletterController {
         await this.planner.plan(newsletter)
       }
 
-      redirectToRoute(ctx.response, 'escalated.admin.newsletters.show', { newsletter: newsletter.id })
+      redirectToRoute(ctx.response, 'escalated.admin.newsletters.show', {
+        newsletter: newsletter.id,
+      })
     } catch (error) {
       return this.handleValidation(ctx, error)
     }
