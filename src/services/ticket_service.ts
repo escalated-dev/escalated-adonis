@@ -125,11 +125,13 @@ export default class TicketService {
     })
 
     if (!ImportContext.isImporting()) {
+      const followerUserIds = await ticket.followerUserIds(causer?.id)
       await emitter.emit(ESCALATED_EVENTS.TICKET_STATUS_CHANGED, {
         ticket,
         oldStatus,
         newStatus,
         causer,
+        followerUserIds,
       })
 
       if (newStatus === 'resolved') {
@@ -172,7 +174,8 @@ export default class TicketService {
     await this.logActivity(ticket, 'replied', author)
 
     if (!ImportContext.isImporting()) {
-      await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply })
+      const followerUserIds = await ticket.followerUserIds(author.id)
+      await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply, followerUserIds })
     }
 
     return reply.refresh()
@@ -447,11 +450,13 @@ export default class TicketService {
     })
 
     if (!ImportContext.isImporting()) {
+      const followerUserIds = await ticket.followerUserIds(causer?.id)
       await emitter.emit(ESCALATED_EVENTS.TICKET_STATUS_CHANGED, {
         ticket,
         oldStatus: 'waiting_on_customer' as TicketStatus,
         newStatus: previousStatus,
         causer,
+        followerUserIds,
       })
     }
 

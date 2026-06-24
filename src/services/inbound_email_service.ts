@@ -140,7 +140,8 @@ export default class InboundEmailService {
         type: 'reply',
       })
 
-      await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply })
+      const followerUserIds = await ticket.followerUserIds()
+      await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply, followerUserIds })
     }
 
     // Handle attachments

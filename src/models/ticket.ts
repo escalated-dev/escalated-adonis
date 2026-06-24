@@ -12,6 +12,7 @@ import {
 import type { BelongsTo, HasMany, HasOne, ManyToMany } from '@adonisjs/lucid/types/relations'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import type { UserId } from '../helpers/user_id_column.js'
+import { followerRecipients } from '../services/follower_recipients.js'
 import { canTransitionTo, isOpenStatus } from '../types.js'
 import Reply from './reply.js'
 import Department from './department.js'
@@ -355,6 +356,23 @@ export default class Ticket extends BaseModel {
       .count('* as total')
       .first()
     return Number(result?.total ?? 0)
+  }
+
+  /**
+   * Host-user ids following this ticket, excluding the actor and de-duplicated.
+   * Ridden along on the reply/status events so the host can notify them — the
+   * package has no user emails of its own. See issue #94.
+   */
+  async followerUserIds(excludeUserId?: UserId): Promise<UserId[]> {
+    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const rows = await db
+      .from('escalated_ticket_followers')
+      .where('ticket_id', this.id)
+      .select('user_id')
+    return followerRecipients(
+      rows.map((row) => row.user_id as UserId),
+      excludeUserId
+    )
   }
 
   /**
