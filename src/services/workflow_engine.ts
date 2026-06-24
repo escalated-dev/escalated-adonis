@@ -303,7 +303,7 @@ export default class WorkflowEngine {
           return 'delayed'
         }
         case 'add_follower':
-          await ticket.related('followers' as any).attach([action.value as string | number])
+          await ticket.follow(action.value as string | number)
           break
         case 'send_notification':
           console.log(

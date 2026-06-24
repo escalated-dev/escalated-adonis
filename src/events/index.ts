@@ -29,6 +29,8 @@ export interface TicketStatusChangedData {
   oldStatus: TicketStatus
   newStatus: TicketStatus
   causer?: any
+  /** Follower user ids to notify (excluding the actor). See issue #94. */
+  followerUserIds?: UserId[]
 }
 
 export interface TicketResolvedData {
@@ -79,6 +81,8 @@ export interface DepartmentChangedData {
 
 export interface ReplyCreatedData {
   reply: Reply
+  /** Follower user ids to notify (excluding the reply author). See issue #94. */
+  followerUserIds?: UserId[]
 }
 
 export interface InternalNoteAddedData {
