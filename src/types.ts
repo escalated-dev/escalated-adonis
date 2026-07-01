@@ -267,6 +267,29 @@ export interface EscalatedConfig {
     prefix: string
   }
 
+  /**
+   * Host-app authentication callbacks for the general JSON API auth endpoints
+   * (login/register/refresh/profile/logout) consumed by the Flutter app.
+   * Escalated owns no credentials or sessions, so it ships no password hasher.
+   * Each returns the JSON payload to send on success, or `null` for an auth
+   * failure (401); an unconfigured callback responds `501`.
+   */
+  apiAuth?: {
+    authenticate?: (
+      params: Record<string, any>
+    ) => Promise<Record<string, any> | null> | Record<string, any> | null
+    register?: (
+      params: Record<string, any>
+    ) => Promise<Record<string, any> | null> | Record<string, any> | null
+    validate?: (token: string) => Promise<Record<string, any> | null> | Record<string, any> | null
+    refresh?: (token: string) => Promise<Record<string, any> | null> | Record<string, any> | null
+    updateProfile?: (
+      token: string,
+      attrs: Record<string, any>
+    ) => Promise<Record<string, any> | null> | Record<string, any> | null
+    logout?: (token: string) => Promise<void> | void
+  }
+
   plugins: {
     enabled: boolean
     path: string
