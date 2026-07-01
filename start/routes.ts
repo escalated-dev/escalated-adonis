@@ -843,4 +843,20 @@ export function registerApiRoutes(config: any) {
     })
     .prefix(apiPrefix)
     .use([AuthenticateApiToken, ApiRateLimit])
+
+  // Public auth endpoints — credentials/token handling is delegated to host
+  // callbacks (config.apiAuth.*), so these skip the API-token middleware.
+  router
+    .group(() => {
+      router.post('/auth/login', [ApiAuthController, 'login']).as('escalated.api.auth.login')
+      router
+        .post('/auth/register', [ApiAuthController, 'register'])
+        .as('escalated.api.auth.register')
+      router.post('/auth/logout', [ApiAuthController, 'logout']).as('escalated.api.auth.logout')
+      router.post('/auth/refresh', [ApiAuthController, 'refresh']).as('escalated.api.auth.refresh')
+      router.get('/auth/me', [ApiAuthController, 'me']).as('escalated.api.auth.me')
+      router.patch('/auth/profile', [ApiAuthController, 'profile']).as('escalated.api.auth.profile')
+    })
+    .prefix(apiPrefix)
+    .use([ApiRateLimit])
 }
