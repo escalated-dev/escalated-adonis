@@ -1,7 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { getConfig } from '../../helpers/config.js'
-
-type AuthCallback = (arg: any) => Promise<Record<string, any> | null> | Record<string, any> | null
+import { bearerToken, runAuthCallback } from '../../helpers/api_auth.js'
 
 /**
  * General JSON API authentication for the Flutter app. login/register/refresh/
@@ -46,65 +45,56 @@ export default class ApiAuthController {
 
   /** POST /auth/login */
   async login(ctx: HttpContext) {
-    return this.delegate(ctx, getConfig().apiAuth?.authenticate, ctx.request.body())
+    const { status, body } = await runAuthCallback(
+      getConfig().apiAuth?.authenticate,
+      ctx.request.body()
+    )
+    return ctx.response.status(status).json(body)
   }
 
   /** POST /auth/register */
   async register(ctx: HttpContext) {
-    return this.delegate(ctx, getConfig().apiAuth?.register, ctx.request.body())
+    const { status, body } = await runAuthCallback(
+      getConfig().apiAuth?.register,
+      ctx.request.body()
+    )
+    return ctx.response.status(status).json(body)
   }
 
   /** POST /auth/refresh */
   async refresh(ctx: HttpContext) {
-    return this.delegate(ctx, getConfig().apiAuth?.refresh, this.bearer(ctx))
+    const { status, body } = await runAuthCallback(
+      getConfig().apiAuth?.refresh,
+      bearerToken(ctx.request.header('authorization'))
+    )
+    return ctx.response.status(status).json(body)
   }
 
   /** GET /auth/me */
   async me(ctx: HttpContext) {
-    return this.delegate(ctx, getConfig().apiAuth?.validate, this.bearer(ctx))
+    const { status, body } = await runAuthCallback(
+      getConfig().apiAuth?.validate,
+      bearerToken(ctx.request.header('authorization'))
+    )
+    return ctx.response.status(status).json(body)
   }
 
   /** PATCH /auth/profile */
   async profile(ctx: HttpContext) {
     const callback = getConfig().apiAuth?.updateProfile
-    if (!callback) {
-      return this.notConfigured(ctx)
-    }
-
-    const result = await callback(this.bearer(ctx), ctx.request.body())
-    if (!result) {
-      return ctx.response.unauthorized({ error: 'Unauthorized' })
-    }
-    return ctx.response.json({ data: result })
+    const wrapped = callback
+      ? (attrs: any) => callback(bearerToken(ctx.request.header('authorization')), attrs)
+      : undefined
+    const { status, body } = await runAuthCallback(wrapped, ctx.request.body())
+    return ctx.response.status(status).json(body)
   }
 
   /** POST /auth/logout */
   async logout(ctx: HttpContext) {
     const callback = getConfig().apiAuth?.logout
     if (callback) {
-      await callback(this.bearer(ctx))
+      await callback(bearerToken(ctx.request.header('authorization')))
     }
     return ctx.response.json({ data: { success: true } })
-  }
-
-  private async delegate(ctx: HttpContext, callback: AuthCallback | undefined, arg: any) {
-    if (!callback) {
-      return this.notConfigured(ctx)
-    }
-
-    const result = await callback(arg ?? {})
-    if (!result) {
-      return ctx.response.unauthorized({ error: 'Unauthorized' })
-    }
-    return ctx.response.json({ data: result })
-  }
-
-  private notConfigured(ctx: HttpContext) {
-    return ctx.response.notImplemented({ error: 'Authentication is not configured' })
-  }
-
-  private bearer(ctx: HttpContext): string {
-    const header = ctx.request.header('authorization') ?? ''
-    return header.startsWith('Bearer ') ? header.slice(7).trim() : header
   }
 }
