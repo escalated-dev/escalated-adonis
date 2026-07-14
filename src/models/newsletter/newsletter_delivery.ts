@@ -5,13 +5,7 @@ import Contact from '../contact.js'
 import Newsletter from './newsletter.js'
 
 export type NewsletterDeliveryStatus =
-  | 'pending'
-  | 'queued'
-  | 'sent'
-  | 'bounced'
-  | 'complained'
-  | 'suppressed'
-  | 'failed'
+  'pending' | 'queued' | 'sent' | 'bounced' | 'complained' | 'suppressed' | 'failed'
 
 export default class NewsletterDelivery extends BaseModel {
   static table = 'escalated_newsletter_deliveries'

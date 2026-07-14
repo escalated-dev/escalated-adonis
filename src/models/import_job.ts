@@ -58,13 +58,7 @@ function decryptJson(value: string | null): any {
 // --------------------------------------------------------------------------
 
 export type ImportJobStatus =
-  | 'pending'
-  | 'authenticating'
-  | 'mapping'
-  | 'importing'
-  | 'paused'
-  | 'completed'
-  | 'failed'
+  'pending' | 'authenticating' | 'mapping' | 'importing' | 'paused' | 'completed' | 'failed'
 
 export interface EntityProgress {
   total: number
