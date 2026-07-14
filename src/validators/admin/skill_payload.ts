@@ -5,8 +5,7 @@ import type { SkillStorePayload } from '../../services/skill_service.js'
 import type { UserId } from '../../helpers/user_id_column.js'
 
 export type SkillPayloadResult =
-  | { ok: true; data: SkillStorePayload }
-  | { ok: false; message: string }
+  { ok: true; data: SkillStorePayload } | { ok: false; message: string }
 
 function asUniquePositiveInts(value: unknown): number[] {
   if (value === undefined || value === null) return []
