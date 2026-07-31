@@ -41,6 +41,7 @@ const AdminApiTokensController = () => import('../src/controllers/admin_api_toke
 const AdminImportController = () => import('../src/controllers/admin_import_controller.js')
 const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
+const AdminWebhooksController = () => import('../src/controllers/admin_webhooks_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
 const AdminSkillController = () => import('../src/controllers/admin_skill_controller.js')
 const TicketSubjectsController = () => import('../src/controllers/ticket_subjects_controller.js')
@@ -588,6 +589,26 @@ function registerUiRoutes(config: any) {
       router
         .delete('/automations/:id', [AdminAutomationsController, 'destroy'])
         .as('escalated.admin.automations.destroy')
+
+      // Webhooks CRUD + delivery log
+      router
+        .get('/webhooks', [AdminWebhooksController, 'index'])
+        .as('escalated.admin.webhooks.index')
+      router
+        .post('/webhooks', [AdminWebhooksController, 'store'])
+        .as('escalated.admin.webhooks.store')
+      router
+        .post('/webhooks/deliveries/:delivery/retry', [AdminWebhooksController, 'retry'])
+        .as('escalated.admin.webhooks.retry')
+      router
+        .get('/webhooks/:webhook/deliveries', [AdminWebhooksController, 'deliveries'])
+        .as('escalated.admin.webhooks.deliveries')
+      router
+        .put('/webhooks/:webhook', [AdminWebhooksController, 'update'])
+        .as('escalated.admin.webhooks.update')
+      router
+        .delete('/webhooks/:webhook', [AdminWebhooksController, 'destroy'])
+        .as('escalated.admin.webhooks.destroy')
 
       // Users (host User model: list + grant/revoke admin/agent)
       router.get('/users', [AdminUsersController, 'index']).as('escalated.admin.users.index')

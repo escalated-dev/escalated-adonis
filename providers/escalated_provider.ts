@@ -138,6 +138,9 @@ export default class EscalatedProvider {
     // Record an internal note whenever a custom ticket action is triggered
     await this.registerCustomActionInternalNote()
 
+    // Forward lifecycle events to subscribed outbound webhooks
+    await this.wireWebhookDispatch()
+
     // Reset the cached renderer so it picks up the freshly-loaded config
     resetRenderer()
 
@@ -299,6 +302,31 @@ export default class EscalatedProvider {
       })
     } catch {
       // Emitter unavailable — skip.
+    }
+  }
+
+  /**
+   * Subscribe to AdonisJS emitter events and forward each mapped event to the
+   * outbound WebhookDispatcher, which POSTs a signed payload to every active
+   * webhook subscribed to that event. Mirrors the Laravel `DispatchWebhook`
+   * listener. Delivery failures are swallowed inside the dispatcher so they
+   * never break the ticket mutation that emitted the event.
+   */
+  protected async wireWebhookDispatch() {
+    try {
+      const { default: emitter } = await import('@adonisjs/core/services/emitter')
+      const { ESCALATED_EVENT_WEBHOOK_MAP } = await import('../src/support/webhook_events.js')
+      const { default: WebhookDispatcher } = await import('../src/services/webhook_dispatcher.js')
+
+      const dispatcher = new WebhookDispatcher()
+
+      for (const [escalatedEvent, wireName] of Object.entries(ESCALATED_EVENT_WEBHOOK_MAP)) {
+        emitter.on(escalatedEvent as any, (data: unknown) => {
+          void dispatcher.dispatchFromEvent(wireName, data)
+        })
+      }
+    } catch {
+      // Emitter or events not available (testing environment, etc.)
     }
   }
 
