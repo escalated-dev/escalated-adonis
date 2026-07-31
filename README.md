@@ -189,7 +189,7 @@ Each subject is serialized as `{ type, id, role, title, subtitle, url, color, ic
 - **Departments:** Organize tickets by team with agent assignments
 - **Tags:** Label and categorize tickets
 - **SLA Policies:** First response and resolution time tracking with breach detection
-- **Escalation Rules:** Automated ticket escalation based on configurable conditions
+- **Escalation Rules:** Automated ticket escalation based on configurable conditions; run the `node ace escalated:run-escalations` Ace command on a schedule (e.g. every 5 minutes) so rules fire periodically
 - **Canned Responses:** Pre-written reply templates (shared or per-agent)
 - **Activity Log:** Full audit trail of all ticket changes
 - **Attachments:** File uploads on replies with configurable storage
@@ -206,7 +206,7 @@ Each subject is serialized as `{ type, id, role, title, subtitle, url, color, ic
 - **Presence Indicators:** See who is viewing a ticket in real time
 - **SSO:** SAML and JWT-based single sign-on
 - **RBAC:** Role-based access control with granular permissions
-- **Automation:** Configurable automation rules with conditions and actions
+- **Automation:** Configurable automation rules with conditions and actions; run the `node ace escalated:run-automations` Ace command on a schedule to apply them periodically
 - **i18n:** Multi-language support sourced from the central `@escalated-dev/locale` npm package, with optional per-host overrides under `resources/lang/overrides/`
 - **Plugin System:** Extensible via TypeScript SDK plugins
 - **REST API:** Token-authenticated API with rate limiting
