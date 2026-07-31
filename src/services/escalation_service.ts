@@ -1,23 +1,22 @@
 import { DateTime } from 'luxon'
-import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
 import EscalationRule from '../models/escalation_rule.js'
-import TicketService from './ticket_service.js'
-import AssignmentService from './assignment_service.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
+import type TicketService from './ticket_service.js'
+import type AssignmentService from './assignment_service.js'
 import type { TicketPriority, TicketStatus } from '../types.js'
 
 export default class EscalationService {
   constructor(
-    protected ticketService: TicketService = new TicketService(),
-    protected assignmentService: AssignmentService = new AssignmentService()
+    protected ticketService?: TicketService,
+    protected assignmentService?: AssignmentService
   ) {}
 
   /**
    * Evaluate all active escalation rules against open tickets.
    */
   async evaluateRules(): Promise<number> {
-    const rules = await EscalationRule.query().withScopes((scopes) => scopes.active())
+    const rules = await this.loadActiveRules()
 
     let escalated = 0
 
@@ -31,6 +30,14 @@ export default class EscalationService {
     }
 
     return escalated
+  }
+
+  /**
+   * Load all active escalation rules, ordered by their configured priority.
+   * Extracted so the runner can be exercised without a live database.
+   */
+  protected async loadActiveRules(): Promise<EscalationRule[]> {
+    return EscalationRule.query().withScopes((scopes) => scopes.active())
   }
 
   /**
@@ -98,27 +105,58 @@ export default class EscalationService {
       const actionValue = action.value
 
       switch (actionType) {
-        case 'escalate':
-          await this.ticketService.changeStatus(ticket, 'escalated' as TicketStatus)
+        case 'escalate': {
+          const ticketService = await this.getTicketService()
+          await ticketService.changeStatus(ticket, 'escalated' as TicketStatus)
           break
-        case 'change_priority':
-          await this.ticketService.changePriority(ticket, actionValue as TicketPriority)
+        }
+        case 'change_priority': {
+          const ticketService = await this.getTicketService()
+          await ticketService.changePriority(ticket, actionValue as TicketPriority)
           break
-        case 'assign_to':
-          await this.assignmentService.assign(ticket, Number(actionValue))
+        }
+        case 'assign_to': {
+          const assignmentService = await this.getAssignmentService()
+          await assignmentService.assign(ticket, Number(actionValue))
           break
-        case 'change_department':
-          await this.ticketService.changeDepartment(ticket, Number(actionValue))
+        }
+        case 'change_department': {
+          const ticketService = await this.getTicketService()
+          await ticketService.changeDepartment(ticket, Number(actionValue))
           break
+        }
       }
     }
 
     const hasEscalate = rule.actions.some((a) => a.type === 'escalate')
     if (hasEscalate) {
+      const { default: emitter } = await import('@adonisjs/core/services/emitter')
       await emitter.emit(ESCALATED_EVENTS.TICKET_ESCALATED, {
         ticket,
         reason: `Escalation rule: ${rule.name}`,
       })
     }
+  }
+
+  /**
+   * Lazily resolve the ticket service. Imported on demand so the module can be
+   * loaded (and unit-tested) without booting the AdonisJS container, mirroring
+   * the lazy-resolution pattern used by the provider.
+   */
+  protected async getTicketService(): Promise<TicketService> {
+    if (this.ticketService) return this.ticketService
+    const { default: TicketService } = await import('./ticket_service.js')
+    this.ticketService = new TicketService()
+    return this.ticketService
+  }
+
+  /**
+   * Lazily resolve the assignment service. See {@link getTicketService}.
+   */
+  protected async getAssignmentService(): Promise<AssignmentService> {
+    if (this.assignmentService) return this.assignmentService
+    const { default: AssignmentService } = await import('./assignment_service.js')
+    this.assignmentService = new AssignmentService()
+    return this.assignmentService
   }
 }
