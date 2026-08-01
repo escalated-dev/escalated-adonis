@@ -45,6 +45,9 @@ const AdminAutomationsController = () =>
 const AdminWebhooksController = () => import('../src/controllers/admin_webhooks_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
 const AdminSkillController = () => import('../src/controllers/admin_skill_controller.js')
+const AdminArticlesController = () => import('../src/controllers/admin_articles_controller.js')
+const AdminArticleCategoriesController = () =>
+  import('../src/controllers/admin_article_categories_controller.js')
 const TicketSubjectsController = () => import('../src/controllers/ticket_subjects_controller.js')
 
 // Lazy-load controllers (core — non-UI)
@@ -122,7 +125,7 @@ function registerCoreRoutes(config: any) {
       router.get('/config', [WidgetController, 'config']).as('escalated.widget.config')
       router.get('/articles', [WidgetController, 'articles']).as('escalated.widget.articles')
       router
-        .get('/articles/:id', [WidgetController, 'articleDetail'])
+        .get('/articles/:slug', [WidgetController, 'articleDetail'])
         .as('escalated.widget.articles.show')
       router
         .post('/tickets', [WidgetController, 'createTicket'])
@@ -509,6 +512,40 @@ function registerUiRoutes(config: any) {
       router
         .delete('/skills/:id', [AdminSkillController, 'destroy'])
         .as('escalated.admin.skills.destroy')
+
+      // Knowledge Base — Articles CRUD
+      router
+        .get('/kb/articles', [AdminArticlesController, 'index'])
+        .as('escalated.admin.kb-articles.index')
+      router
+        .get('/kb/articles/create', [AdminArticlesController, 'create'])
+        .as('escalated.admin.kb-articles.create')
+      router
+        .post('/kb/articles', [AdminArticlesController, 'store'])
+        .as('escalated.admin.kb-articles.store')
+      router
+        .get('/kb/articles/:id/edit', [AdminArticlesController, 'edit'])
+        .as('escalated.admin.kb-articles.edit')
+      router
+        .put('/kb/articles/:id', [AdminArticlesController, 'update'])
+        .as('escalated.admin.kb-articles.update')
+      router
+        .delete('/kb/articles/:id', [AdminArticlesController, 'destroy'])
+        .as('escalated.admin.kb-articles.destroy')
+
+      // Knowledge Base — Categories CRUD
+      router
+        .get('/kb/categories', [AdminArticleCategoriesController, 'index'])
+        .as('escalated.admin.kb-categories.index')
+      router
+        .post('/kb/categories', [AdminArticleCategoriesController, 'store'])
+        .as('escalated.admin.kb-categories.store')
+      router
+        .put('/kb/categories/:id', [AdminArticleCategoriesController, 'update'])
+        .as('escalated.admin.kb-categories.update')
+      router
+        .delete('/kb/categories/:id', [AdminArticleCategoriesController, 'destroy'])
+        .as('escalated.admin.kb-categories.destroy')
 
       // Canned Responses
       router
