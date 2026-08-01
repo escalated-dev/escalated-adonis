@@ -38,6 +38,7 @@ const SatisfactionRatingController = () =>
   import('../src/controllers/satisfaction_rating_controller.js')
 const GuestTicketsController = () => import('../src/controllers/guest_tickets_controller.js')
 const AdminApiTokensController = () => import('../src/controllers/admin_api_tokens_controller.js')
+const AdminTwoFactorController = () => import('../src/controllers/admin_two_factor_controller.js')
 const AdminImportController = () => import('../src/controllers/admin_import_controller.js')
 const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
@@ -547,6 +548,26 @@ function registerUiRoutes(config: any) {
         .delete('/api-tokens/:id', [AdminApiTokensController, 'destroy'])
         .as('escalated.admin.api-tokens.destroy')
 
+      // Two-Factor Authentication (agent/admin self-service)
+      router
+        .get('/settings/two-factor', [AdminTwoFactorController, 'index'])
+        .as('escalated.admin.two-factor.index')
+      router
+        .post('/settings/two-factor/setup', [AdminTwoFactorController, 'setup'])
+        .as('escalated.admin.two-factor.setup')
+      router
+        .post('/settings/two-factor/confirm', [AdminTwoFactorController, 'confirm'])
+        .as('escalated.admin.two-factor.confirm')
+      router
+        .post('/settings/two-factor/disable', [AdminTwoFactorController, 'disable'])
+        .as('escalated.admin.two-factor.disable')
+      router
+        .post('/settings/two-factor/recovery-codes', [
+          AdminTwoFactorController,
+          'regenerateRecoveryCodes',
+        ])
+        .as('escalated.admin.two-factor.recovery-codes')
+
       // Import
       router.get('/import', [AdminImportController, 'index']).as('escalated.admin.import.index')
       router
@@ -637,6 +658,19 @@ function registerUiRoutes(config: any) {
     })
     .prefix(`${prefix}/admin`)
     .use([...adminMiddleware, EnsureIsAdmin])
+
+  // ---- Two-Factor Challenge (post-login, auth-only) ----
+  router
+    .group(() => {
+      router
+        .get('/two-factor/challenge', [AdminTwoFactorController, 'challenge'])
+        .as('escalated.two-factor.challenge')
+      router
+        .post('/two-factor/challenge', [AdminTwoFactorController, 'verify'])
+        .as('escalated.two-factor.verify')
+    })
+    .prefix(prefix)
+    .use(authMiddleware)
 
   // ---- Guest Routes (no auth) ----
   router

@@ -29,6 +29,10 @@ export * from './src/events/index.js'
 export { default as ApiToken } from './src/models/api_token.js'
 export { default as AuthenticateApiToken } from './src/middleware/authenticate_api_token.js'
 export { default as ApiRateLimit } from './src/middleware/api_rate_limit.js'
+// Two-factor authentication (TOTP + recovery codes)
+export { default as TwoFactor } from './src/models/two_factor.js'
+export { default as TwoFactorService } from './src/services/two_factor_service.js'
+export type { RecoveryCodeResult } from './src/services/two_factor_service.js'
 // Plugin system
 export { default as HookManager } from './src/support/hook_manager.js'
 export { default as HookRegistry } from './src/services/hook_registry.js'
