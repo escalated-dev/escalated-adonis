@@ -1,5 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import EscalatedSetting from '../models/escalated_setting.js'
+import AuditService from '../services/audit_service.js'
+import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
@@ -11,7 +13,7 @@ export default class AdminSettingsController {
     })
   }
 
-  async update({ request, response, session }: HttpContext) {
+  async update({ auth, request, response, session }: HttpContext) {
     const data = request.only([
       'guest_tickets_enabled',
       'allow_customer_close',
@@ -43,6 +45,8 @@ export default class AdminSettingsController {
       return response.redirect().back()
     }
 
+    const changed: Record<string, any> = {}
+
     for (const [key, value] of Object.entries(data)) {
       // Skip sensitive fields that contain masked placeholder
       if (sensitiveKeys.includes(key) && this.isMaskedValue(value as string)) {
@@ -51,7 +55,14 @@ export default class AdminSettingsController {
 
       const strValue = typeof value === 'boolean' ? (value ? '1' : '0') : String(value ?? '')
       await EscalatedSetting.set(key, strValue)
+      // Record which keys changed; redact secret values from the audit trail.
+      changed[key] = sensitiveKeys.includes(key) ? '[redacted]' : strValue
     }
+
+    await AuditService.fromContext({ auth, request }, AUDIT_ACTIONS.SETTINGS_UPDATED, {
+      auditableType: 'settings',
+      newValues: changed,
+    })
 
     session.flash('success', t('admin.settings_updated'))
     return response.redirect().back()
@@ -147,7 +158,7 @@ export default class AdminSettingsController {
     })
   }
 
-  async updatePublicTickets({ request, response, session }: HttpContext) {
+  async updatePublicTickets({ auth, request, response, session }: HttpContext) {
     const modeRaw = request.input('guest_policy_mode', 'unassigned')
     const mode = modeRaw === 'guest_user' || modeRaw === 'prompt_signup' ? modeRaw : 'unassigned'
 
@@ -166,6 +177,11 @@ export default class AdminSettingsController {
     } else {
       await EscalatedSetting.set('guest_policy_signup_url_template', '')
     }
+
+    await AuditService.fromContext({ auth, request }, AUDIT_ACTIONS.PUBLIC_TICKETS_UPDATED, {
+      auditableType: 'settings',
+      newValues: { guest_policy_mode: mode },
+    })
 
     session.flash('success', t('admin.settings_updated'))
     return response.redirect().back()

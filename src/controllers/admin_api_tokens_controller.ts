@@ -1,6 +1,8 @@
 import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 import ApiToken from '../models/api_token.js'
+import AuditService from '../services/audit_service.js'
+import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 
@@ -65,6 +67,12 @@ export default class AdminApiTokensController {
 
     const result = await ApiToken.createToken(user, name, abilities, expiresAt)
 
+    await AuditService.fromContext(ctx, AUDIT_ACTIONS.API_TOKEN_CREATED, {
+      auditableType: 'ApiToken',
+      auditableId: result.token.id,
+      newValues: { name, abilities, user_id: userId, expires_at: expiresAt?.toISO() ?? null },
+    })
+
     ctx.session.flash('success', 'API token created.')
     ctx.session.flash('plain_text_token', result.plainTextToken)
     return ctx.response.redirect().back()
@@ -86,6 +94,12 @@ export default class AdminApiTokensController {
 
     await token.save()
 
+    await AuditService.fromContext(ctx, AUDIT_ACTIONS.API_TOKEN_UPDATED, {
+      auditableType: 'ApiToken',
+      auditableId: token.id,
+      newValues: { name: token.name, abilities: token.abilities },
+    })
+
     ctx.session.flash('success', 'Token updated.')
     return ctx.response.redirect().back()
   }
@@ -95,7 +109,15 @@ export default class AdminApiTokensController {
    */
   async destroy(ctx: HttpContext) {
     const token = await ApiToken.findOrFail(ctx.params.id)
+    const snapshot = { name: token.name, abilities: token.abilities }
+    const tokenId = token.id
     await token.delete()
+
+    await AuditService.fromContext(ctx, AUDIT_ACTIONS.API_TOKEN_REVOKED, {
+      auditableType: 'ApiToken',
+      auditableId: tokenId,
+      oldValues: snapshot,
+    })
 
     ctx.session.flash('success', 'Token revoked.')
     return ctx.response.redirect().back()

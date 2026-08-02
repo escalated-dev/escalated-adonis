@@ -44,6 +44,7 @@ const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
 const AdminWebhooksController = () => import('../src/controllers/admin_webhooks_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
+const AdminAuditLogsController = () => import('../src/controllers/admin_audit_logs_controller.js')
 const AdminSkillController = () => import('../src/controllers/admin_skill_controller.js')
 const AdminArticlesController = () => import('../src/controllers/admin_articles_controller.js')
 const AdminArticleCategoriesController = () =>
@@ -673,6 +674,11 @@ function registerUiRoutes(config: any) {
       router
         .patch('/users/:user/role', [AdminUsersController, 'updateRole'])
         .as('escalated.admin.users.role')
+
+      // Audit Log (system-wide audit trail; read-only, filtered + paginated)
+      router
+        .get('/audit-logs', [AdminAuditLogsController, 'index'])
+        .as('escalated.admin.audit-logs.index')
 
       // Plugins
       router.get('/plugins', [AdminPluginsController, 'index']).as('escalated.admin.plugins.index')

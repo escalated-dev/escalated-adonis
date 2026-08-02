@@ -2,7 +2,9 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Webhook from '../models/webhook.js'
 import WebhookDelivery from '../models/webhook_delivery.js'
 import WebhookDispatcher from '../services/webhook_dispatcher.js'
+import AuditService from '../services/audit_service.js'
 import { WEBHOOK_EVENTS } from '../support/webhook_events.js'
+import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
@@ -51,7 +53,7 @@ export default class AdminWebhooksController {
   /**
    * POST /support/admin/webhooks — create a webhook.
    */
-  async store({ request, response, session }: HttpContext) {
+  async store({ auth, request, response, session }: HttpContext) {
     const data = request.only(['url', 'events', 'secret', 'active'])
 
     const error = this.validate(data)
@@ -60,11 +62,17 @@ export default class AdminWebhooksController {
       return response.redirect().back()
     }
 
-    await Webhook.create({
+    const webhook = await Webhook.create({
       url: data.url,
       events: this.normalizeEvents(data.events),
       secret: data.secret || null,
       active: data.active !== false,
+    })
+
+    await AuditService.fromContext({ auth, request }, AUDIT_ACTIONS.WEBHOOK_CREATED, {
+      auditableType: 'Webhook',
+      auditableId: webhook.id,
+      newValues: { url: webhook.url, events: webhook.events, active: webhook.active },
     })
 
     session.flash('success', t('admin.webhook_created'))
@@ -74,7 +82,7 @@ export default class AdminWebhooksController {
   /**
    * PUT /support/admin/webhooks/:webhook — update a webhook.
    */
-  async update({ params, request, response, session }: HttpContext) {
+  async update({ auth, params, request, response, session }: HttpContext) {
     const webhook = await Webhook.findOrFail(params.webhook || params.id)
     const data = request.only(['url', 'events', 'secret', 'active'])
 
@@ -84,6 +92,8 @@ export default class AdminWebhooksController {
       return response.redirect().back()
     }
 
+    const before = { url: webhook.url, events: webhook.events, active: webhook.active }
+
     webhook.merge({
       url: data.url,
       events: this.normalizeEvents(data.events),
@@ -91,6 +101,13 @@ export default class AdminWebhooksController {
       active: data.active !== false,
     })
     await webhook.save()
+
+    await AuditService.fromContext({ auth, request }, AUDIT_ACTIONS.WEBHOOK_UPDATED, {
+      auditableType: 'Webhook',
+      auditableId: webhook.id,
+      oldValues: before,
+      newValues: { url: webhook.url, events: webhook.events, active: webhook.active },
+    })
 
     session.flash('success', t('admin.webhook_updated'))
     return response.redirect().back()
@@ -100,9 +117,18 @@ export default class AdminWebhooksController {
    * DELETE /support/admin/webhooks/:webhook — delete a webhook (cascades
    * delivery rows).
    */
-  async destroy({ params, response, session }: HttpContext) {
+  async destroy({ auth, params, request, response, session }: HttpContext) {
     const webhook = await Webhook.findOrFail(params.webhook || params.id)
+    const snapshot = { url: webhook.url, events: webhook.events, active: webhook.active }
+    const webhookId = webhook.id
     await webhook.delete()
+
+    await AuditService.fromContext({ auth, request }, AUDIT_ACTIONS.WEBHOOK_DELETED, {
+      auditableType: 'Webhook',
+      auditableId: webhookId,
+      oldValues: snapshot,
+    })
+
     session.flash('success', t('admin.webhook_deleted'))
     return response.redirect().back()
   }

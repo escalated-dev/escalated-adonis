@@ -33,6 +33,23 @@ export { default as ApiRateLimit } from './src/middleware/api_rate_limit.js'
 export { default as TwoFactor } from './src/models/two_factor.js'
 export { default as TwoFactorService } from './src/services/two_factor_service.js'
 export type { RecoveryCodeResult } from './src/services/two_factor_service.js'
+// System-wide audit log
+export { default as AuditLog } from './src/models/audit_log.js'
+export { default as AuditService } from './src/services/audit_service.js'
+export {
+  AUDIT_ACTIONS,
+  buildAuditEntry,
+  diffAuditable,
+  filterAuditLogs,
+  sortAuditLogsDesc,
+} from './src/support/audit_events.js'
+export type {
+  AuditContext,
+  AuditEntry,
+  AuditActionName,
+  AuditLogFilters,
+  AuditLogRow,
+} from './src/support/audit_events.js'
 // Plugin system
 export { default as HookManager } from './src/support/hook_manager.js'
 export { default as HookRegistry } from './src/services/hook_registry.js'
