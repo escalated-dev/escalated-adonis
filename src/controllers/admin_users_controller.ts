@@ -1,4 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import AuditService from '../services/audit_service.js'
+import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 
@@ -103,6 +105,11 @@ export default class AdminUsersController {
       return response.redirect().back()
     }
 
+    const before = {
+      is_admin: Boolean(target.isAdmin ?? target.is_admin ?? false),
+      is_agent: Boolean(target.isAgent ?? target.is_agent ?? false),
+    }
+
     if (role === 'admin') {
       target.isAdmin = value
       // Admins are agents; promoting to admin auto-enables agent.
@@ -121,6 +128,18 @@ export default class AdminUsersController {
     }
 
     await target.save()
+
+    await AuditService.fromContext(ctx, AUDIT_ACTIONS.USER_ROLE_UPDATED, {
+      auditableType: 'User',
+      auditableId: target.id,
+      oldValues: before,
+      newValues: {
+        role,
+        value,
+        is_admin: Boolean(target.isAdmin ?? target.is_admin ?? false),
+        is_agent: Boolean(target.isAgent ?? target.is_agent ?? false),
+      },
+    })
 
     session.flash('success', t('admin.user_updated'))
     return response.redirect().back()

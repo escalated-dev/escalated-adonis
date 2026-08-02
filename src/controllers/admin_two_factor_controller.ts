@@ -2,6 +2,8 @@ import { DateTime } from 'luxon'
 import type { HttpContext } from '@adonisjs/core/http'
 import TwoFactor from '../models/two_factor.js'
 import TwoFactorService from '../services/two_factor_service.js'
+import AuditService from '../services/audit_service.js'
+import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { requireAuthUser } from '../support/auth_user.js'
 import { getRenderer } from '../rendering/renderer.js'
 
@@ -89,6 +91,11 @@ export default class AdminTwoFactorController {
     record.confirmedAt = DateTime.now()
     await record.save()
 
+    await AuditService.fromContext(ctx, AUDIT_ACTIONS.TWO_FACTOR_ENABLED, {
+      auditableType: 'TwoFactor',
+      auditableId: userId,
+    })
+
     ctx.session.flash('success', 'Two-factor authentication enabled.')
     ctx.session.flash('two_factor_confirmed', true)
     return ctx.response.redirect().back()
@@ -100,6 +107,11 @@ export default class AdminTwoFactorController {
   async disable(ctx: HttpContext) {
     const userId = requireAuthUser(ctx.auth).id
     await TwoFactor.query().where('user_id', userId).delete()
+
+    await AuditService.fromContext(ctx, AUDIT_ACTIONS.TWO_FACTOR_DISABLED, {
+      auditableType: 'TwoFactor',
+      auditableId: userId,
+    })
 
     ctx.session.flash('success', 'Two-factor authentication disabled.')
     return ctx.response.redirect().back()
@@ -124,6 +136,11 @@ export default class AdminTwoFactorController {
     const recoveryCodes = this.service.generateRecoveryCodes()
     record.recoveryCodes = recoveryCodes.map((code) => this.service.hashRecoveryCode(code))
     await record.save()
+
+    await AuditService.fromContext(ctx, AUDIT_ACTIONS.TWO_FACTOR_RECOVERY_CODES_REGENERATED, {
+      auditableType: 'TwoFactor',
+      auditableId: userId,
+    })
 
     ctx.session.flash('success', 'Recovery codes regenerated.')
     ctx.session.flash('two_factor_recovery_codes', recoveryCodes)
