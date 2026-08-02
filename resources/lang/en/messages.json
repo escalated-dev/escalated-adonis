@@ -61,7 +61,17 @@
     "skill_created": "Skill created.",
     "skill_updated": "Skill updated.",
     "skill_deleted": "Skill deleted.",
-    "skill_not_found": "Skill not found."
+    "skill_not_found": "Skill not found.",
+    "article_created": "Article created.",
+    "article_updated": "Article updated.",
+    "article_deleted": "Article deleted.",
+    "article_not_found": "Article not found.",
+    "article_title_required": "An article title is required.",
+    "article_category_created": "Category created.",
+    "article_category_updated": "Category updated.",
+    "article_category_deleted": "Category deleted.",
+    "article_category_not_found": "Category not found.",
+    "article_category_name_required": "A category name is required."
   },
   "middleware": {
     "not_admin": "You are not authorized as a support administrator.",

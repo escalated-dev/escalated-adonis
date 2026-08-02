@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
 import Contact from '../models/contact.js'
 import EscalatedSetting from '../models/escalated_setting.js'
+import Article from '../models/article.js'
 import TicketService from '../services/ticket_service.js'
 
 /**
@@ -38,7 +39,7 @@ export default class WidgetController {
   }
 
   /**
-   * GET /widget/articles — Search knowledge base articles
+   * GET /widget/articles — List / search published knowledge base articles
    */
   async articles(ctx: HttpContext) {
     const kbEnabled = await EscalatedSetting.getBool('knowledge_base_enabled', false)
@@ -48,18 +49,27 @@ export default class WidgetController {
 
     const { q, limit } = ctx.request.only(['q', 'limit'])
     const maxResults = Math.min(Number(limit) || 10, 25)
+    const term = typeof q === 'string' ? q.trim() : ''
 
-    // Placeholder: in a full implementation this would query an articles table.
-    // For now we return an empty result set to establish the API contract.
+    const query = Article.query()
+      .withScopes((scopes) => scopes.published())
+      .preload('category')
+
+    if (term !== '') {
+      query.withScopes((scopes) => scopes.search(term))
+    }
+
+    const articles = await query.orderBy('published_at', 'desc').limit(maxResults)
+
     return ctx.response.json({
-      articles: [],
-      query: q ?? '',
+      articles: articles.map((article) => serializeSummary(article)),
+      query: term,
       limit: maxResults,
     })
   }
 
   /**
-   * GET /widget/articles/:id — Get a single article
+   * GET /widget/articles/:slug — Get a single published article by slug
    */
   async articleDetail(ctx: HttpContext) {
     const kbEnabled = await EscalatedSetting.getBool('knowledge_base_enabled', false)
@@ -67,10 +77,37 @@ export default class WidgetController {
       return ctx.response.notFound({ error: 'Knowledge base is disabled' })
     }
 
-    const articleId = ctx.params.id
+    const slug = String(ctx.params.slug ?? '')
 
-    // Placeholder: return 404 until articles table exists
-    return ctx.response.notFound({ error: `Article ${articleId} not found` })
+    const article = await Article.query()
+      .withScopes((scopes) => scopes.published())
+      .where('slug', slug)
+      .preload('category')
+      .first()
+
+    if (!article) {
+      return ctx.response.notFound({ error: `Article "${slug}" not found` })
+    }
+
+    await article.incrementViews()
+
+    const related = await Article.query()
+      .withScopes((scopes) => scopes.published())
+      .where('category_id', article.categoryId ?? 0)
+      .whereNot('id', article.id)
+      .orderBy('published_at', 'desc')
+      .limit(5)
+      .select('id', 'title', 'slug')
+
+    return ctx.response.json({
+      article: {
+        ...serializeSummary(article),
+        body: article.body,
+        view_count: article.viewCount,
+        published_at: article.publishedAt?.toISO() ?? null,
+      },
+      related: related.map((r) => ({ id: r.id, title: r.title, slug: r.slug })),
+    })
   }
 
   /**
@@ -148,5 +185,18 @@ export default class WidgetController {
         created_at: r.createdAt.toISO(),
       })),
     })
+  }
+}
+
+/**
+ * Serialize an article to the compact summary shape returned by the widget
+ * list endpoint (and reused as the base of the detail payload).
+ */
+function serializeSummary(article: Article) {
+  return {
+    id: article.id,
+    title: article.title,
+    slug: article.slug,
+    category: article.category ? { id: article.category.id, name: article.category.name } : null,
   }
 }
