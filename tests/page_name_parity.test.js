@@ -87,7 +87,9 @@ function renderedPages() {
 }
 
 function explain(missing, rendered) {
-  const lines = ['these page names have no component in @escalated-dev/escalated, so they render a blank panel:']
+  const lines = [
+    'these page names have no component in @escalated-dev/escalated, so they render a blank panel:',
+  ]
 
   for (const name of missing) {
     lines.push(`  ${name}  (${[...rendered.get(name)].join(', ')})`)
@@ -104,9 +106,14 @@ describe('page name parity', () => {
   it('renders only page names the frontend ships', () => {
     const rendered = renderedPages()
 
-    assert.ok(rendered.size > 0, 'found no page names at all, which means this test is not looking where it should')
+    assert.ok(
+      rendered.size > 0,
+      'found no page names at all, which means this test is not looking where it should'
+    )
 
-    const missing = [...rendered.keys()].filter((name) => !SHIPPED.includes(name) && !KNOWN_BLANK.includes(name)).sort()
+    const missing = [...rendered.keys()]
+      .filter((name) => !SHIPPED.includes(name) && !KNOWN_BLANK.includes(name))
+      .sort()
 
     assert.deepEqual(missing, [], explain(missing, rendered))
   })
