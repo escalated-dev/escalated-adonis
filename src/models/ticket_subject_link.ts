@@ -1,12 +1,13 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { column, belongsTo } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Ticket from './ticket.js'
 
 /**
  * Join row linking a ticket to one host-app subject (type + id).
  */
-export default class TicketSubjectLink extends BaseModel {
+export default class TicketSubjectLink extends EscalatedBaseModel {
   static table = 'escalated_ticket_subjects'
 
   @column({ isPrimary: true })

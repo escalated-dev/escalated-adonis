@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { column } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { UserId } from '../helpers/user_id_column.js'
 import TwoFactorService from '../services/two_factor_service.js'
 
@@ -14,7 +15,7 @@ const service = new TwoFactorService()
  * first code. A pending (unconfirmed) row means setup was started but not
  * completed.
  */
-export default class TwoFactor extends BaseModel {
+export default class TwoFactor extends EscalatedBaseModel {
   static table = 'escalated_two_factor'
 
   @column({ isPrimary: true })

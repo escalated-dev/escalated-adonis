@@ -1,7 +1,8 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { column } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 
-export default class EscalatedSetting extends BaseModel {
+export default class EscalatedSetting extends EscalatedBaseModel {
   static table = 'escalated_settings'
 
   @column({ isPrimary: true })

@@ -1,10 +1,11 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, beforeCreate } from '@adonisjs/lucid/orm'
+import { column, belongsTo, beforeCreate } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { UserId } from '../helpers/user_id_column.js'
 import Ticket from './ticket.js'
 
-export default class SatisfactionRating extends BaseModel {
+export default class SatisfactionRating extends EscalatedBaseModel {
   static table = 'escalated_satisfaction_ratings'
 
   // Disable auto timestamps — we only use created_at

@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { escalatedDb } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 import WorkflowEngine, {
   OPERATORS,
@@ -44,7 +45,7 @@ function logJson(row: Record<string, any>) {
 
 export default class AdminWorkflowsController {
   async index(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const workflows = await db
       .from('escalated_workflows')
       .orderBy('position', 'asc')
@@ -55,7 +56,7 @@ export default class AdminWorkflowsController {
   }
 
   async show(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const workflow = await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
     return getRenderer().render(ctx, 'Escalated/Admin/Workflows/Show', {
       workflow: workflowJson(workflow),
@@ -66,7 +67,7 @@ export default class AdminWorkflowsController {
   }
 
   async store(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const data = ctx.request.only([
       'name',
       'trigger_event',
@@ -84,7 +85,7 @@ export default class AdminWorkflowsController {
   }
 
   async update(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const data = ctx.request.only([
       'name',
       'trigger_event',
@@ -100,13 +101,13 @@ export default class AdminWorkflowsController {
   }
 
   async destroy(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     await db.from('escalated_workflows').where('id', ctx.params.id).delete()
     return ctx.response.ok({ deleted: true })
   }
 
   async toggle(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const workflow = await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
     await db
       .from('escalated_workflows')
@@ -116,7 +117,7 @@ export default class AdminWorkflowsController {
   }
 
   async reorder(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const ids = ctx.request.input('workflow_ids', [])
     for (const [i, id] of ids.entries()) {
       await db.from('escalated_workflows').where('id', id).update({ position: i })
@@ -125,7 +126,7 @@ export default class AdminWorkflowsController {
   }
 
   async logs(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const workflow = await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
     const logs = await db
       .from('escalated_workflow_logs')
@@ -150,7 +151,7 @@ export default class AdminWorkflowsController {
   }
 
   async dryRun(ctx: HttpContext) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const workflow = await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
     const ticketId = ctx.request.input('ticket_id')
     const ticket = await Ticket.findOrFail(ticketId)

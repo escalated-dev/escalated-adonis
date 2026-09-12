@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { column } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { UserId } from '../helpers/user_id_column.js'
 
 /**
@@ -8,7 +9,7 @@ import type { UserId } from '../helpers/user_id_column.js'
  * ceiling (maxConcurrent) so routing can avoid overloading. Mirrors the
  * Laravel AgentCapacity model.
  */
-export default class AgentCapacity extends BaseModel {
+export default class AgentCapacity extends EscalatedBaseModel {
   static table = 'escalated_agent_capacity'
 
   static DEFAULT_MAX_CONCURRENT = 10

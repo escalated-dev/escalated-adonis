@@ -1,10 +1,11 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, hasMany, scope, beforeCreate } from '@adonisjs/lucid/orm'
+import { column, belongsTo, hasMany, scope, beforeCreate } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import { resolveSlug } from '../support/knowledge_base.js'
 import Article from './article.js'
 
-export default class ArticleCategory extends BaseModel {
+export default class ArticleCategory extends EscalatedBaseModel {
   static table = 'escalated_article_categories'
 
   @column({ isPrimary: true })

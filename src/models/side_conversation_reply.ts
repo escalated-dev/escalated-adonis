@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { column, belongsTo } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { UserId } from '../helpers/user_id_column.js'
 import SideConversation from './side_conversation.js'
@@ -8,7 +9,7 @@ import SideConversation from './side_conversation.js'
  * A single message within a SideConversation. Mirrors the Laravel
  * SideConversationReply model.
  */
-export default class SideConversationReply extends BaseModel {
+export default class SideConversationReply extends EscalatedBaseModel {
   static table = 'escalated_side_conversation_replies'
 
   @column({ isPrimary: true })

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Configurable database connection.** `connection` on the Escalated config names the Lucid connection Escalated's own tables live on. Omitted means the host's default connection, which is the historical behaviour and leaves an unconfigured host unchanged.
+
+  Every model now extends `EscalatedBaseModel`, which exposes `connection` as a getter rather than the static string Lucid normally takes — the config is not loaded when the model classes are defined, and Lucid reads `modelConstructor.connection` when it resolves a query client, so a getter satisfies it at exactly the right moment. A test enumerates `src/models` and fails if a model is added that does not extend the base.
+
+  Direct query-builder access in the workflows controller and the department pivot now binds `db` to Escalated's connection, which also picks up `escalated_workflow_logs`. The importer's user lookup deliberately stays on the default connection: that table belongs to the host.
+
+  Run migrations against the same connection with `node ace migration:run --connection=support`.
+
+### Fixed
+- **Average first-response reporting was broken on SQLite.** The dialect check compared against `'sqlite'`, which is not a name any driver reports — Knex returns `'sqlite3'` — so the branch never fired and SQLite hosts were handed MySQL's `TIMESTAMPDIFF`, a function SQLite does not have. Typing the connection surfaced it. Now matches `sqlite3`, `better-sqlite3` and `libsql`.
+
+### Added
 - Ticket subjects: attach host-app entities (Project, Customer, asset, …) that a ticket is *about*, distinct from the requester. `TicketSubject` contract + `ticketSubjects` config (`types` allowlist, `resolver` for presentation). `TicketSubjectLink` model, `attachSubject` / `detachSubject` / `syncSubjects` on `Ticket`, agent/admin attach/detach routes, API/detail serialization as `subjects[]`.
 - Admin Users management page (`GET /support/admin/users`) and role-toggle endpoint (`PATCH /support/admin/users/:user/role`) that mirror the Laravel reference (escalated-laravel#94). Admins can grant or revoke the `is_admin` / `is_agent` flags on host users; admins cannot demote themselves, and revoking the agent flag from a user who is also admin cascades to clear admin too. Renders the shared `Escalated/Admin/Users/Index` Inertia page.
 - Consume translations from the central `@escalated-dev/locale` npm package. The package is loaded as the base layer, this package's `resources/lang/{locale}/messages.json` files are deep-merged on top as overrides, and host apps can drop further overrides into `resources/lang/overrides/{locale}/messages.json`. See `resources/lang/overrides/README.md` for the layering rules and a sample `config/i18n.ts` chain for `@adonisjs/i18n` v3+.

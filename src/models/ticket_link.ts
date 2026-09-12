@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { column, belongsTo } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Ticket from './ticket.js'
 
@@ -8,7 +9,7 @@ import Ticket from './ticket.js'
  * parent/child, or related). Distinct from TicketSubjectLink, which links a
  * ticket to a host-app subject. Mirrors the Laravel TicketLink model.
  */
-export default class TicketLink extends BaseModel {
+export default class TicketLink extends EscalatedBaseModel {
   static table = 'escalated_ticket_links'
 
   @column({ isPrimary: true })

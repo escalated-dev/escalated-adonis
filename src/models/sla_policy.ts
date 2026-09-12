@@ -1,10 +1,11 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, hasMany, scope } from '@adonisjs/lucid/orm'
+import { column, hasMany, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import type { TicketPriority } from '../types.js'
 import Ticket from './ticket.js'
 
-export default class SlaPolicy extends BaseModel {
+export default class SlaPolicy extends EscalatedBaseModel {
   static table = 'escalated_sla_policies'
 
   @column({ isPrimary: true })

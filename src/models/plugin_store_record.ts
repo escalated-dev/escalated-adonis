@@ -21,9 +21,10 @@
 */
 
 import { type DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { column } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 
-export default class PluginStoreRecord extends BaseModel {
+export default class PluginStoreRecord extends EscalatedBaseModel {
   static table = 'escalated_plugin_store'
 
   @column({ isPrimary: true })

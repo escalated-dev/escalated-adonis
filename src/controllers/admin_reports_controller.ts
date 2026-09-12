@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon'
+import { escalatedDb } from '../helpers/config.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
 import SatisfactionRating from '../models/satisfaction_rating.js'
@@ -72,21 +73,28 @@ export default class AdminReportsController {
     })
   }
 
-  protected async avgFirstResponseHours(since: string, db: any): Promise<number> {
-    const driver = db.connection().dialect.name
+  protected async avgFirstResponseHours(since: string, _db?: unknown): Promise<number> {
+    // Escalated's own connection, not the host's default: this reads
+    // escalated_tickets, which moves with the package.
+    const connection = await escalatedDb()
+    const driver = connection.dialect.name
 
+    // 'sqlite3' is what Knex actually reports. This used to compare against
+    // 'sqlite', which is not a dialect name any driver returns, so the branch
+    // never fired and SQLite hosts were handed MySQL's TIMESTAMPDIFF -- a
+    // function SQLite does not have. Typing the connection surfaced it.
     let raw: string
-    if (driver === 'sqlite' || driver === 'better-sqlite3') {
+    if (driver === 'sqlite3' || driver === 'better-sqlite3' || driver === 'libsql') {
       raw = 'AVG((julianday(first_response_at) - julianday(created_at)) * 24) as avg_hours'
     } else {
       raw = 'AVG(TIMESTAMPDIFF(HOUR, created_at, first_response_at)) as avg_hours'
     }
 
-    const result = await db
+    const result = await connection
       .from('escalated_tickets')
       .whereNotNull('first_response_at')
       .where('created_at', '>=', since)
-      .select(db.raw(raw))
+      .select(connection.raw(raw))
       .first()
 
     return Math.round(Number(result?.avg_hours ?? 0) * 10) / 10

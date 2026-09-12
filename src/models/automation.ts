@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
+import { column, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 
 export interface AutomationCondition {
   field: string
@@ -12,7 +13,7 @@ export interface AutomationAction {
   value: any
 }
 
-export default class Automation extends BaseModel {
+export default class Automation extends EscalatedBaseModel {
   static table = 'escalated_automations'
 
   @column({ isPrimary: true })

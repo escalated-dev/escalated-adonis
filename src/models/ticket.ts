@@ -1,6 +1,5 @@
 import { type DateTime } from 'luxon'
 import {
-  BaseModel,
   column,
   belongsTo,
   hasMany,
@@ -9,6 +8,7 @@ import {
   computed,
   scope,
 } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo, HasMany, HasOne, ManyToMany } from '@adonisjs/lucid/types/relations'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import type { UserId } from '../helpers/user_id_column.js'
@@ -26,7 +26,7 @@ import TicketSubjectLink from './ticket_subject_link.js'
 import { assertTicketSubjectTypeAllowed } from '../services/ticket_subject_service.js'
 import type { TicketSubjectSyncItem } from '../contracts/ticket_subject.js'
 
-export default class Ticket extends BaseModel {
+export default class Ticket extends EscalatedBaseModel {
   static table = 'escalated_tickets'
 
   static selfAssignPrimaryKey = true

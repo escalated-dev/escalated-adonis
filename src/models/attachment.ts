@@ -1,7 +1,8 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, computed } from '@adonisjs/lucid/orm'
+import { column, computed } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 
-export default class Attachment extends BaseModel {
+export default class Attachment extends EscalatedBaseModel {
   static table = 'escalated_attachments'
 
   @column({ isPrimary: true })

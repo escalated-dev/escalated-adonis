@@ -1,9 +1,10 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, manyToMany } from '@adonisjs/lucid/orm'
+import { column, manyToMany } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { ManyToMany } from '@adonisjs/lucid/types/relations'
 import Permission from './permission.js'
 
-export default class Role extends BaseModel {
+export default class Role extends EscalatedBaseModel {
   static table = 'escalated_roles'
 
   @column({ isPrimary: true })

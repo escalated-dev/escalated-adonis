@@ -14,11 +14,12 @@
 */
 
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { column, belongsTo } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import ImportJob from './import_job.js'
 
-export default class ImportSourceMap extends BaseModel {
+export default class ImportSourceMap extends EscalatedBaseModel {
   static table = 'escalated_import_source_maps'
 
   static selfAssignPrimaryKey = false

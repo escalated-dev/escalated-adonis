@@ -208,6 +208,17 @@ export interface EscalatedConfig {
 
   tablePrefix: string
 
+  /**
+   * The Lucid connection Escalated's own tables live on, named as in
+   * `config/database.ts`. Omit it for the host's default connection,
+   * which is the historical behaviour.
+   *
+   * This does not move your user table: that belongs to the host, and
+   * Escalated stores host user ids as plain unconstrained columns so the
+   * two can live on different connections.
+   */
+  connection?: string
+
   tickets: {
     allowCustomerClose: boolean
     autoCloseResolvedAfterDays: number
