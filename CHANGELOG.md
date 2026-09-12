@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-12
+
 ### Added
 - **Configurable database connection.** `connection` on the Escalated config names the Lucid connection Escalated's own tables live on. Omitted means the host's default connection, which is the historical behaviour and leaves an unconfigured host unchanged.
 
