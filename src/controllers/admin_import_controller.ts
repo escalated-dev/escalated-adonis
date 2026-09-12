@@ -53,7 +53,7 @@ export default class AdminImportController {
   async create(ctx: HttpContext) {
     const adapters = await this.importService.availableAdapters()
 
-    return getRenderer().render(ctx, 'Escalated/Admin/Import/Create', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Index', {
       adapters: adapters.map((a) => ({
         name: a.name(),
         displayName: a.displayName(),
@@ -180,7 +180,7 @@ export default class AdminImportController {
     const job = await this.findJobOrFail(ctx)
     if (!job) return
 
-    return getRenderer().render(ctx, 'Escalated/Admin/Import/Show', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Progress', {
       job: this.serializeJob(job),
     })
   }

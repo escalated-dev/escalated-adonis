@@ -58,7 +58,7 @@ export default class AdminWorkflowsController {
   async show(ctx: HttpContext) {
     const db = await escalatedDb()
     const workflow = await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
-    return getRenderer().render(ctx, 'Escalated/Admin/Workflows/Show', {
+    return getRenderer().render(ctx, 'Escalated/Admin/Workflows/Form', {
       workflow: workflowJson(workflow),
       trigger_events: TRIGGER_EVENTS,
       operators: OPERATORS,
