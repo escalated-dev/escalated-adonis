@@ -1,12 +1,13 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, scope } from '@adonisjs/lucid/orm'
+import { column, belongsTo, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { UserId } from '../helpers/user_id_column.js'
 import Ticket from './ticket.js'
 
 export type ChatSessionStatus = 'waiting' | 'active' | 'ended' | 'abandoned'
 
-export default class ChatSession extends BaseModel {
+export default class ChatSession extends EscalatedBaseModel {
   static table = 'escalated_chat_sessions'
 
   @column({ isPrimary: true })

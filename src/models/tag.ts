@@ -1,10 +1,11 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, manyToMany, beforeCreate } from '@adonisjs/lucid/orm'
+import { column, manyToMany, beforeCreate } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { ManyToMany } from '@adonisjs/lucid/types/relations'
 import string from '@adonisjs/core/helpers/string'
 import Ticket from './ticket.js'
 
-export default class Tag extends BaseModel {
+export default class Tag extends EscalatedBaseModel {
   static table = 'escalated_tags'
 
   @column({ isPrimary: true })

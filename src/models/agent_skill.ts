@@ -1,10 +1,11 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { column, belongsTo } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { UserId } from '../helpers/user_id_column.js'
 import Skill from './skill.js'
 
-export default class AgentSkill extends BaseModel {
+export default class AgentSkill extends EscalatedBaseModel {
   static table = 'escalated_agent_skills'
 
   @column({ isPrimary: true })

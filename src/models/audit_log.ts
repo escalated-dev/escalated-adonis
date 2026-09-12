@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { column } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { UserId } from '../helpers/user_id_column.js'
 
 /**
@@ -11,7 +12,7 @@ import type { UserId } from '../helpers/user_id_column.js'
  * `created_at` but no `updated_at`. `userId` is the actor (a host user);
  * `auditableType` / `auditableId` are the polymorphic target.
  */
-export default class AuditLog extends BaseModel {
+export default class AuditLog extends EscalatedBaseModel {
   static table = 'escalated_audit_logs'
 
   @column({ isPrimary: true })

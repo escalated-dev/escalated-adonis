@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
+import { column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import type { UserId } from '../helpers/user_id_column.js'
 import Ticket from './ticket.js'
@@ -11,7 +12,7 @@ import SideConversationReply from './side_conversation_reply.js'
  * without exposing the main customer thread. Mirrors the Laravel
  * SideConversation model.
  */
-export default class SideConversation extends BaseModel {
+export default class SideConversation extends EscalatedBaseModel {
   static table = 'escalated_side_conversations'
 
   static STATUS_OPEN = 'open'

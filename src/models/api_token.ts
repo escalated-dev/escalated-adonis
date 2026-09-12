@@ -1,8 +1,9 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
+import { column, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import { randomBytes, createHash } from 'node:crypto'
 
-export default class ApiToken extends BaseModel {
+export default class ApiToken extends EscalatedBaseModel {
   static table = 'escalated_api_tokens'
 
   @column({ isPrimary: true })

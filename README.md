@@ -695,6 +695,48 @@ await dispatcher.dispatchBatch()
 
 Custom themes go in `resources/views/newsletter_themes/<slug>.edge`. The shipped renderer supports the `{{ key }}` / `{{{ key }}}` substitution subset.
 
+## Database connection
+
+By default Escalated's tables live on your application's default Lucid
+connection. Name a different one to keep them somewhere else — a schema shared
+with a legacy system, a multi-tenant split, a separate reporting store, or
+simply out of your primary database:
+
+```ts
+// config/escalated.ts
+export default defineConfig({
+  connection: 'support',
+})
+```
+
+`'support'` is a connection from your `config/database.ts`. Omit it entirely for
+the default connection, which is the historical behaviour — an unconfigured host
+is unchanged.
+
+Every Escalated model extends `EscalatedBaseModel`, so one setting moves all of
+them together. Lucid normally takes a static connection string on the model;
+this is a getter instead, because the value comes from runtime config that is
+not loaded when the model classes are defined. A test enumerates `src/models`
+and fails if a model is ever added that does not extend the base class.
+
+**Your user table does not move.** It belongs to your application, and Escalated
+stores host user ids as plain unconstrained columns precisely so the two can
+live on different connections — there is no foreign key that would have to span
+them. The importer's user lookup deliberately stays on the default connection
+for the same reason.
+
+### Migrations
+
+Lucid decides which database a migration runs against from the connection you
+pass, so run Escalated's against the same one:
+
+```bash
+node ace migration:run --connection=support
+```
+
+Setting `connection` on an existing install does not move existing data. Migrate
+the tables and copy the rows across before pointing Escalated at them.
+
 ## License
 
 MIT

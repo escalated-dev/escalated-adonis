@@ -1,9 +1,10 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
+import { column, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { UserId } from '../helpers/user_id_column.js'
 import type { MacroAction } from '../types.js'
 
-export default class Macro extends BaseModel {
+export default class Macro extends EscalatedBaseModel {
   static table = 'escalated_macros'
 
   @column({ isPrimary: true })

@@ -10,7 +10,8 @@
 */
 
 import { type DateTime } from 'luxon'
-import { BaseModel, beforeCreate, column, hasMany } from '@adonisjs/lucid/orm'
+import { beforeCreate, column, hasMany } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import { createCipheriv, createDecipheriv, randomBytes, randomUUID, createHash } from 'node:crypto'
 import ImportSourceMap from './import_source_map.js'
@@ -79,7 +80,7 @@ export interface ErrorLogEntry {
 // Model
 // --------------------------------------------------------------------------
 
-export default class ImportJob extends BaseModel {
+export default class ImportJob extends EscalatedBaseModel {
   static table = 'escalated_import_jobs'
 
   static readonly VALID_TRANSITIONS: Record<ImportJobStatus, ImportJobStatus[]> = {

@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
+import { column, belongsTo } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Webhook from './webhook.js'
 
@@ -8,7 +9,7 @@ import Webhook from './webhook.js'
  * payload plus the response code/body and attempt count. Mirrors the Laravel
  * `WebhookDelivery` model.
  */
-export default class WebhookDelivery extends BaseModel {
+export default class WebhookDelivery extends EscalatedBaseModel {
   static table = 'escalated_webhook_deliveries'
 
   @column({ isPrimary: true })

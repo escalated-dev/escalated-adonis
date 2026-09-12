@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, hasMany, beforeSave } from '@adonisjs/lucid/orm'
+import { column, hasMany, beforeSave } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import type { UserId } from '../helpers/user_id_column.js'
 import Ticket from './ticket.js'
@@ -13,7 +14,7 @@ import Ticket from './ticket.js'
  * release — the backfill migration populates `contact_id` for
  * existing rows. New code should write via Contact.findOrCreateByEmail.
  */
-export default class Contact extends BaseModel {
+export default class Contact extends EscalatedBaseModel {
   static table = 'escalated_contacts'
 
   @column({ isPrimary: true })

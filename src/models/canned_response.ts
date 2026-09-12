@@ -1,8 +1,9 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
+import { column, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { UserId } from '../helpers/user_id_column.js'
 
-export default class CannedResponse extends BaseModel {
+export default class CannedResponse extends EscalatedBaseModel {
   static table = 'escalated_canned_responses'
 
   @column({ isPrimary: true })

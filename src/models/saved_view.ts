@@ -1,8 +1,9 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, scope } from '@adonisjs/lucid/orm'
+import { column, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { UserId } from '../helpers/user_id_column.js'
 
-export default class SavedView extends BaseModel {
+export default class SavedView extends EscalatedBaseModel {
   static table = 'escalated_saved_views'
 
   @column({ isPrimary: true })

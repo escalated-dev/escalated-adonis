@@ -1,10 +1,11 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { column } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { UserId } from '../helpers/user_id_column.js'
 
 export type AgentChatStatus = 'online' | 'away' | 'offline'
 
-export default class AgentProfile extends BaseModel {
+export default class AgentProfile extends EscalatedBaseModel {
   static table = 'escalated_agent_profiles'
 
   @column({ isPrimary: true })

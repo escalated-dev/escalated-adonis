@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { column } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 
 export interface ChatRoutingCondition {
   field: string
@@ -12,7 +13,7 @@ export interface ChatRoutingAction {
   value: any
 }
 
-export default class ChatRoutingRule extends BaseModel {
+export default class ChatRoutingRule extends EscalatedBaseModel {
   static table = 'escalated_chat_routing_rules'
 
   @column({ isPrimary: true })

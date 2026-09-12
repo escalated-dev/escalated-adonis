@@ -1,11 +1,13 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, hasMany, scope, beforeCreate } from '@adonisjs/lucid/orm'
+import { escalatedDb } from '../helpers/config.js'
+import { column, hasMany, scope, beforeCreate } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import string from '@adonisjs/core/helpers/string'
 import Ticket from './ticket.js'
 import type { UserId } from '../helpers/user_id_column.js'
 
-export default class Department extends BaseModel {
+export default class Department extends EscalatedBaseModel {
   static table = 'escalated_departments'
 
   @column({ isPrimary: true })
@@ -55,12 +57,12 @@ export default class Department extends BaseModel {
   // ---- Helpers for department-agent pivot ----
 
   async agents(): Promise<any[]> {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     return db.from('escalated_department_agent').where('department_id', this.id).select('agent_id')
   }
 
   async attachAgent(agentId: UserId): Promise<void> {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     // Lucid's `InsertQueryBuilderContract` doesn't expose `onConflict` —
     // drop into the underlying Knex builder for the upsert-ignore.
     await db
@@ -72,7 +74,7 @@ export default class Department extends BaseModel {
   }
 
   async detachAgent(agentId: UserId): Promise<void> {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     await db
       .from('escalated_department_agent')
       .where('department_id', this.id)

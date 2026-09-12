@@ -1,11 +1,12 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, scope } from '@adonisjs/lucid/orm'
+import { column, belongsTo, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import type { InboundEmailStatus } from '../types.js'
 import Ticket from './ticket.js'
 import Reply from './reply.js'
 
-export default class InboundEmail extends BaseModel {
+export default class InboundEmail extends EscalatedBaseModel {
   static table = 'escalated_inbound_emails'
 
   @column({ isPrimary: true })

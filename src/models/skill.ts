@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, hasMany, manyToMany, beforeCreate } from '@adonisjs/lucid/orm'
+import { column, hasMany, manyToMany, beforeCreate } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import string from '@adonisjs/core/helpers/string'
 import Tag from './tag.js'
@@ -8,7 +9,7 @@ import AgentSkill from './agent_skill.js'
 import SkillRoutingTag from './skill_routing_tag.js'
 import SkillRoutingDepartment from './skill_routing_department.js'
 
-export default class Skill extends BaseModel {
+export default class Skill extends EscalatedBaseModel {
   static table = 'escalated_skills'
 
   @column({ isPrimary: true })

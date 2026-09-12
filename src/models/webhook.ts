@@ -1,5 +1,6 @@
 import { type DateTime } from 'luxon'
-import { BaseModel, column, hasMany, scope } from '@adonisjs/lucid/orm'
+import { column, hasMany, scope } from '@adonisjs/lucid/orm'
+import EscalatedBaseModel from './base_model.js'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import WebhookDelivery from './webhook_delivery.js'
 
@@ -8,7 +9,7 @@ import WebhookDelivery from './webhook_delivery.js'
  * every active webhook whose `events` array contains that event name receives
  * a signed HTTP POST. Mirrors the Laravel `Webhook` model.
  */
-export default class Webhook extends BaseModel {
+export default class Webhook extends EscalatedBaseModel {
   static table = 'escalated_webhooks'
 
   @column({ isPrimary: true })
