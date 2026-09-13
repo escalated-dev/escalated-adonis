@@ -5,7 +5,7 @@
 |
 | The configure hook is called when someone runs "node ace configure"
 | on this package. It copies the config file and migrations, and
-| registers the provider.
+| registers the provider and the Ace commands.
 |
 */
 
@@ -24,10 +24,11 @@ export async function configure(command: ConfigureCommand) {
   await codemods.makeUsingStub(stubsRoot, 'config/escalated.stub', {})
 
   /**
-   * Register the provider
+   * Register the provider, and the loader that gives ace the package commands
    */
   await codemods.updateRcFile((rcFile: any) => {
     rcFile.addProvider('@escalated-dev/escalated-adonis/providers/escalated_provider')
+    rcFile.addCommand('@escalated-dev/escalated-adonis/commands')
   })
 
   /**

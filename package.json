@@ -19,6 +19,7 @@
     "./events": "./build/src/events/index.js",
     "./types": "./build/src/types.js",
     "./providers/*": "./build/providers/*.js",
+    "./commands": "./build/src/commands/main.js",
     "./commands/*": "./build/src/commands/*.js",
     "./contracts/*": "./build/src/contracts/*.js",
     "./configure": "./build/configure.js"
@@ -34,6 +35,7 @@
     "build": "tsc && npm run copy:stubs",
     "build:emit": "tsc --noEmitOnError false || true && npm run copy:stubs",
     "copy:stubs": "node ./scripts/copy-build-assets.mjs",
+    "index:commands": "node --import=tsx scripts/index_commands.ts",
     "dev": "tsc --watch",
     "clean": "rm -rf build",
     "pretest": "npm run build",

@@ -1,0 +1,187 @@
+{
+  "commands": [
+    {
+      "commandName": "escalated:cleanup-abandoned-chats",
+      "description": "Clean up chat sessions abandoned in the queue",
+      "help": [
+        "Mark waiting chat sessions older than N minutes as abandoned:",
+        "  node ace escalated:cleanup-abandoned-chats --minutes=15"
+      ],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [
+        {
+          "name": "minutesArg",
+          "argumentName": "minutes-arg",
+          "required": false,
+          "description": "Abandon threshold in minutes",
+          "type": "string"
+        }
+      ],
+      "options": { "startApp": true },
+      "filePath": "cleanup_abandoned_chats_command.js"
+    },
+    {
+      "commandName": "escalated:close-idle-chats",
+      "description": "Close chat sessions that have been idle beyond the threshold",
+      "help": [
+        "Close all active chat sessions that have had no activity for N minutes:",
+        "  node ace escalated:close-idle-chats --minutes=30"
+      ],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [
+        {
+          "name": "minutesArg",
+          "argumentName": "minutes-arg",
+          "required": false,
+          "description": "Idle threshold in minutes",
+          "type": "string"
+        }
+      ],
+      "options": { "startApp": true },
+      "filePath": "close_idle_chats_command.js"
+    },
+    {
+      "commandName": "escalated:import",
+      "description": "Run a data import from an external platform (Zendesk, Freshdesk, Intercom, Help Scout…)",
+      "help": [
+        "Start a new import:",
+        "  node ace escalated:import zendesk --token=abc123",
+        "",
+        "Resume a paused or failed import:",
+        "  node ace escalated:import <jobId> --resume",
+        "",
+        "List all import jobs:",
+        "  node ace escalated:import --list"
+      ],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [
+        {
+          "name": "resume",
+          "flagName": "resume",
+          "required": false,
+          "type": "boolean",
+          "description": "Resume a paused or failed import (platform arg must be the job UUID)",
+          "alias": "r"
+        },
+        {
+          "name": "list",
+          "flagName": "list",
+          "required": false,
+          "type": "boolean",
+          "description": "List all import jobs and exit",
+          "alias": "l"
+        },
+        {
+          "name": "mapping",
+          "flagName": "mapping",
+          "required": false,
+          "type": "string",
+          "description": "Field mapping overrides as a JSON string (e.g. '{\"tickets\":{\"subject\":\"title\"}}')"
+        },
+        {
+          "name": "token",
+          "flagName": "token",
+          "required": false,
+          "type": "string",
+          "description": "Auth token credential"
+        },
+        {
+          "name": "subdomain",
+          "flagName": "subdomain",
+          "required": false,
+          "type": "string",
+          "description": "Subdomain or base URL credential"
+        },
+        {
+          "name": "email",
+          "flagName": "email",
+          "required": false,
+          "type": "string",
+          "description": "Email credential"
+        },
+        {
+          "name": "api-key",
+          "flagName": "api-key",
+          "required": false,
+          "type": "string",
+          "description": "API key credential"
+        }
+      ],
+      "args": [
+        {
+          "name": "platform",
+          "argumentName": "platform",
+          "required": false,
+          "description": "Platform slug (e.g. \"zendesk\") or job UUID when using --resume",
+          "type": "string"
+        }
+      ],
+      "options": { "startApp": true },
+      "filePath": "import_command.js"
+    },
+    {
+      "commandName": "escalated:newsletters:dispatch",
+      "description": "Plan scheduled newsletters whose time has come and dispatch a batch of pending deliveries",
+      "help": "",
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "dispatch_newsletters_command.js"
+    },
+    {
+      "commandName": "escalated:run-automations",
+      "description": "Evaluate all active automations against open tickets",
+      "help": ["Run all active automations:", "  node ace escalated:run-automations"],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "run_automations_command.js"
+    },
+    {
+      "commandName": "escalated:run-escalations",
+      "description": "Evaluate all active escalation rules against open tickets",
+      "help": ["Run all active escalation rules:", "  node ace escalated:run-escalations"],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "run_escalations_command.js"
+    },
+    {
+      "commandName": "escalated:seed-permissions",
+      "description": "Seed granular permissions and default system roles",
+      "help": "",
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "seed_permissions_command.js"
+    },
+    {
+      "commandName": "escalated:wake-snoozed-tickets",
+      "description": "Unsnooze tickets whose snooze period has elapsed",
+      "help": [
+        "Wake all snoozed tickets that are past their snoozed_until time:",
+        "  node ace escalated:wake-snoozed-tickets"
+      ],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "wake_snoozed_tickets_command.js"
+    }
+  ],
+  "version": 1
+}
