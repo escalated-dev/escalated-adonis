@@ -141,6 +141,9 @@ export default class EscalatedProvider {
     // Forward lifecycle events to subscribed outbound webhooks
     await this.wireWebhookDispatch()
 
+    // Run admin workflows on the ticket events they are triggered by
+    await this.wireWorkflows()
+
     // Reset the cached renderer so it picks up the freshly-loaded config
     resetRenderer()
 
@@ -324,6 +327,32 @@ export default class EscalatedProvider {
         emitter.on(escalatedEvent as any, (data: unknown) => {
           void dispatcher.dispatchFromEvent(wireName, data)
         })
+      }
+    } catch {
+      // Emitter or events not available (testing environment, etc.)
+    }
+  }
+
+  /**
+   * Subscribe the workflow engine to the package events that trigger workflows.
+   * Nothing else calls the engine: without this a saved workflow never runs.
+   * The engine contains its own failures, so a workflow never breaks the ticket
+   * change that emitted the event.
+   *
+   * The emitter comes from the container. The `@adonisjs/core/services/emitter`
+   * export is only assigned once the app has booted, so during `boot()` it is
+   * still undefined.
+   */
+  protected async wireWorkflows() {
+    try {
+      const emitter = await this.app.container.make('emitter')
+      const { default: WorkflowEngine, WORKFLOW_TRIGGER_EVENT_MAP } =
+        await import('../src/services/workflow_engine.js')
+
+      const engine = new WorkflowEngine()
+
+      for (const [escalatedEvent, triggerEvent] of Object.entries(WORKFLOW_TRIGGER_EVENT_MAP)) {
+        emitter.on(escalatedEvent as any, (data: any) => engine.handleEvent(triggerEvent, data))
       }
     } catch {
       // Emitter or events not available (testing environment, etc.)
