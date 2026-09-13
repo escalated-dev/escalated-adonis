@@ -50,6 +50,12 @@ const escalatedConfig: EscalatedConfig = {
   |--------------------------------------------------------------------------
   | Routes
   |--------------------------------------------------------------------------
+  |
+  | `middleware` guards the customer routes and `adminMiddleware` the agent
+  | and admin routes, ahead of Escalated's own agent and admin checks. Name
+  | each middleware as `router.named()` does in start/kernel.ts. A name the
+  | kernel does not define stops the app from booting.
+  |
   */
   routes: {
     enabled: true,

@@ -71,7 +71,9 @@ const escalatedConfig: EscalatedConfig = {
   // Your app's user model import path
   userModel: '#models/user',
 
-  // Route configuration
+  // Route configuration. Middleware are named as in router.named() in
+  // your start/kernel.ts; adminMiddleware runs before Escalated's own
+  // agent and admin checks.
   routes: {
     enabled: true,
     prefix: 'support',

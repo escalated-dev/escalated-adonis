@@ -207,7 +207,7 @@ export default class EscalatedProvider {
     }
 
     const { registerRoutes } = await import('../start/routes.js')
-    registerRoutes()
+    await registerRoutes()
   }
 
   /**

@@ -19,6 +19,7 @@ import router from '@adonisjs/core/services/router'
 import type { PluginManifest } from '@escalated-dev/plugin-sdk'
 import type PluginBridge from './plugin_bridge.js'
 import { getConfig } from '../helpers/config.js'
+import { escalatedMiddleware, resolveConfiguredMiddleware } from '../support/route_middleware.js'
 
 export default class RouteRegistrar {
   constructor(private readonly bridge: PluginBridge) {}
@@ -26,9 +27,9 @@ export default class RouteRegistrar {
   /**
    * Register AdonisJS routes for every plugin manifest provided.
    */
-  registerAll(manifests: Map<string, PluginManifest>): void {
+  async registerAll(manifests: Map<string, PluginManifest>): Promise<void> {
     for (const [name, manifest] of manifests) {
-      this.registerPlugin(name, manifest)
+      await this.registerPlugin(name, manifest)
     }
   }
 
@@ -36,12 +37,14 @@ export default class RouteRegistrar {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  private registerPlugin(name: string, manifest: PluginManifest): void {
+  private async registerPlugin(name: string, manifest: PluginManifest): Promise<void> {
     const config = getConfig()
     const prefix = config.routes?.prefix ?? 'support'
-    const adminMiddleware = config.routes?.adminMiddleware ?? ['auth']
-
-    const EnsureIsAdmin = () => import('../middleware/ensure_is_admin.js')
+    const middleware = escalatedMiddleware(router)
+    const adminMiddleware = await resolveConfiguredMiddleware(
+      config.routes?.adminMiddleware ?? ['auth'],
+      'routes.adminMiddleware'
+    )
 
     // ---- Data endpoints (admin-authenticated) ----
     if (manifest.endpoints.length > 0) {
@@ -68,12 +71,7 @@ export default class RouteRegistrar {
           }
         })
         .prefix(`${prefix}/plugins/${this.slugify(name)}/api`)
-        // `.use()` expects `MiddlewareFn | ParsedNamedMiddleware`, but the
-        // host config gives us middleware *names* (e.g. `'auth'`) plus our
-        // own dynamically-imported `EnsureIsAdmin` lazy module. Both are
-        // accepted at runtime by AdonisJS's middleware resolver — the type
-        // is just narrower than reality. Cast to satisfy the signature.
-        .use([...adminMiddleware, EnsureIsAdmin] as never)
+        .use([...adminMiddleware, middleware.ensureIsAdmin()])
     }
 
     // ---- Webhook routes (no authentication) ----

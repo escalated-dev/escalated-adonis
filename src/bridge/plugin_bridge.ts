@@ -58,7 +58,7 @@ export default class PluginBridge {
 
     try {
       await this.loadInstalledPlugins()
-      this.registerRoutes()
+      await this.registerRoutes()
       this.booted = true
 
       console.info(
@@ -265,9 +265,9 @@ export default class PluginBridge {
   // Route registration
   // ---------------------------------------------------------------------------
 
-  private registerRoutes(): void {
+  private async registerRoutes(): Promise<void> {
     if (this.routesRegistered || this.manifests.size === 0) return
-    this.routeRegistrar.registerAll(this.manifests)
+    await this.routeRegistrar.registerAll(this.manifests)
     this.routesRegistered = true
   }
 
