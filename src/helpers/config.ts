@@ -54,3 +54,11 @@ export async function escalatedDb() {
 export function table(name: string): string {
   return `${tablePrefix()}${name}`
 }
+
+/**
+ * Whether outbound webhooks may call non-public addresses. Off unless the host
+ * sets `webhooks.allowPrivateUrls`.
+ */
+export function allowPrivateWebhookUrls(): boolean {
+  return getConfig().webhooks?.allowPrivateUrls === true
+}

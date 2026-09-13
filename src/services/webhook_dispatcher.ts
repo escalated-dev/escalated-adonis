@@ -11,6 +11,8 @@ import {
   truncateResponseBody,
   webhookHeaders,
 } from '../support/webhook_events.js'
+import { assertPublicHttpUrl, UnsafeOutboundUrlError } from '../support/outbound_url.js'
+import { allowPrivateWebhookUrls } from '../helpers/config.js'
 
 /**
  * Dispatches outbound webhooks to subscribed endpoints with HMAC-SHA256
@@ -77,6 +79,29 @@ export default class WebhookDispatcher {
       payload,
       attempts: attempt,
     })
+
+    // Checked before every send, not only when the webhook was saved: a host
+    // name can resolve somewhere else later. A blocked delivery is recorded in
+    // the delivery log and not retried.
+    try {
+      await assertPublicHttpUrl(webhook.url, { allowPrivate: allowPrivateWebhookUrls() })
+    } catch (error) {
+      if (!(error instanceof UnsafeOutboundUrlError)) throw error
+
+      delivery.merge({
+        responseCode: 0,
+        responseBody: truncateResponseBody(`Blocked: ${error.message}`),
+        attempts: attempt,
+      })
+      await delivery.save()
+
+      console.warn('[Escalated] webhook delivery blocked:', {
+        webhookId: webhook.id,
+        event,
+        reason: error.message,
+      })
+      return
+    }
 
     try {
       const result = await deliverWebhook(webhook.url, body, headers, this.timeoutMs)

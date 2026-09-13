@@ -288,6 +288,19 @@ export interface EscalatedConfig {
   }
 
   /**
+   * Outbound webhooks: admin webhooks and the workflow send_webhook action.
+   */
+  webhooks?: {
+    /**
+     * Allow webhook URLs that resolve to loopback, private-network, link-local
+     * or other non-public addresses. Off by default: a webhook URL is typed in
+     * by an admin, and unchecked it can make the server call its own internal
+     * services.
+     */
+    allowPrivateUrls?: boolean
+  }
+
+  /**
    * Host-app authentication callbacks for the general JSON API auth endpoints
    * (login/register/refresh/profile/logout) consumed by the Flutter app.
    * Escalated owns no credentials or sessions, so it ships no password hasher.

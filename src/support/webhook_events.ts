@@ -191,6 +191,9 @@ export async function deliverWebhook(
       method: 'POST',
       headers,
       body,
+      // A redirect is recorded as the response, never followed: following one
+      // would send the delivery to a destination nobody checked.
+      redirect: 'manual',
       signal: controller.signal,
     })
     const text = await response.text()
