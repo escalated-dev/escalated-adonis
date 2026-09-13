@@ -242,7 +242,7 @@ commands: [
 - **Automation:** Configurable automation rules with conditions and actions; run the `node ace escalated:run-automations` Ace command on a schedule to apply them periodically
 - **i18n:** Multi-language support sourced from the central `@escalated-dev/locale` npm package, with optional per-host overrides under `resources/lang/overrides/`
 - **Plugin System:** Extensible via TypeScript SDK plugins
-- **REST API:** Token-authenticated API with rate limiting
+- **REST API:** Token-authenticated API with rate limiting. Admins issue tokens with the `agent` and/or `admin` abilities: agent endpoints need `agent` and a token owner who is still an agent or admin, and deleting a ticket needs `admin` and an owner who is an admin
 - **Import Framework:** Bulk data import support
 - **Ticket Splitting:** Split a reply into a new standalone ticket while preserving the original context
 - **Ticket Snooze:** Snooze tickets with presets (1h, 4h, tomorrow, next week); `node ace escalated:wake-snoozed-tickets` Ace command auto-wakes them on schedule

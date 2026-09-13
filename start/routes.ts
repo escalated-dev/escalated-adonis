@@ -911,6 +911,8 @@ export function registerApiRoutes(config: any) {
   const apiPrefix = config.api?.prefix ?? 'support/api/v1'
   const middleware = escalatedMiddleware(router)
 
+  // Agent API: the token needs the `agent` ability, and its owner must be an
+  // agent or an admin.
   router
     .group(() => {
       // Auth
@@ -955,9 +957,6 @@ export function registerApiRoutes(config: any) {
           router
             .post('/tickets/:ticket/tags', [ApiTicketController, 'tags'])
             .as('escalated.api.tickets.tags')
-          router
-            .delete('/tickets/:ticket', [ApiTicketController, 'destroy'])
-            .as('escalated.api.tickets.destroy')
         })
         .use([middleware.resolveTicket()])
 
@@ -978,7 +977,19 @@ export function registerApiRoutes(config: any) {
         .as('escalated.api.realtime')
     })
     .prefix(apiPrefix)
-    .use([middleware.authenticateApiToken(), middleware.apiRateLimit()])
+    .use([middleware.authenticateApiToken({ ability: 'agent' }), middleware.apiRateLimit()])
+
+  // Admin API: the token needs the `admin` ability, and its owner must be an
+  // admin. The token is checked before the ticket is looked up.
+  router
+    .group(() => {
+      router
+        .delete('/tickets/:ticket', [ApiTicketController, 'destroy'])
+        .as('escalated.api.tickets.destroy')
+        .use([middleware.resolveTicket()])
+    })
+    .prefix(apiPrefix)
+    .use([middleware.authenticateApiToken({ ability: 'admin' }), middleware.apiRateLimit()])
 
   // Public auth endpoints — credentials/token handling is delegated to host
   // callbacks (config.apiAuth.*), so these skip the API-token middleware.
