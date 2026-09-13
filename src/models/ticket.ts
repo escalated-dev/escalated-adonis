@@ -29,8 +29,6 @@ import type { TicketSubjectSyncItem } from '../contracts/ticket_subject.js'
 export default class Ticket extends EscalatedBaseModel {
   static table = 'escalated_tickets'
 
-  static selfAssignPrimaryKey = true
-
   static TYPES = ['question', 'problem', 'incident', 'task'] as const
 
   @column({ isPrimary: true })
