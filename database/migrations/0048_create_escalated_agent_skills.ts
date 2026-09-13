@@ -14,7 +14,7 @@ export default class CreateEscalatedAgentSkills extends BaseSchema {
         .references('id')
         .inTable('escalated_skills')
         .onDelete('CASCADE')
-      table.smallInteger('proficiency').notNullable().defaultTo(3)
+      table.smallint('proficiency').notNullable().defaultTo(3)
       table.timestamp('created_at', { useTz: true }).notNullable()
       table.timestamp('updated_at', { useTz: true }).notNullable()
       table.unique(['user_id', 'skill_id'])
