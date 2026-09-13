@@ -2,7 +2,8 @@ import { DateTime } from 'luxon'
 import Ticket from '../models/ticket.js'
 import Tag from '../models/tag.js'
 import Reply from '../models/reply.js'
-import { escalatedDb } from '../helpers/config.js'
+import { allowPrivateWebhookUrls, escalatedDb } from '../helpers/config.js'
+import { assertPublicHttpUrl } from '../support/outbound_url.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 
 interface Condition {
@@ -366,6 +367,9 @@ export default class WorkflowEngine {
 
   private async sendWebhook(action: Action, ticket: Ticket) {
     const url = action.url || action.value!
+    // Checked on every send, like admin webhooks. A refused URL throws, and the
+    // action is recorded as failed.
+    await assertPublicHttpUrl(url, { allowPrivate: allowPrivateWebhookUrls() })
     const body = JSON.stringify({
       event: 'workflow_action',
       ticket: {
@@ -380,6 +384,7 @@ export default class WorkflowEngine {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body,
+      redirect: 'manual',
       signal: AbortSignal.timeout(10000),
     })
   }

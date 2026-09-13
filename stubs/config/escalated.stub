@@ -144,6 +144,20 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | Outbound Webhooks
+  |--------------------------------------------------------------------------
+  |
+  | Admin webhooks and the workflow send_webhook action refuse URLs that
+  | resolve to loopback, private-network, link-local or other non-public
+  | addresses. Allow them only if your webhooks deliver to internal services.
+  |
+  */
+  webhooks: {
+    allowPrivateUrls: false,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Storage (Attachments)
   |--------------------------------------------------------------------------
   */

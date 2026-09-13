@@ -196,6 +196,7 @@ Each subject is serialized as `{ type, id, role, title, subtitle, url, color, ic
 - **Activity Log:** Full audit trail of all ticket changes
 - **Attachments:** File uploads on replies with configurable storage
 - **Notifications:** Webhook-based notifications with HMAC signing
+- **Outbound Webhooks:** Signed deliveries with a delivery log and retries. Webhook URLs that resolve to loopback, private-network, link-local or other non-public addresses are refused when saved and before every delivery, as are the workflow `send_webhook` action's; set `webhooks.allowPrivateUrls` to allow them
 - **Admin Settings:** Runtime-configurable settings stored in the database
 - **Guest Tickets:** Anonymous ticket creation with 64-character token access
 - **Inbound Email:** Mailgun, Postmark, and SES adapters with auto-threading and attachment processing

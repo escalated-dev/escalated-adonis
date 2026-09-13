@@ -225,3 +225,34 @@ describe('deliverWebhook — real HTTP round-trip', () => {
     assert.equal(isSuccessfulStatus(result.status), false)
   })
 })
+
+describe('deliverWebhook — redirects', () => {
+  it('does not follow a redirect, so an endpoint cannot bounce a delivery to another host', async () => {
+    let bouncedRequests = 0
+    const target = createServer((_req, res) => {
+      bouncedRequests++
+      res.end('reached')
+    })
+    await new Promise<void>((resolve) => target.listen(0, '127.0.0.1', resolve))
+    const targetPort = (target.address() as AddressInfo).port
+
+    const bouncer = createServer((_req, res) => {
+      res.writeHead(302, { Location: `http://127.0.0.1:${targetPort}/internal` })
+      res.end()
+    })
+    await new Promise<void>((resolve) => bouncer.listen(0, '127.0.0.1', resolve))
+    const bouncerPort = (bouncer.address() as AddressInfo).port
+
+    try {
+      const result = await deliverWebhook(`http://127.0.0.1:${bouncerPort}/hook`, '{}', {
+        'Content-Type': 'application/json',
+      })
+
+      assert.equal(result.status, 302)
+      assert.equal(bouncedRequests, 0)
+    } finally {
+      await new Promise<void>((resolve) => bouncer.close(() => resolve()))
+      await new Promise<void>((resolve) => target.close(() => resolve()))
+    }
+  })
+})

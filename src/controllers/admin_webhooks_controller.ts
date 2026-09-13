@@ -4,6 +4,8 @@ import WebhookDelivery from '../models/webhook_delivery.js'
 import WebhookDispatcher from '../services/webhook_dispatcher.js'
 import AuditService from '../services/audit_service.js'
 import { WEBHOOK_EVENTS } from '../support/webhook_events.js'
+import { assertPublicHttpUrl, UnsafeOutboundUrlError } from '../support/outbound_url.js'
+import { allowPrivateWebhookUrls } from '../helpers/config.js'
 import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
@@ -56,7 +58,7 @@ export default class AdminWebhooksController {
   async store({ auth, request, response, session }: HttpContext) {
     const data = request.only(['url', 'events', 'secret', 'active'])
 
-    const error = this.validate(data)
+    const error = await this.validate(data)
     if (error) {
       session.flash('error', error)
       return response.redirect().back()
@@ -86,7 +88,7 @@ export default class AdminWebhooksController {
     const webhook = await Webhook.findOrFail(params.webhook || params.id)
     const data = request.only(['url', 'events', 'secret', 'active'])
 
-    const error = this.validate(data)
+    const error = await this.validate(data)
     if (error) {
       session.flash('error', error)
       return response.redirect().back()
@@ -179,13 +181,19 @@ export default class AdminWebhooksController {
   }
 
   /** Returns an error message string when the payload is invalid, else null. */
-  protected validate(data: { url?: unknown; events?: unknown }): string | null {
+  protected async validate(data: { url?: unknown; events?: unknown }): Promise<string | null> {
     const url = typeof data.url === 'string' ? data.url.trim() : ''
     if (!url || !/^https?:\/\//i.test(url)) {
       return 'A valid http(s) URL is required.'
     }
     if (this.normalizeEvents(data.events).length === 0) {
       return 'At least one event must be selected.'
+    }
+    try {
+      await assertPublicHttpUrl(url, { allowPrivate: allowPrivateWebhookUrls() })
+    } catch (error) {
+      if (error instanceof UnsafeOutboundUrlError) return error.message
+      throw error
     }
     return null
   }
