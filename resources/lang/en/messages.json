@@ -30,7 +30,8 @@
   "rating": {
     "thank_you": "Thank you for your feedback!",
     "only_resolved_closed": "You can only rate resolved or closed tickets.",
-    "already_rated": "This ticket has already been rated."
+    "already_rated": "This ticket has already been rated.",
+    "not_your_ticket": "You can only rate your own tickets."
   },
   "admin": {
     "department_created": "Department created.",
