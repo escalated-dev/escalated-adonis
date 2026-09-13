@@ -50,7 +50,7 @@ node ace configure @escalated-dev/escalated-adonis
 This will:
 
 1. Publish `config/escalated.ts` to your application
-2. Register the `EscalatedProvider` in your `.adonisrc.ts`
+2. Register the `EscalatedProvider` and the package's Ace commands in your `.adonisrc.ts`
 3. Copy all database migration files to your `database/migrations/` directory
 
 Run the migrations:
@@ -184,13 +184,43 @@ Agent/admin routes: `POST …/tickets/:ticket/subjects` (`type`, `id`, optional 
 
 Each subject is serialized as `{ type, id, role, title, subtitle, url, color, icon, missing }` (fallback title `type#id` when the resolver is absent or returns null).
 
+## Scheduled commands
+
+Time-based features only happen when their Ace command runs, so run these from cron, a process manager or a scheduler package:
+
+| Command | Suggested schedule | What it does |
+| --- | --- | --- |
+| `node ace escalated:check-sla` | every minute | Flags SLA breaches and emits `escalated:sla:breached`; emits `escalated:sla:warning` for targets due within `--warning-minutes` (default 30) |
+| `node ace escalated:wake-snoozed-tickets` | every minute | Wakes tickets whose snooze has ended |
+| `node ace escalated:run-escalations` | every 5 minutes | Applies escalation rules |
+| `node ace escalated:run-automations` | every 5 minutes | Applies automations |
+| `node ace escalated:close-idle-chats` | every 5 minutes | Closes chat sessions idle beyond the threshold |
+| `node ace escalated:cleanup-abandoned-chats` | every 5 minutes | Cleans up chat sessions abandoned in the queue |
+| `node ace escalated:newsletters:dispatch` | every minute | Plans due newsletters and dispatches pending deliveries |
+
+For example, with cron:
+
+```
+* * * * * cd /path/to/app && node ace escalated:check-sla
+*/5 * * * * cd /path/to/app && node ace escalated:run-escalations
+```
+
+`node ace configure @escalated-dev/escalated-adonis` registers the commands. An app configured before it did needs the loader added to the `commands` array in `adonisrc.ts` by hand:
+
+```ts
+commands: [
+  // ...your other commands
+  () => import('@escalated-dev/escalated-adonis/commands'),
+],
+```
+
 ## Features
 
 - **Tickets:** Create, view, update, close, reopen tickets with status machine
 - **Replies:** Threaded conversations with rich text and pinned notes
 - **Departments:** Organize tickets by team with agent assignments
 - **Tags:** Label and categorize tickets
-- **SLA Policies:** First response and resolution time tracking with breach detection
+- **SLA Policies:** First response and resolution time tracking with breach detection; run the `node ace escalated:check-sla` Ace command on a schedule (e.g. every minute) so breaches are flagged and `escalated:sla:breached` / `escalated:sla:warning` are emitted
 - **Escalation Rules:** Automated ticket escalation based on configurable conditions; run the `node ace escalated:run-escalations` Ace command on a schedule (e.g. every 5 minutes) so rules fire periodically
 - **Canned Responses:** Pre-written reply templates (shared or per-agent)
 - **Activity Log:** Full audit trail of all ticket changes
@@ -214,7 +244,7 @@ Each subject is serialized as `{ type, id, role, title, subtitle, url, color, ic
 - **REST API:** Token-authenticated API with rate limiting
 - **Import Framework:** Bulk data import support
 - **Ticket Splitting:** Split a reply into a new standalone ticket while preserving the original context
-- **Ticket Snooze:** Snooze tickets with presets (1h, 4h, tomorrow, next week); `node ace escalated:wake_snoozed_tickets` Ace command auto-wakes them on schedule
+- **Ticket Snooze:** Snooze tickets with presets (1h, 4h, tomorrow, next week); `node ace escalated:wake-snoozed-tickets` Ace command auto-wakes them on schedule
 - **Saved Views / Custom Queues:** Save, name, and share filter presets as reusable ticket views
 - **Embeddable Support Widget:** Lightweight `<script>` widget with KB search, ticket form, and status check
 - **Email Threading:** Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients

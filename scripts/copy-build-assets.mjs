@@ -30,3 +30,8 @@ copyTree(
   'resources/views/newsletter_themes',
   'newsletter_themes'
 )
+
+// The commands loader (build/src/commands/main.js) reads its index at runtime.
+mkdirSync(join(BUILD, 'src/commands'), { recursive: true })
+cpSync(join(ROOT, 'src/commands/commands.json'), join(BUILD, 'src/commands/commands.json'))
+console.log('[copy-assets] commands index: copied src/commands/commands.json')

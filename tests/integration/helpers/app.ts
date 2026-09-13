@@ -100,6 +100,8 @@ async function boot() {
           () => import('@adonisjs/session/session_provider'),
           () => import('../../../providers/escalated_provider.js'),
         ],
+        // As a host's adonisrc registers them, via `configure`.
+        commands: [() => import('../../../src/commands/main.js')],
       },
       config: {
         database: defineDatabaseConfig({
