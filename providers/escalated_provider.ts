@@ -288,7 +288,9 @@ export default class EscalatedProvider {
    */
   protected async registerCustomActionInternalNote() {
     try {
-      const { default: emitter } = await import('@adonisjs/core/services/emitter')
+      // From the container: the `@adonisjs/core/services/emitter` export is only
+      // assigned once the app has booted, so during boot() it is undefined.
+      const emitter = await this.app.container.make('emitter')
       const { ESCALATED_EVENTS } = await import('../src/events/index.js')
 
       emitter.on(ESCALATED_EVENTS.TICKET_CUSTOM_ACTION_TRIGGERED, async (data) => {
@@ -303,8 +305,10 @@ export default class EscalatedProvider {
           console.warn('[Escalated] recording custom action note failed:', (err as Error).message)
         }
       })
-    } catch {
-      // Emitter unavailable — skip.
+    } catch (error) {
+      // Logged rather than swallowed: a subscription that fails silently leaves
+      // its feature dead with nothing to show why.
+      console.warn('[Escalated] could not subscribe to package events:', (error as Error).message)
     }
   }
 
@@ -317,7 +321,9 @@ export default class EscalatedProvider {
    */
   protected async wireWebhookDispatch() {
     try {
-      const { default: emitter } = await import('@adonisjs/core/services/emitter')
+      // From the container: the `@adonisjs/core/services/emitter` export is only
+      // assigned once the app has booted, so during boot() it is undefined.
+      const emitter = await this.app.container.make('emitter')
       const { ESCALATED_EVENT_WEBHOOK_MAP } = await import('../src/support/webhook_events.js')
       const { default: WebhookDispatcher } = await import('../src/services/webhook_dispatcher.js')
 
@@ -328,8 +334,10 @@ export default class EscalatedProvider {
           void dispatcher.dispatchFromEvent(wireName, data)
         })
       }
-    } catch {
-      // Emitter or events not available (testing environment, etc.)
+    } catch (error) {
+      // Logged rather than swallowed: a subscription that fails silently leaves
+      // its feature dead with nothing to show why.
+      console.warn('[Escalated] could not subscribe to package events:', (error as Error).message)
     }
   }
 
@@ -354,8 +362,10 @@ export default class EscalatedProvider {
       for (const [escalatedEvent, triggerEvent] of Object.entries(WORKFLOW_TRIGGER_EVENT_MAP)) {
         emitter.on(escalatedEvent as any, (data: any) => engine.handleEvent(triggerEvent, data))
       }
-    } catch {
-      // Emitter or events not available (testing environment, etc.)
+    } catch (error) {
+      // Logged rather than swallowed: a subscription that fails silently leaves
+      // its feature dead with nothing to show why.
+      console.warn('[Escalated] could not subscribe to package events:', (error as Error).message)
     }
   }
 
@@ -369,7 +379,9 @@ export default class EscalatedProvider {
    */
   protected async wireEventsToBridge() {
     try {
-      const { default: emitter } = await import('@adonisjs/core/services/emitter')
+      // From the container: the `@adonisjs/core/services/emitter` export is only
+      // assigned once the app has booted, so during boot() it is undefined.
+      const emitter = await this.app.container.make('emitter')
       const { ESCALATED_EVENTS } = await import('../src/events/index.js')
 
       const bridge = (globalThis as any).__escalated_pluginBridge
@@ -463,8 +475,10 @@ export default class EscalatedProvider {
           tag: data.tag?.toJSON?.() ?? data.tag,
         })
       )
-    } catch {
-      // Emitter or events not available (testing environment, etc.)
+    } catch (error) {
+      // Logged rather than swallowed: a subscription that fails silently leaves
+      // its feature dead with nothing to show why.
+      console.warn('[Escalated] could not subscribe to package events:', (error as Error).message)
     }
   }
 
