@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-09-13
+
+### Security
+- **Any API token had full agent access.** `authenticateApiToken()` was applied without an ability, and it only checked abilities when one was named, so a token issued to a customer could list every ticket and an `agent` token could delete one.
+  - Agent API routes now need the `agent` ability (or `*`) and an owner who is currently an agent or admin.
+  - Deleting a ticket needs `admin` and an admin owner.
+  - A route that names no ability gets the agent check (#143).
+- **Any customer could rate any ticket.** `SatisfactionRatingController` never compared the ticket's requester to the user, so one customer could use up another customer's single rating. Other customers now get a 403 (#144).
+- **Webhook URLs could point at internal addresses.**
+  - Admin webhooks and the workflow `send_webhook` action refuse URLs that resolve to loopback, private-network, link-local or other non-public addresses. The check runs when a webhook is saved and again before every delivery and retry.
+  - A blocked delivery is recorded in the delivery log and not retried.
+  - Redirects are recorded as the response rather than followed.
+  - Hosts that deliver to internal services can set `webhooks.allowPrivateUrls` (#145).
+
+### Fixed
+- **None of the package's Ace commands could be loaded.** The package exported its commands but no loader, and `configure` never registered one. As a result, none of these ran:
+  - `escalated:run-escalations`
+  - `escalated:run-automations`
+  - `escalated:wake-snoozed-tickets`
+  - newsletter dispatch
+  - chat cleanup
+
+  `@escalated-dev/escalated-adonis/commands` is now a loader backed by a committed `commands.json` index (`npm run index:commands`), and `configure` adds it to `adonisrc.ts`. **Apps configured before this release need to add the loader by hand**; the README's new "Scheduled commands" section shows how and lists the schedule for each command. The README also named the snooze command `wake_snoozed_tickets`; it is `wake-snoozed-tickets` (#142).
+- **SLA breaches were never flagged.** `SlaService.checkBreaches()` and `checkWarnings()` had no callers, so `escalated:sla:breached` and `escalated:sla:warning` never fired. The new `escalated:check-sla` command runs both, with `--warning-minutes` (default 30) (#142).
+- **Webhooks, plugin hooks and custom-action notes never received events.** The provider imported `@adonisjs/core/services/emitter` during `boot()`, before AdonisJS assigns it. The subscription threw, and a silent `catch {}` swallowed the error. They now take the emitter from the container, and a failed subscription logs a warning (#146).
+
 ## [0.6.1] - 2026-09-13
 
 ### Fixed

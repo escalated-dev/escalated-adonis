@@ -1,7 +1,7 @@
 {
   "name": "@escalated-dev/escalated-adonis",
   "description": "An embeddable support ticket system for AdonisJS v7 applications",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "engines": {
     "node": ">=24.0.0"
   },
