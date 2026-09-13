@@ -13,6 +13,15 @@ export default class SatisfactionRatingController {
     const user = requireAuthUser(ctx.auth)
     const { rating, comment } = ctx.request.only(['rating', 'comment'])
 
+    // A ticket takes one rating, so only its requester may give it -- the same
+    // check the other customer ticket actions make.
+    if (
+      ticket.requesterType !== user.constructor.name ||
+      String(ticket.requesterId) !== String(user.id)
+    ) {
+      return ctx.response.forbidden({ error: t('rating.not_your_ticket') })
+    }
+
     if (!['resolved', 'closed'].includes(ticket.status)) {
       ctx.session.flash('error', t('rating.only_resolved_closed'))
       return ctx.response.redirect().back()
