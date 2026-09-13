@@ -1,12 +1,30 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { escalatedDb } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { redirectToRoute } from '../support/routing.js'
+import { t } from '../support/i18n.js'
 import WorkflowEngine, {
   OPERATORS,
   ACTION_TYPES,
   TRIGGER_EVENTS,
 } from '../services/workflow_engine.js'
 import Ticket from '../models/ticket.js'
+import {
+  validateWorkflowPayload,
+  type WorkflowValidationMessage,
+} from '../validators/admin/workflow_payload.js'
+
+/*
+|--------------------------------------------------------------------------
+| Admin workflows
+|--------------------------------------------------------------------------
+|
+| Page props, the create/update body, and toggle/reorder/delete follow
+| escalated-developer-context/domain-model/workflow-admin-contract.md.
+|
+*/
+
+const INDEX_ROUTE = 'escalated.admin.workflows.index'
 
 function workflowJson(row: Record<string, any>) {
   return {
@@ -14,6 +32,8 @@ function workflowJson(row: Record<string, any>) {
     trigger: row.trigger_event,
     conditions: typeof row.conditions === 'string' ? JSON.parse(row.conditions) : row.conditions,
     actions: typeof row.actions === 'string' ? JSON.parse(row.actions) : row.actions,
+    // MySQL and SQLite hand booleans back as 1 and 0.
+    is_active: Boolean(row.is_active),
   }
 }
 
@@ -43,6 +63,24 @@ function logJson(row: Record<string, any>) {
   }
 }
 
+function formOptions() {
+  return {
+    trigger_events: TRIGGER_EVENTS,
+    action_types: ACTION_TYPES,
+    operators: OPERATORS,
+  }
+}
+
+/**
+ * An Inertia form visit cannot consume a JSON 422. Flash the errors under the
+ * keys a VineJS validation failure uses, which the Inertia adapter reads into
+ * the page's `errors`, and send the visit back to the form.
+ */
+function redirectBackWithErrors(ctx: HttpContext, messages: WorkflowValidationMessage[]) {
+  ctx.session.flashValidationErrors({ code: 'E_VALIDATION_ERROR', messages } as any)
+  return ctx.response.redirect().back()
+}
+
 export default class AdminWorkflowsController {
   async index(ctx: HttpContext) {
     const db = await escalatedDb()
@@ -55,55 +93,73 @@ export default class AdminWorkflowsController {
     })
   }
 
-  async show(ctx: HttpContext) {
-    const db = await escalatedDb()
-    const workflow = await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
+  async create(ctx: HttpContext) {
     return getRenderer().render(ctx, 'Escalated/Admin/Workflows/Form', {
-      workflow: workflowJson(workflow),
-      trigger_events: TRIGGER_EVENTS,
-      operators: OPERATORS,
-      action_types: ACTION_TYPES,
+      workflow: null,
+      ...formOptions(),
     })
   }
 
   async store(ctx: HttpContext) {
+    const result = validateWorkflowPayload(ctx.request.all())
+    if (!result.ok) return redirectBackWithErrors(ctx, result.messages)
+
     const db = await escalatedDb()
-    const data = ctx.request.only([
-      'name',
-      'trigger_event',
-      'conditions',
-      'actions',
-      'is_active',
-      'position',
-    ])
-    const [id] = await db.table('escalated_workflows').insert({
-      ...data,
-      conditions: JSON.stringify(data.conditions || {}),
-      actions: JSON.stringify(data.actions || []),
+    const last = await db.from('escalated_workflows').max('position as max_position').first()
+    const now = new Date()
+
+    await db.table('escalated_workflows').insert({
+      name: result.data.name,
+      trigger_event: result.data.trigger_event,
+      conditions: JSON.stringify(result.data.conditions),
+      actions: JSON.stringify(result.data.actions),
+      is_active: result.data.is_active,
+      position: Number(last?.max_position ?? -1) + 1,
+      created_at: now,
+      updated_at: now,
     })
-    return ctx.response.created({ id })
+
+    ctx.session.flash('success', t('admin.workflow_created'))
+    return redirectToRoute(ctx.response, INDEX_ROUTE)
+  }
+
+  async edit(ctx: HttpContext) {
+    const db = await escalatedDb()
+    const workflow = await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
+    return getRenderer().render(ctx, 'Escalated/Admin/Workflows/Form', {
+      workflow: workflowJson(workflow),
+      ...formOptions(),
+    })
   }
 
   async update(ctx: HttpContext) {
     const db = await escalatedDb()
-    const data = ctx.request.only([
-      'name',
-      'trigger_event',
-      'conditions',
-      'actions',
-      'is_active',
-      'position',
-    ])
-    if (data.conditions) data.conditions = JSON.stringify(data.conditions)
-    if (data.actions) data.actions = JSON.stringify(data.actions)
-    await db.from('escalated_workflows').where('id', ctx.params.id).update(data)
-    return ctx.response.ok({ updated: true })
+    await db.from('escalated_workflows').where('id', ctx.params.id).firstOrFail()
+
+    const result = validateWorkflowPayload(ctx.request.all())
+    if (!result.ok) return redirectBackWithErrors(ctx, result.messages)
+
+    await db
+      .from('escalated_workflows')
+      .where('id', ctx.params.id)
+      .update({
+        name: result.data.name,
+        trigger_event: result.data.trigger_event,
+        conditions: JSON.stringify(result.data.conditions),
+        actions: JSON.stringify(result.data.actions),
+        is_active: result.data.is_active,
+        updated_at: new Date(),
+      })
+
+    ctx.session.flash('success', t('admin.workflow_updated'))
+    return redirectToRoute(ctx.response, INDEX_ROUTE)
   }
 
   async destroy(ctx: HttpContext) {
     const db = await escalatedDb()
     await db.from('escalated_workflows').where('id', ctx.params.id).delete()
-    return ctx.response.ok({ deleted: true })
+    ctx.session.flash('success', t('admin.workflow_deleted'))
+    return redirectToRoute(ctx.response, INDEX_ROUTE)
   }
 
   async toggle(ctx: HttpContext) {
@@ -112,17 +168,19 @@ export default class AdminWorkflowsController {
     await db
       .from('escalated_workflows')
       .where('id', ctx.params.id)
-      .update({ is_active: !workflow.is_active })
-    return ctx.response.ok({ is_active: !workflow.is_active })
+      .update({ is_active: !workflow.is_active, updated_at: new Date() })
+    return redirectToRoute(ctx.response, INDEX_ROUTE)
   }
 
   async reorder(ctx: HttpContext) {
     const db = await escalatedDb()
     const ids = ctx.request.input('workflow_ids', [])
-    for (const [i, id] of ids.entries()) {
-      await db.from('escalated_workflows').where('id', id).update({ position: i })
+    if (Array.isArray(ids)) {
+      for (const [position, id] of ids.entries()) {
+        await db.from('escalated_workflows').where('id', id).update({ position })
+      }
     }
-    return ctx.response.ok({ reordered: true })
+    return redirectToRoute(ctx.response, INDEX_ROUTE)
   }
 
   async logs(ctx: HttpContext) {

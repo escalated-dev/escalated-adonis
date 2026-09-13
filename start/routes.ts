@@ -46,6 +46,7 @@ const AdminTwoFactorController = () => import('../src/controllers/admin_two_fact
 const AdminImportController = () => import('../src/controllers/admin_import_controller.js')
 const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
+const AdminWorkflowsController = () => import('../src/controllers/admin_workflows_controller.js')
 const AdminWebhooksController = () => import('../src/controllers/admin_webhooks_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
 const AdminAuditLogsController = () => import('../src/controllers/admin_audit_logs_controller.js')
@@ -653,6 +654,36 @@ async function registerUiRoutes(config: any) {
       router
         .delete('/automations/:id', [AdminAutomationsController, 'destroy'])
         .as('escalated.admin.automations.destroy')
+
+      // Workflows (event-driven). The wire format is
+      // escalated-developer-context/domain-model/workflow-admin-contract.md.
+      router
+        .get('/workflows', [AdminWorkflowsController, 'index'])
+        .as('escalated.admin.workflows.index')
+      router
+        .get('/workflows/create', [AdminWorkflowsController, 'create'])
+        .as('escalated.admin.workflows.create')
+      router
+        .post('/workflows', [AdminWorkflowsController, 'store'])
+        .as('escalated.admin.workflows.store')
+      router
+        .post('/workflows/reorder', [AdminWorkflowsController, 'reorder'])
+        .as('escalated.admin.workflows.reorder')
+      router
+        .get('/workflows/:id/edit', [AdminWorkflowsController, 'edit'])
+        .as('escalated.admin.workflows.edit')
+      router
+        .put('/workflows/:id', [AdminWorkflowsController, 'update'])
+        .as('escalated.admin.workflows.update')
+      router
+        .delete('/workflows/:id', [AdminWorkflowsController, 'destroy'])
+        .as('escalated.admin.workflows.destroy')
+      router
+        .post('/workflows/:id/toggle', [AdminWorkflowsController, 'toggle'])
+        .as('escalated.admin.workflows.toggle')
+      router
+        .get('/workflows/:id/logs', [AdminWorkflowsController, 'logs'])
+        .as('escalated.admin.workflows.logs')
 
       // Webhooks CRUD + delivery log
       router

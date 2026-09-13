@@ -2,6 +2,8 @@ import { DateTime } from 'luxon'
 import Ticket from '../models/ticket.js'
 import Tag from '../models/tag.js'
 import Reply from '../models/reply.js'
+import { escalatedDb } from '../helpers/config.js'
+import { ESCALATED_EVENTS } from '../events/index.js'
 
 interface Condition {
   field: string
@@ -37,6 +39,15 @@ export const OPERATORS = [
   'is_not_empty',
 ] as const
 
+/**
+ * The actions offered to the admin builder: the ones the executor below carries
+ * out from what the builder sends.
+ *
+ * `delay` and `send_notification` still execute for workflows that already hold
+ * them, but are not offered. A builder `delay` is `{type, value}` with no
+ * actions to defer, and nothing runs the delayed-action queue; a
+ * `send_notification` only writes to the console.
+ */
 export const ACTION_TYPES = [
   'change_status',
   'assign_agent',
@@ -45,31 +56,31 @@ export const ACTION_TYPES = [
   'remove_tag',
   'set_department',
   'add_note',
+  'insert_canned_reply',
   'send_webhook',
   'set_type',
-  'delay',
   'add_follower',
-  'send_notification',
 ] as const
 
-export const TRIGGER_EVENTS = [
-  'ticket.created',
-  'ticket.updated',
-  'ticket.status_changed',
-  'ticket.assigned',
-  'ticket.priority_changed',
-  'ticket.tagged',
-  'ticket.department_changed',
-  'reply.created',
-  'reply.agent_reply',
-  'sla.warning',
-  'sla.breached',
-  'ticket.reopened',
-] as const
+/**
+ * The package events that run workflows, keyed by emitter event name: the five
+ * Workflow triggers in the domain model. The provider subscribes the engine to
+ * exactly these, and `TRIGGER_EVENTS` is derived from them, so the builder only
+ * offers triggers that fire.
+ */
+export const WORKFLOW_TRIGGER_EVENT_MAP = {
+  [ESCALATED_EVENTS.TICKET_CREATED]: 'ticket.created',
+  [ESCALATED_EVENTS.TICKET_UPDATED]: 'ticket.updated',
+  [ESCALATED_EVENTS.TICKET_ASSIGNED]: 'ticket.assigned',
+  [ESCALATED_EVENTS.TICKET_STATUS_CHANGED]: 'ticket.status_changed',
+  [ESCALATED_EVENTS.REPLY_CREATED]: 'reply.created',
+} as const
+
+export const TRIGGER_EVENTS = Object.values(WORKFLOW_TRIGGER_EVENT_MAP)
 
 export default class WorkflowEngine {
   async processEvent(eventName: string, ticket: Ticket, _context: Record<string, any> = {}) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const workflows = await db
       .from('escalated_workflows')
       .where('trigger_event', eventName)
@@ -78,6 +89,23 @@ export default class WorkflowEngine {
 
     for (const workflow of workflows) {
       await this.processWorkflow(workflow, ticket, eventName)
+    }
+  }
+
+  /**
+   * Run the workflows for a trigger, given the emitter's event data: a ticket
+   * event carries the ticket, a reply event carries the reply.
+   *
+   * Never throws. A failing workflow must not break the ticket change that
+   * emitted the event.
+   */
+  async handleEvent(triggerEvent: string, data: { ticket?: Ticket; reply?: { ticketId: number } }) {
+    try {
+      const ticket = data?.ticket ?? (data?.reply ? await Ticket.find(data.reply.ticketId) : null)
+      if (!ticket) return
+      await this.processEvent(triggerEvent, ticket)
+    } catch (error) {
+      console.warn(`[Escalated] workflows for ${triggerEvent} failed:`, (error as Error).message)
     }
   }
 
@@ -99,7 +127,7 @@ export default class WorkflowEngine {
   }
 
   async processDelayedActions() {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const pending = await db
       .from('escalated_delayed_actions')
       .where('executed', false)
@@ -124,22 +152,29 @@ export default class WorkflowEngine {
   }
 
   evaluateConditions(
-    conditions: ConditionGroup | Condition[] | Condition,
+    conditions: ConditionGroup | Condition[] | Condition | null | undefined,
     ticket: Ticket
   ): boolean {
+    // Omitted conditions mean every ticket. So does `{}`, which is what this
+    // package stored for omitted conditions before they defaulted to `{all: []}`.
+    if (conditions === null || conditions === undefined) {
+      return true
+    }
+    // A flat list is an older stored shape, read as `all`.
     if (Array.isArray(conditions)) {
       return conditions.every((c) => this.evalSingle(c, ticket))
     }
-    if ('all' in conditions && conditions.all) {
+    if ('all' in conditions && Array.isArray(conditions.all)) {
       return conditions.all.every((c) => this.evalSingle(c, ticket))
     }
-    if ('any' in conditions && conditions.any) {
-      return conditions.any.some((c) => this.evalSingle(c, ticket))
+    if ('any' in conditions && Array.isArray(conditions.any)) {
+      // An empty list matches every ticket, for `any` as well as `all`.
+      return conditions.any.length === 0 || conditions.any.some((c) => this.evalSingle(c, ticket))
     }
     if ('field' in conditions) {
       return this.evalSingle(conditions as Condition, ticket)
     }
-    return false
+    return Object.keys(conditions).length === 0
   }
 
   private async processWorkflow(workflow: any, ticket: Ticket, eventName: string) {
@@ -278,6 +313,17 @@ export default class WorkflowEngine {
             ticketId: ticket.id,
             body: this.interpolate(String(action.value || ''), ticket),
             isInternalNote: true,
+            isPinned: false,
+            type: 'note',
+          })
+          break
+        case 'insert_canned_reply':
+          await Reply.create({
+            ticketId: ticket.id,
+            body: this.interpolate(String(action.value || ''), ticket),
+            isInternalNote: false,
+            isPinned: false,
+            type: 'reply',
           })
           break
         case 'send_webhook':
@@ -288,7 +334,7 @@ export default class WorkflowEngine {
           await ticket.save()
           break
         case 'delay': {
-          const { default: db } = await import('@adonisjs/lucid/services/db')
+          const db = await escalatedDb()
           const delayMinutes = Number(action.value || 0)
           for (const remaining of action.remaining_actions || []) {
             await db.table('escalated_delayed_actions').insert({
@@ -360,7 +406,7 @@ export default class WorkflowEngine {
     actionsExecuted: any[],
     errorMessage?: string
   ) {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     await db.table('escalated_workflow_logs').insert({
       workflow_id: workflowId,
       ticket_id: ticketId,
