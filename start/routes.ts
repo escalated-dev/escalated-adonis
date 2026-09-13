@@ -11,6 +11,10 @@
 import router from '@adonisjs/core/services/router'
 import { getConfig } from '../src/helpers/config.js'
 import { isUiEnabled } from '../src/rendering/renderer.js'
+import {
+  escalatedMiddleware,
+  resolveConfiguredMiddleware,
+} from '../src/support/route_middleware.js'
 
 // Lazy-load controllers (UI — Inertia-powered)
 const CustomerTicketsController = () => import('../src/controllers/customer_tickets_controller.js')
@@ -63,10 +67,6 @@ const ApiDashboardController = () => import('../src/controllers/api/api_dashboar
 const ApiTicketController = () => import('../src/controllers/api/api_ticket_controller.js')
 const ApiResourceController = () => import('../src/controllers/api/api_resource_controller.js')
 
-// Middleware imports
-const EnsureIsAgent = () => import('../src/middleware/ensure_is_agent.js')
-const EnsureIsAdmin = () => import('../src/middleware/ensure_is_admin.js')
-const EnsureNewslettersEnabled = () => import('../src/middleware/ensure_newsletters_enabled.js')
 const AdminNewsletterController = () => import('../src/controllers/admin_newsletter_controller.js')
 const AdminNewsletterListController = () =>
   import('../src/controllers/admin_newsletter_list_controller.js')
@@ -78,11 +78,8 @@ const NewsletterPublicController = () =>
   import('../src/controllers/newsletter_public_controller.js')
 const NewsletterEspWebhookController = () =>
   import('../src/controllers/newsletter_esp_webhook_controller.js')
-const ResolveTicket = () => import('../src/middleware/resolve_ticket.js')
-const AuthenticateApiToken = () => import('../src/middleware/authenticate_api_token.js')
-const ApiRateLimit = () => import('../src/middleware/api_rate_limit.js')
 
-export function registerRoutes() {
+export async function registerRoutes() {
   const config = getConfig()
 
   // Always register core (non-UI) routes: API, inbound webhooks, plugin endpoints
@@ -95,7 +92,7 @@ export function registerRoutes() {
 
   // Only register Inertia UI routes when ui.enabled is true (default)
   if (isUiEnabled()) {
-    registerUiRoutes(config)
+    await registerUiRoutes(config)
   }
 }
 
@@ -107,6 +104,7 @@ export function registerRoutes() {
  */
 function registerCoreRoutes(config: any) {
   const prefix = config.routes?.prefix ?? 'support'
+  const middleware = escalatedMiddleware(router)
 
   // ---- Inbound Email Webhook Routes (no auth) ----
   if (config.inboundEmail?.enabled) {
@@ -137,7 +135,7 @@ function registerCoreRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/widget`)
-    .use([ApiRateLimit])
+    .use([middleware.apiRateLimit()])
 
   // ---- Widget Chat Routes (no auth, rate-limited) ----
   router
@@ -164,7 +162,7 @@ function registerCoreRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/widget/chat`)
-    .use([ApiRateLimit])
+    .use([middleware.apiRateLimit()])
 
   // ---- API Routes ----
   if ((config as any).api?.enabled) {
@@ -176,10 +174,17 @@ function registerCoreRoutes(config: any) {
  * Register Inertia-powered UI routes for customers, agents, admins, and guests.
  * These are only registered when `ui.enabled` is true.
  */
-function registerUiRoutes(config: any) {
+async function registerUiRoutes(config: any) {
   const prefix = config.routes?.prefix ?? 'support'
-  const authMiddleware = config.routes?.middleware ?? ['auth']
-  const adminMiddleware = config.routes?.adminMiddleware ?? ['auth']
+  const middleware = escalatedMiddleware(router)
+  const authMiddleware = await resolveConfiguredMiddleware(
+    config.routes?.middleware ?? ['auth'],
+    'routes.middleware'
+  )
+  const adminMiddleware = await resolveConfiguredMiddleware(
+    config.routes?.adminMiddleware ?? ['auth'],
+    'routes.adminMiddleware'
+  )
 
   // ---- Customer Routes ----
   router
@@ -209,7 +214,7 @@ function registerUiRoutes(config: any) {
             .post('/:ticket/rate', [SatisfactionRatingController, 'store'])
             .as('escalated.customer.tickets.rate')
         })
-        .use([ResolveTicket])
+        .use([middleware.resolveTicket()])
     })
     .prefix(prefix)
     .use(authMiddleware)
@@ -294,10 +299,10 @@ function registerUiRoutes(config: any) {
             .post('/tickets/:ticket/split', [AgentTicketsController, 'split'])
             .as('escalated.agent.tickets.split')
         })
-        .use([ResolveTicket])
+        .use([middleware.resolveTicket()])
     })
     .prefix(`${prefix}/agent`)
-    .use([...adminMiddleware, EnsureIsAgent])
+    .use([...adminMiddleware, middleware.ensureIsAgent()])
 
   // ---- Agent Chat Routes ----
   router
@@ -314,7 +319,7 @@ function registerUiRoutes(config: any) {
       router.post('/:id/typing', [ChatController, 'typing']).as('escalated.agent.chats.typing')
     })
     .prefix(`${prefix}/agent/chats`)
-    .use([...adminMiddleware, EnsureIsAgent])
+    .use([...adminMiddleware, middleware.ensureIsAgent()])
 
   // ---- Admin Routes ----
   router
@@ -414,7 +419,7 @@ function registerUiRoutes(config: any) {
             .post('/tickets/:ticket/replies/:reply/pin', [AdminTicketsController, 'pin'])
             .as('escalated.admin.tickets.pin')
         })
-        .use([ResolveTicket])
+        .use([middleware.resolveTicket()])
 
       // Settings
       router.get('/settings', [AdminSettingsController, 'index']).as('escalated.admin.settings')
@@ -700,7 +705,7 @@ function registerUiRoutes(config: any) {
       }
     })
     .prefix(`${prefix}/admin`)
-    .use([...adminMiddleware, EnsureIsAdmin])
+    .use([...adminMiddleware, middleware.ensureIsAdmin()])
 
   // ---- Two-Factor Challenge (post-login, auth-only) ----
   router
@@ -829,6 +834,7 @@ function registerNewsletterAdminRoutes() {
  * Public newsletter tracking routes (no auth; per-request enabled gate).
  */
 function registerNewsletterPublicRoutes() {
+  const middleware = escalatedMiddleware(router)
   router
     .group(() => {
       router
@@ -853,7 +859,7 @@ function registerNewsletterPublicRoutes() {
         .where('token', /^[A-Za-z0-9_-]+$/)
     })
     .prefix('escalated/n')
-    .use([EnsureNewslettersEnabled])
+    .use([middleware.ensureNewslettersEnabled()])
 
   router
     .group(() => {
@@ -863,7 +869,7 @@ function registerNewsletterPublicRoutes() {
       router.post('/sendgrid', [NewsletterEspWebhookController, 'sendgrid'])
     })
     .prefix('escalated/webhooks/newsletter')
-    .use([EnsureNewslettersEnabled])
+    .use([middleware.ensureNewslettersEnabled()])
 }
 
 /**
@@ -872,6 +878,7 @@ function registerNewsletterPublicRoutes() {
  */
 export function registerApiRoutes(config: any) {
   const apiPrefix = config.api?.prefix ?? 'support/api/v1'
+  const middleware = escalatedMiddleware(router)
 
   router
     .group(() => {
@@ -921,7 +928,7 @@ export function registerApiRoutes(config: any) {
             .delete('/tickets/:ticket', [ApiTicketController, 'destroy'])
             .as('escalated.api.tickets.destroy')
         })
-        .use([ResolveTicket])
+        .use([middleware.resolveTicket()])
 
       // Resources
       router.get('/agents', [ApiResourceController, 'agents']).as('escalated.api.agents')
@@ -940,7 +947,7 @@ export function registerApiRoutes(config: any) {
         .as('escalated.api.realtime')
     })
     .prefix(apiPrefix)
-    .use([AuthenticateApiToken, ApiRateLimit])
+    .use([middleware.authenticateApiToken(), middleware.apiRateLimit()])
 
   // Public auth endpoints — credentials/token handling is delegated to host
   // callbacks (config.apiAuth.*), so these skip the API-token middleware.
@@ -956,5 +963,5 @@ export function registerApiRoutes(config: any) {
       router.patch('/auth/profile', [ApiAuthController, 'profile']).as('escalated.api.auth.profile')
     })
     .prefix(apiPrefix)
-    .use([ApiRateLimit])
+    .use([middleware.apiRateLimit()])
 }

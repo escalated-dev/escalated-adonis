@@ -7,6 +7,7 @@
 import { t } from './support/i18n.js'
 import type { TicketAction, TicketActionConfig } from './contracts/ticket_action.js'
 import type { TicketSubject } from './contracts/ticket_subject.js'
+import type { ConfiguredMiddleware } from './support/route_middleware.js'
 
 /**
  * Ticket statuses
@@ -202,8 +203,16 @@ export interface EscalatedConfig {
   routes: {
     enabled: boolean
     prefix: string
-    middleware: string[]
-    adminMiddleware: string[]
+    /**
+     * Middleware for customer routes. A string is the name of a middleware in
+     * `router.named()` in the host's `start/kernel.ts`, e.g. `'auth'`.
+     */
+    middleware: ConfiguredMiddleware[]
+    /**
+     * Middleware for agent and admin routes, run before Escalated's own agent
+     * and admin checks. Names resolve as for `middleware`.
+     */
+    adminMiddleware: ConfiguredMiddleware[]
   }
 
   tablePrefix: string
