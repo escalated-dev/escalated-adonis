@@ -4,7 +4,9 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { DateTime } from 'luxon'
 import { testApp, type TestApp } from './helpers/app.js'
+import { TEST_USERS } from './fixtures/user.js'
 
 /*
 |--------------------------------------------------------------------------
@@ -140,4 +142,60 @@ test.group('Ace commands', (group) => {
     assert.isTrue(existsSync(new URL('build/src/commands/main.js', ROOT)))
     assert.isTrue(existsSync(new URL('build/src/commands/commands.json', ROOT)))
   }).skip(!existsSync(new URL('build/', ROOT)), 'no build output: run `npm run build` first')
+
+  // ---- SLA ----------------------------------------------------------------------
+
+  test('escalated:check-sla emits a breach for an overdue ticket and a warning for one about to breach', async ({
+    assert,
+    cleanup,
+  }) => {
+    const { default: Ticket } = await import('../../src/models/ticket.js')
+    const { ESCALATED_EVENTS } = await import('../../src/events/index.js')
+    const { default: emitter } = await import('@adonisjs/core/services/emitter')
+
+    const ticket = (reference: string, subject: string, dueDates: Record<string, DateTime>) =>
+      Ticket.create({
+        reference: `${reference}-${Date.now()}`,
+        requesterType: 'User',
+        requesterId: TEST_USERS.customer.id,
+        subject,
+        description: 'SLA command test',
+        status: 'open',
+        priority: 'high',
+        ticketType: 'question',
+        channel: 'web',
+        slaFirstResponseBreached: false,
+        slaResolutionBreached: false,
+        ...dueDates,
+      } as any)
+
+    const overdue = await ticket('SLA-OVERDUE', 'First response overdue', {
+      firstResponseDueAt: DateTime.now().minus({ hours: 1 }),
+    })
+    const dueSoon = await ticket('SLA-SOON', 'Resolution due soon', {
+      resolutionDueAt: DateTime.now().plus({ minutes: 10 }),
+    })
+
+    const breaches: Array<{ id: number; type: string }> = []
+    const warnings: Array<{ id: number; type: string }> = []
+    const onBreach = (data: any) => breaches.push({ id: data.ticket.id, type: data.type })
+    const onWarning = (data: any) => warnings.push({ id: data.ticket.id, type: data.type })
+    emitter.on(ESCALATED_EVENTS.SLA_BREACHED, onBreach)
+    emitter.on(ESCALATED_EVENTS.SLA_WARNING, onWarning)
+    cleanup(() => {
+      emitter.off(ESCALATED_EVENTS.SLA_BREACHED, onBreach)
+      emitter.off(ESCALATED_EVENTS.SLA_WARNING, onWarning)
+    })
+
+    const ace = await kernel()
+    const command = await ace.exec('escalated:check-sla', [])
+
+    assert.equal(command.exitCode, 0, JSON.stringify(logs(ace)))
+    assert.deepInclude(breaches, { id: overdue.id, type: 'first_response' })
+    assert.deepInclude(warnings, { id: dueSoon.id, type: 'resolution' })
+    assert.notDeepInclude(warnings, { id: overdue.id, type: 'first_response' })
+
+    const overdueAfter = await Ticket.findOrFail(overdue.id)
+    assert.isTrue(Boolean(overdueAfter.slaFirstResponseBreached))
+  })
 })

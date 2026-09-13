@@ -190,6 +190,7 @@ Time-based features only happen when their Ace command runs, so run these from c
 
 | Command | Suggested schedule | What it does |
 | --- | --- | --- |
+| `node ace escalated:check-sla` | every minute | Flags SLA breaches and emits `escalated:sla:breached`; emits `escalated:sla:warning` for targets due within `--warning-minutes` (default 30) |
 | `node ace escalated:wake-snoozed-tickets` | every minute | Wakes tickets whose snooze has ended |
 | `node ace escalated:run-escalations` | every 5 minutes | Applies escalation rules |
 | `node ace escalated:run-automations` | every 5 minutes | Applies automations |
@@ -200,7 +201,7 @@ Time-based features only happen when their Ace command runs, so run these from c
 For example, with cron:
 
 ```
-* * * * * cd /path/to/app && node ace escalated:wake-snoozed-tickets
+* * * * * cd /path/to/app && node ace escalated:check-sla
 */5 * * * * cd /path/to/app && node ace escalated:run-escalations
 ```
 
@@ -219,7 +220,7 @@ commands: [
 - **Replies:** Threaded conversations with rich text and pinned notes
 - **Departments:** Organize tickets by team with agent assignments
 - **Tags:** Label and categorize tickets
-- **SLA Policies:** First response and resolution time tracking with breach detection
+- **SLA Policies:** First response and resolution time tracking with breach detection; run the `node ace escalated:check-sla` Ace command on a schedule (e.g. every minute) so breaches are flagged and `escalated:sla:breached` / `escalated:sla:warning` are emitted
 - **Escalation Rules:** Automated ticket escalation based on configurable conditions; run the `node ace escalated:run-escalations` Ace command on a schedule (e.g. every 5 minutes) so rules fire periodically
 - **Canned Responses:** Pre-written reply templates (shared or per-agent)
 - **Activity Log:** Full audit trail of all ticket changes

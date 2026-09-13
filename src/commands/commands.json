@@ -1,6 +1,32 @@
 {
   "commands": [
     {
+      "commandName": "escalated:check-sla",
+      "description": "Flag SLA breaches and warn about SLA targets that are about to pass",
+      "help": [
+        "Check open tickets against their SLA targets:",
+        "  node ace escalated:check-sla",
+        "",
+        "Warn about targets due within the next hour instead of 30 minutes:",
+        "  node ace escalated:check-sla --warning-minutes=60"
+      ],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [
+        {
+          "name": "warningMinutes",
+          "flagName": "warning-minutes",
+          "required": false,
+          "type": "number",
+          "description": "Warn about SLA targets due within this many minutes",
+          "default": 30
+        }
+      ],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "check_sla_command.js"
+    },
+    {
       "commandName": "escalated:cleanup-abandoned-chats",
       "description": "Clean up chat sessions abandoned in the queue",
       "help": [
