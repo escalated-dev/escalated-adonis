@@ -34,26 +34,14 @@ const SHIPPED = require('@escalated-dev/escalated/pages.json').pages
 /**
  * Names that render a blank panel today, and are not fixed by renaming.
  *
- * These nine advanced-report endpoints pass `{ data, filters }`, while every
- * report component in the frontend takes flat props (`period_days`, `trend`,
- * `by_agent`, ...). Three of the nine resolve by name and still render an empty
- * report because every prop falls back to its default; these six do not resolve
- * at all. Renaming them would turn this test green and leave the screens just
- * as blank, so they stay listed until the controllers are reworked to match the
- * components -- which also means collapsing the three FRT endpoints into the
- * one ResponseTimes screen, and the two resolution endpoints into
- * ResolutionTimes.
+ * Empty. The advanced reports were the whole of this list; they now render the
+ * screens the frontend ships, with the props those screens read. Anything added
+ * here needs the reason written against it, and the last test in this file
+ * fails if an entry stays after the screen is fixed.
  *
  * This list may shrink. It must never grow.
  */
-const KNOWN_BLANK = [
-  'Escalated/Admin/Reports/Cohort',
-  'Escalated/Admin/Reports/FrtByAgent',
-  'Escalated/Admin/Reports/FrtDistribution',
-  'Escalated/Admin/Reports/FrtTrends',
-  'Escalated/Admin/Reports/ResolutionDistribution',
-  'Escalated/Admin/Reports/ResolutionTrends',
-]
+const KNOWN_BLANK = []
 
 const PAGE_NAME = /'(Escalated\/[A-Za-z0-9/_]+)'/g
 
