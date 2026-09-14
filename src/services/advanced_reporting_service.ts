@@ -228,6 +228,8 @@ export default class AdvancedReportingService {
         return this.cohortByChannel()
       case 'type':
         return this.cohortByType()
+      case 'priority':
+        return this.cohortByPriority()
       default:
         return { error: `Unknown dimension: ${dimension}` }
     }
@@ -384,6 +386,22 @@ export default class AdvancedReportingService {
         .whereBetween('created_at', [this.from.toSQL()!, this.to.toSQL()!])
         .where('ticket_type', t)
       results.push(await this.buildCohort(t, scope))
+    }
+    return results
+  }
+
+  private async cohortByPriority() {
+    const tickets = await Ticket.query().whereBetween('created_at', [
+      this.from.toSQL()!,
+      this.to.toSQL()!,
+    ])
+    const priorities = [...new Set(tickets.map((t) => t.priority).filter(Boolean))]
+    const results = []
+    for (const priority of priorities) {
+      const scope = Ticket.query()
+        .whereBetween('created_at', [this.from.toSQL()!, this.to.toSQL()!])
+        .where('priority', priority as string)
+      results.push(await this.buildCohort(String(priority), scope))
     }
     return results
   }

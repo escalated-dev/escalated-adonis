@@ -357,6 +357,18 @@ async function registerUiRoutes(config: any) {
         ])
         .as('escalated.admin.reports.resolutionTrends')
       router
+        .get('/reports/advanced/response-times', [AdminAdvancedReportsController, 'responseTimes'])
+        .as('escalated.admin.reports.responseTimes')
+      router
+        .get('/reports/advanced/resolution-times', [
+          AdminAdvancedReportsController,
+          'resolutionTimes',
+        ])
+        .as('escalated.admin.reports.resolutionTimes')
+      router
+        .get('/reports/advanced/cohorts', [AdminAdvancedReportsController, 'cohorts'])
+        .as('escalated.admin.reports.cohorts')
+      router
         .get('/reports/advanced/agent-ranking', [AdminAdvancedReportsController, 'agentRanking'])
         .as('escalated.admin.reports.agentRanking')
       router
