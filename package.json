@@ -69,7 +69,7 @@
     "@adonisjs/lucid": "^22.0.0",
     "@adonisjs/mail": "^10.0.0",
     "@adonisjs/transmit": "^3.0.0",
-    "adm-zip": "^0.6.0"
+    "adm-zip": "^0.6.1"
   },
   "peerDependenciesMeta": {
     "@adonisjs/transmit": {
@@ -97,7 +97,7 @@
     "@japa/runner": "^5.3.0",
     "@types/adm-zip": "^0.5.8",
     "@types/luxon": "^3.7.5",
-    "adm-zip": "^0.6.0",
+    "adm-zip": "^0.6.1",
     "better-sqlite3": "^13.0.3",
     "eslint": "^10.10.0",
     "prettier": "^3.9.6",
