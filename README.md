@@ -20,6 +20,7 @@
 [![Tests](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml/badge.svg)](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml)
 [![AdonisJS](https://img.shields.io/badge/adonisjs-v7-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Views](https://hits.sh/github.com/escalated-dev/escalated-adonis.svg?style=flat&label=views&color=007ec6)](https://hits.sh/github.com/escalated-dev/escalated-adonis/)
 
 A full-featured, embeddable support ticket system for AdonisJS v7. Drop it into any app — get a complete helpdesk with SLA tracking, escalation rules, agent workflows, and a customer portal. No external services required.
 
