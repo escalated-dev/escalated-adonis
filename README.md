@@ -773,4 +773,4 @@ the tables and copy the rows across before pointing Escalated at them.
 
 ## License
 
-MIT
+MIT - Copyright (c) Escalated.dev. See [LICENSE](LICENSE).
