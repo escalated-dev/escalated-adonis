@@ -263,6 +263,9 @@ const escalatedConfig: EscalatedConfig = {
     enabled: false,
     adapter: 'mailgun',
     address: 'support@example.com',
+    // Signs Reply-To as reply+{id}.{hmac8}@domain. When set, inbound mail is
+    // matched to a ticket only through that signed address.
+    replySecret: process.env.ESCALATED_INBOUND_REPLY_SECRET ?? undefined,
     mailgun: {
       signingKey: undefined,
     },

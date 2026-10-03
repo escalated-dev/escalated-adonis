@@ -372,6 +372,13 @@ export interface EscalatedConfig {
     enabled: boolean
     adapter: string
     address: string
+    /**
+     * HMAC key for signed Reply-To addresses (`reply+{id}.{hmac8}@domain`).
+     * When set, inbound mail is matched to a ticket only through that
+     * signed address; sign outbound mail with
+     * `EmailThreadingService.buildSignedReplyTo()` using the same key.
+     */
+    replySecret?: string
     mailgun: {
       signingKey?: string
     }
