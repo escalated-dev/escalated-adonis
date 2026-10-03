@@ -19,6 +19,11 @@ export default class User implements TestUser {
     this.role = role
   }
 
+  /** Read by inbound email, which compares a sender to the requester's address. */
+  get email(): string {
+    return `user${this.id}@example.test`
+  }
+
   static async find(id: number | string): Promise<User | null> {
     return Object.values(TEST_USERS).find((user) => String(user.id) === String(id)) ?? null
   }

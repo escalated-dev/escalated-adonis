@@ -9,6 +9,7 @@ import Attachment from '../models/attachment.js'
 import EscalatedSetting from '../models/escalated_setting.js'
 import TicketService from './ticket_service.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
+import { verifyReplyTo } from './email/message_id_util.js'
 import { BLOCKED_EXTENSIONS, ALLOWED_HTML_TAGS, type InboundMessage } from '../types.js'
 
 export default class InboundEmailService {
@@ -34,18 +35,20 @@ export default class InboundEmailService {
         return inboundEmail
       }
 
-      // 2. Check if this is a reply to an existing ticket
+      // 2. Check if this is a reply to an existing ticket. A thread
+      // match alone is not enough: the sender must also be the ticket's
+      // requester, and the author is always taken from the ticket, never
+      // from the unauthenticated From header.
       const existingTicket = await this.findTicketByEmail(message)
+      const author = existingTicket ? await this.resolveReplyAuthor(existingTicket, message) : false
 
-      // 3. Look up the sender
-      const user = await this.findUserByEmail(message.fromEmail)
-
-      if (existingTicket) {
-        // 4. Reply to existing ticket
-        const reply = await this.addReplyToTicket(existingTicket, message, user)
+      if (existingTicket && author !== false) {
+        // 3. Reply to existing ticket as its requester
+        const reply = await this.addReplyToTicket(existingTicket, message, author)
         await inboundEmail.markProcessed(existingTicket.id, reply.id)
       } else {
-        // 5. Create new ticket
+        // 4. Create new ticket (also for a sender who is not the requester)
+        const user = await this.findUserByEmail(message.fromEmail)
         const ticket = await this.createNewTicket(message, user)
         await inboundEmail.markProcessed(ticket.id)
       }
@@ -59,8 +62,22 @@ export default class InboundEmailService {
 
   /**
    * Find an existing ticket this email is replying to.
+   *
+   * Ticket references and Message-IDs are guessable, so once an inbound
+   * reply secret is configured (`inboundEmail.replySecret`, which outbound
+   * mail uses to sign `reply+{id}.{hmac8}@domain`) only that signed
+   * recipient address is accepted. Without a secret, the subject reference
+   * and In-Reply-To / References lookups are used, and
+   * {@link resolveReplyAuthor} still requires the sender to be the
+   * ticket's requester.
    */
   protected async findTicketByEmail(message: InboundMessage): Promise<Ticket | null> {
+    const secret = this.replySecret()
+    if (secret) {
+      const ticketId = verifyReplyTo(message.toEmail, secret)
+      return ticketId !== null ? Ticket.find(ticketId) : null
+    }
+
     // Check subject for reference pattern
     const prefix = await EscalatedSetting.get('ticket_reference_prefix', 'ESC')
     const pattern = new RegExp(`\\[(${prefix!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-\\d+)\\]`)
@@ -97,6 +114,59 @@ export default class InboundEmailService {
     }
 
     return null
+  }
+
+  /**
+   * Decide who a threaded inbound email may post as.
+   *
+   * Returns the requester (a host user, or null for a guest reply) when the
+   * From address is the ticket's guest email or its requester's email,
+   * compared case-insensitively, and false when the sender is anyone else.
+   * Staff identity is never derived from the From header: an agent replying
+   * by email is not the requester, so the message becomes a new ticket.
+   */
+  protected async resolveReplyAuthor(ticket: Ticket, message: InboundMessage): Promise<any> {
+    const sender = this.normalizeEmail(message.fromEmail)
+    if (!sender) return false
+
+    if (ticket.guestEmail && this.normalizeEmail(ticket.guestEmail) === sender) {
+      return null
+    }
+
+    if (ticket.requesterType && ticket.requesterId !== null && ticket.requesterId !== undefined) {
+      const requester = await this.findRequester(ticket)
+      if (requester && this.normalizeEmail(requester.email) === sender) {
+        return requester
+      }
+    }
+
+    return false
+  }
+
+  /**
+   * Load the ticket's requester from the configured user model.
+   */
+  protected async findRequester(ticket: Ticket): Promise<any | null> {
+    try {
+      const config = (globalThis as any).__escalated_config
+      const userModelPath = config?.userModel ?? '#models/user'
+      const { default: UserModel } = await import(userModelPath)
+      const user = await UserModel.find(ticket.requesterId)
+      if (!user || user.constructor?.name !== ticket.requesterType) return null
+      return user
+    } catch {
+      return null
+    }
+  }
+
+  protected normalizeEmail(email: unknown): string {
+    return typeof email === 'string' ? email.trim().toLowerCase() : ''
+  }
+
+  protected replySecret(): string {
+    const config = (globalThis as any).__escalated_config
+    const secret = config?.inboundEmail?.replySecret
+    return typeof secret === 'string' ? secret : ''
   }
 
   /**

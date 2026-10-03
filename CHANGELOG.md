@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Security
+
+- Inbound email that matched a ticket by subject reference or In-Reply-To/References was added as a reply whatever its sender, and a `From` address belonging to a host user posted the reply as that user. A matched email is now a reply only when `From` is the ticket's requester (the guest email or the requester user's email), and it is posted as that requester. Any other sender gets a new ticket of their own, and only an accepted reply reopens a resolved or closed ticket.
+- New `inboundEmail.replySecret` (`ESCALATED_INBOUND_REPLY_SECRET`). When set, only the signed Reply-To address identifies a ticket.
+
 ## [0.6.2] - 2026-09-13
 
 ### Security
