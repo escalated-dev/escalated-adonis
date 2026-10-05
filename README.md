@@ -229,7 +229,7 @@ commands: [
 - **Notifications:** Webhook-based notifications with HMAC signing
 - **Outbound Webhooks:** Signed deliveries with a delivery log and retries. Webhook URLs that resolve to loopback, private-network, link-local or other non-public addresses are refused when saved and before every delivery, as are the workflow `send_webhook` action's; set `webhooks.allowPrivateUrls` to allow them
 - **Admin Settings:** Runtime-configurable settings stored in the database
-- **Guest Tickets:** Anonymous ticket creation with 64-character token access
+- **Guest Tickets:** Anonymous ticket creation with 64-character token access. Guest ticket creation (form and widget) and guest replies are rate-limited per client IP (5 and 10 a minute by default, `guestRateLimit` in the config); behind a proxy, set `http.trustProxy` so each guest gets their own IP
 - **Inbound Email:** Mailgun, Postmark, and SES adapters with auto-threading and attachment processing
 - **Three Role Types:** Customer, Agent, Admin with separate dashboards
 - **Bulk Actions:** Batch status/priority/assignment/tag/department changes
