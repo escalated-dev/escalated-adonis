@@ -158,6 +158,27 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | Guest Rate Limit
+  |--------------------------------------------------------------------------
+  |
+  | Per-client-IP limits on the unauthenticated guest endpoints: ticket
+  | creation (guest form and widget) and guest replies. A request over the
+  | limit gets 429 with Retry-After. Disable only if you throttle upstream.
+  |
+  | The client IP is request.ip(). Behind a load balancer or reverse proxy,
+  | set http.trustProxy in config/app.ts, or every guest shares the proxy's
+  | address and one limit. Counters are in memory per process; with several
+  | instances, pass a shared `store` implementing GuestRateLimitStore.
+  |
+  */
+  guestRateLimit: {
+    enabled: true,
+    ticketsPerMinute: 5,
+    repliesPerMinute: 10,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Storage (Attachments)
   |--------------------------------------------------------------------------
   */

@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Inbound email that matched a ticket by subject reference or In-Reply-To/References was added as a reply whatever its sender, and a `From` address belonging to a host user posted the reply as that user. A matched email is now a reply only when `From` is the ticket's requester (the guest email or the requester user's email), and it is posted as that requester. Any other sender gets a new ticket of their own, and only an accepted reply reopens a resolved or closed ticket.
 - New `inboundEmail.replySecret` (`ESCALATED_INBOUND_REPLY_SECRET`). When set, only the signed Reply-To address identifies a ticket.
+- **Guest endpoints were not rate-limited.** Guest ticket creation (`POST guest`, `POST widget/tickets`) and guest replies (`POST guest/:token/reply`) are now limited per client IP, 5 tickets and 10 replies a minute by default, answering 429 with `Retry-After`. Replies are counted before the guest token is checked, so wrong-token requests count too. Configure with `guestRateLimit` (`enabled`, `ticketsPerMinute`, `repliesPerMinute`, and a shared `store` for multi-instance deployments). Behind a proxy, set `http.trustProxy` in `config/app.ts`, or every guest shares one IP.
 
 ## [0.6.2] - 2026-09-13
 
