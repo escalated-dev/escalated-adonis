@@ -34,6 +34,7 @@ export function escalatedMiddleware(router: Router) {
     resolveTicket: () => import('../middleware/resolve_ticket.js'),
     authenticateApiToken: () => import('../middleware/authenticate_api_token.js'),
     apiRateLimit: () => import('../middleware/api_rate_limit.js'),
+    guestRateLimit: () => import('../middleware/guest_rate_limit.js'),
   })
 }
 

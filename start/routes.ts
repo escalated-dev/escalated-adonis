@@ -130,6 +130,7 @@ function registerCoreRoutes(config: any) {
       router
         .post('/tickets', [WidgetController, 'createTicket'])
         .as('escalated.widget.tickets.create')
+        .use(middleware.guestRateLimit({ scope: 'ticket' }))
       router
         .get('/tickets/:token', [WidgetController, 'lookupTicket'])
         .as('escalated.widget.tickets.lookup')
@@ -764,10 +765,16 @@ async function registerUiRoutes(config: any) {
     .use(authMiddleware)
 
   // ---- Guest Routes (no auth) ----
+  // Ticket creation and replies are rate-limited per client IP (see
+  // `guestRateLimit` in the config). The reply limit runs before the token is
+  // looked up, so requests with a wrong token count too.
   router
     .group(() => {
       router.get('/create', [GuestTicketsController, 'create']).as('escalated.guest.tickets.create')
-      router.post('/', [GuestTicketsController, 'store']).as('escalated.guest.tickets.store')
+      router
+        .post('/', [GuestTicketsController, 'store'])
+        .as('escalated.guest.tickets.store')
+        .use(middleware.guestRateLimit({ scope: 'ticket' }))
       router
         .get('/:token', [GuestTicketsController, 'show'])
         .as('escalated.guest.tickets.show')
@@ -775,6 +782,7 @@ async function registerUiRoutes(config: any) {
       router
         .post('/:token/reply', [GuestTicketsController, 'reply'])
         .as('escalated.guest.tickets.reply')
+        .use(middleware.guestRateLimit({ scope: 'reply' }))
         .where('token', /^[A-Za-z0-9]{64}$/)
       router
         .post('/:token/rate', [SatisfactionRatingController, 'storeGuest'])

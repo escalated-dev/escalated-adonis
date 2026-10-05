@@ -8,6 +8,7 @@ import { t } from './support/i18n.js'
 import type { TicketAction, TicketActionConfig } from './contracts/ticket_action.js'
 import type { TicketSubject } from './contracts/ticket_subject.js'
 import type { ConfiguredMiddleware } from './support/route_middleware.js'
+import type { GuestRateLimitConfig } from './support/guest_rate_limit.js'
 
 /**
  * Ticket statuses
@@ -286,6 +287,17 @@ export interface EscalatedConfig {
     tokenExpiryDays: number | null
     prefix: string
   }
+
+  /**
+   * Per-client-IP rate limits on the unauthenticated guest endpoints: ticket
+   * creation (`POST guest`, `POST widget/tickets`) and guest replies
+   * (`POST guest/:token/reply`). A request over the limit gets 429 with
+   * `Retry-After`. The client IP is `request.ip()`; behind a proxy the host must
+   * set `http.trustProxy` in `config/app.ts`, or every guest shares the proxy's
+   * address. Defaults: enabled, 5 tickets and 10 replies per IP per minute,
+   * counted in memory per process.
+   */
+  guestRateLimit?: GuestRateLimitConfig
 
   /**
    * Outbound webhooks: admin webhooks and the workflow send_webhook action.
