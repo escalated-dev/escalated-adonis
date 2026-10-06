@@ -100,7 +100,7 @@
     "adm-zip": "^0.6.1",
     "better-sqlite3": "^13.0.3",
     "eslint": "^10.11.0",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.9",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   },
