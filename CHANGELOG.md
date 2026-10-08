@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-08
+
+This release changes how inbound email is matched to tickets. Read
+**Upgrading** before deploying.
+
+### Upgrading
+
+- **Inbound replies are accepted only from the ticket's requester.** A matched email becomes a reply only when `From` is the ticket's guest email or the requester user's email, and it is posted as that requester. A `From` address that belongs to another host user (for example an agent answering a notification by email) no longer posts as that user: the email opens a new ticket for its sender, and it no longer reopens a resolved or closed ticket. Agents should reply in the app.
+- **New config: `inboundEmail.replySecret` (`ESCALATED_INBOUND_REPLY_SECRET`).** Set it to sign the Reply-To address on outbound notifications. Once it is set, only that signed address links inbound mail to a ticket, and replies to mail sent without it open new tickets. Without it, subject and `In-Reply-To` / `References` matching is kept (still subject to the requester check).
+- **Guest endpoints are rate-limited per client IP** (5 tickets and 10 replies a minute by default; `POST guest`, `POST widget/tickets`, `POST guest/:token/reply`). Configure `guestRateLimit` (`enabled`, `ticketsPerMinute`, `repliesPerMinute`, and a shared `store` for multi-instance deployments). Behind a proxy, set `http.trustProxy` in `config/app.ts`, or every guest shares one budget.
+
 ### Security
 
 - Inbound email that matched a ticket by subject reference or In-Reply-To/References was added as a reply whatever its sender, and a `From` address belonging to a host user posted the reply as that user. A matched email is now a reply only when `From` is the ticket's requester (the guest email or the requester user's email), and it is posted as that requester. Any other sender gets a new ticket of their own, and only an accepted reply reopens a resolved or closed ticket.
