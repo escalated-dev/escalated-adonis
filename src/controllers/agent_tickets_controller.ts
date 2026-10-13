@@ -34,6 +34,8 @@ export default class AgentTicketsController {
       'assigned_to',
       'unassigned',
       'department_id',
+      'account_type',
+      'account_id',
       'search',
       'sla_breached',
       'tag_ids',

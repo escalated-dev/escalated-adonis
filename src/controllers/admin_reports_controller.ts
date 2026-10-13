@@ -11,7 +11,7 @@ export default class AdminReportsController {
     const days = Number(request.input('days', 30))
     const since = DateTime.now().minus({ days }).toSQL()!
 
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
 
     const totalTickets = await Ticket.query()
       .where('created_at', '>=', since)

@@ -1,3 +1,4 @@
+import { agentCanAccessTicket } from '../support/ticket_access.js'
 import { DateTime } from 'luxon'
 import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
@@ -79,6 +80,8 @@ export default class ChatSessionService {
    */
   async assignAgent(sessionId: number, agentId: UserId): Promise<ChatSession> {
     const session = await ChatSession.findOrFail(sessionId)
+    if (!(await agentCanAccessTicket(agentId, { id: session.ticketId })))
+      throw Object.assign(new Error('Agent cannot access this ticket'), { status: 403 })
     session.agentId = agentId
     session.status = 'active'
     session.acceptedAt = DateTime.now()
@@ -126,6 +129,8 @@ export default class ChatSessionService {
     const session = await ChatSession.findOrFail(sessionId)
     const previousAgentId = session.agentId
 
+    if (!(await agentCanAccessTicket(newAgentId, { id: session.ticketId })))
+      throw Object.assign(new Error('Agent cannot access this ticket'), { status: 403 })
     session.agentId = newAgentId
     session.lastActivityAt = DateTime.now()
     await session.save()

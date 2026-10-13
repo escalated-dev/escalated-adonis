@@ -1,3 +1,4 @@
+import { getConfig } from '../helpers/config.js'
 import { DateTime } from 'luxon'
 import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
@@ -10,11 +11,18 @@ export default class SlaService {
    * Attach the default SLA policy to a ticket.
    */
   async attachDefaultPolicy(ticket: Ticket): Promise<void> {
-    const policy = await SlaPolicy.query()
-      .withScopes((scopes) => scopes.active())
-      .withScopes((scopes) => scopes.isDefault())
-      .first()
-
+    const policies = await SlaPolicy.query().where('is_active', true).orderBy('id')
+    const rank = (policy: SlaPolicy): number => {
+      const department = policy.departmentId !== null && policy.departmentId !== undefined
+      const type = policy.ticketType !== null && policy.ticketType !== undefined
+      if (!getConfig().targetedSlas) return !department && !type && policy.isDefault ? 0 : -1
+      if (department && policy.departmentId !== ticket.departmentId) return -1
+      if (type && policy.ticketType !== ticket.ticketType) return -1
+      return department ? (type ? 3 : 2) : type ? 1 : policy.isDefault ? 0 : -1
+    }
+    const policy = policies
+      .filter((item) => rank(item) >= 0)
+      .sort((a, b) => rank(b) - rank(a) || a.id - b.id)[0]
     if (!policy) return
 
     await this.attachPolicy(ticket, policy)
@@ -25,6 +33,8 @@ export default class SlaService {
    */
   async attachPolicy(ticket: Ticket, policy: SlaPolicy): Promise<void> {
     ticket.slaPolicyId = policy.id
+    ticket.firstResponseDueAt = null
+    ticket.resolutionDueAt = null
 
     const firstResponseHours = policy.getFirstResponseHoursFor(ticket.priority as TicketPriority)
     const resolutionHours = policy.getResolutionHoursFor(ticket.priority as TicketPriority)

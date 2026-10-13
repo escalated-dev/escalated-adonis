@@ -1,3 +1,4 @@
+import { agentCanAccessTicket } from '../support/ticket_access.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import type Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
@@ -30,6 +31,8 @@ export default class AdminTicketsController {
       'assigned_to',
       'unassigned',
       'department_id',
+      'account_type',
+      'account_id',
       'search',
       'sla_breached',
       'tag_ids',
@@ -96,7 +99,11 @@ export default class AdminTicketsController {
       scopes.forAgent(userId)
     )
 
-    const agents = await this.getAgents()
+    const candidates = await this.getAgents()
+    const eligibility = await Promise.all(
+      candidates.map((agent) => agentCanAccessTicket(agent.id, ticket))
+    )
+    const agents = candidates.filter((_agent, index) => eligibility[index])
 
     const macros = await Macro.query()
       .withScopes((scopes) => scopes.forAgent(userId))

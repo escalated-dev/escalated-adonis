@@ -1,3 +1,4 @@
+import { agentCanAccessTicket } from '../support/ticket_access.js'
 import ChatSession from '../models/chat_session.js'
 import ChatRoutingRule from '../models/chat_routing_rule.js'
 import AgentProfile from '../models/agent_profile.js'
@@ -10,6 +11,7 @@ export default class ChatRoutingService {
    * and concurrency limits.
    */
   async findAvailableAgent(context: {
+    ticketId?: number
     departmentId?: number | null
     metadata?: Record<string, any> | null
   }): Promise<UserId | null> {
@@ -22,9 +24,9 @@ export default class ChatRoutingService {
     // Filter by department if set (from rule or context)
     const deptId = rule?.departmentId ?? context.departmentId
     if (deptId) {
-      // If department filtering is needed, we rely on department-agent
-      // pivot table for matching. For simplicity, we filter agents who
-      // are online and below their max chat limit.
+      agentQuery.whereIn('user_id', (query) =>
+        query.from('escalated_department_agent').select('agent_id').where('department_id', deptId)
+      )
     }
 
     const onlineAgents = await agentQuery
@@ -40,6 +42,8 @@ export default class ChatRoutingService {
     let minChats = Infinity
 
     for (const agent of onlineAgents) {
+      if (context.ticketId && !(await agentCanAccessTicket(agent.userId, { id: context.ticketId })))
+        continue
       const activeChats = await ChatSession.query()
         .where('agent_id', agent.userId)
         .where('status', 'active')
@@ -62,6 +66,7 @@ export default class ChatRoutingService {
    * Returns the first matching rule (by priority) or null.
    */
   async evaluateRouting(context: {
+    ticketId?: number
     departmentId?: number | null
     metadata?: Record<string, any> | null
   }): Promise<ChatRoutingRule | null> {

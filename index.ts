@@ -116,3 +116,11 @@ export { default as AgentProfile } from './src/models/agent_profile.js'
 export { default as ChatSessionService } from './src/services/chat_session_service.js'
 export { default as ChatRoutingService } from './src/services/chat_routing_service.js'
 export { default as ChatAvailabilityService } from './src/services/chat_availability_service.js'
+
+export {
+  withTicketAccess,
+  withoutTicketAccess,
+  userCanAccessTicket,
+  agentCanAccessTicket,
+} from './src/support/ticket_access.js'
+export type { TicketAccount, AccountReference } from './src/support/ticket_access.js'

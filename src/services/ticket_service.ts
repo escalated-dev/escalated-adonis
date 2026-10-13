@@ -1,3 +1,9 @@
+import {
+  assertTicketAccess,
+  resolveTicketAccount,
+  accountCondition,
+} from '../support/ticket_access.js'
+import SlaService from './sla_service.js'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import emitter from '@adonisjs/core/services/emitter'
@@ -40,7 +46,15 @@ export default class TicketService {
     const configModule = await import('../helpers/config.js')
     const config = configModule.getConfig()
 
+    const account = await resolveTicketAccount({
+      kind: 'requester',
+      type: requester.constructor.name,
+      id: requester.id,
+      model: requester,
+    })
     const ticket = await Ticket.create({
+      accountType: account?.type ?? null,
+      accountId: account ? String(account.id) : null,
       reference,
       requesterType: requester.constructor.name,
       requesterId: requester.id,
@@ -55,6 +69,9 @@ export default class TicketService {
       slaFirstResponseBreached: false,
       slaResolutionBreached: false,
     })
+
+    if (config.sla?.enabled && !ticket.slaPolicyId)
+      await new SlaService().attachDefaultPolicy(ticket)
 
     if (data.attachments && data.attachments.length > 0) {
       await this.attachmentService.storeMany('Ticket', ticket.id, data.attachments)
@@ -82,6 +99,7 @@ export default class TicketService {
     ticket: Ticket,
     data: { subject?: string; description?: string; metadata?: Record<string, any> | null }
   ): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     ticket.merge({
       ...(data.subject !== undefined && { subject: data.subject }),
       ...(data.description !== undefined && { description: data.description }),
@@ -100,6 +118,7 @@ export default class TicketService {
    * Change ticket status with transition validation.
    */
   async changeStatus(ticket: Ticket, newStatus: TicketStatus, causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     const oldStatus = ticket.status
 
     if (!canTransitionTo(oldStatus, newStatus)) {
@@ -157,6 +176,7 @@ export default class TicketService {
     body: string,
     attachments: any[] = []
   ): Promise<Reply> {
+    await assertTicketAccess(ticket)
     const reply = await Reply.create({
       ticketId: ticket.id,
       authorType: author.constructor.name,
@@ -190,6 +210,7 @@ export default class TicketService {
     body: string,
     attachments: any[] = []
   ): Promise<Reply> {
+    await assertTicketAccess(ticket)
     const reply = await Reply.create({
       ticketId: ticket.id,
       authorType: author.constructor.name,
@@ -217,6 +238,7 @@ export default class TicketService {
    * Change ticket priority.
    */
   async changePriority(ticket: Ticket, priority: TicketPriority, causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     const oldPriority = ticket.priority
     ticket.priority = priority
     await ticket.save()
@@ -242,6 +264,7 @@ export default class TicketService {
    * Add tags to a ticket.
    */
   async addTags(ticket: Ticket, tagIds: number[], causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     await ticket.related('tags').attach(tagIds)
 
     for (const tagId of tagIds) {
@@ -260,6 +283,7 @@ export default class TicketService {
    * Remove tags from a ticket.
    */
   async removeTags(ticket: Ticket, tagIds: number[], causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     await ticket.related('tags').detach(tagIds)
 
     for (const tagId of tagIds) {
@@ -278,6 +302,7 @@ export default class TicketService {
    * Change ticket department.
    */
   async changeDepartment(ticket: Ticket, departmentId: number, causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     const oldDepartmentId = ticket.departmentId
     ticket.departmentId = departmentId
     await ticket.save()
@@ -303,6 +328,7 @@ export default class TicketService {
    * Close a ticket.
    */
   async close(ticket: Ticket, causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     return this.changeStatus(ticket, 'closed', causer)
   }
 
@@ -310,6 +336,7 @@ export default class TicketService {
    * Resolve a ticket.
    */
   async resolve(ticket: Ticket, causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     return this.changeStatus(ticket, 'resolved', causer)
   }
 
@@ -317,6 +344,7 @@ export default class TicketService {
    * Reopen a ticket.
    */
   async reopen(ticket: Ticket, causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     return this.changeStatus(ticket, 'reopened', causer)
   }
 
@@ -362,6 +390,9 @@ export default class TicketService {
       query.whereNull('assigned_to')
     }
 
+    if (filters.account_type !== undefined || filters.account_id !== undefined) {
+      accountCondition(query, { type: filters.account_type, id: filters.account_id })
+    }
     if (filters.department_id) {
       query.where('department_id', filters.department_id)
     }
@@ -475,6 +506,7 @@ export default class TicketService {
     replyId: number,
     causer: { id: number; constructor: { name: string } }
   ): Promise<Ticket> {
+    await assertTicketAccess(sourceTicket)
     const reply = await Reply.query()
       .where('id', replyId)
       .where('ticket_id', sourceTicket.id)
@@ -493,6 +525,8 @@ export default class TicketService {
       ticketType: sourceTicket.ticketType,
       channel: sourceTicket.channel,
       departmentId: sourceTicket.departmentId,
+      accountType: sourceTicket.accountType,
+      accountId: sourceTicket.accountId,
       metadata: {
         split_from_ticket_id: sourceTicket.id,
         split_from_reply_id: reply.id,

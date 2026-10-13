@@ -190,6 +190,18 @@ export function isOpenStatus(status: TicketStatus): boolean {
  * Configuration interface for the escalated package
  */
 export interface EscalatedConfig {
+  visibility?: 'all' | 'department'
+  accounts?: {
+    enabled?: boolean
+    scopeAgents?: boolean
+    resolver?: (
+      reference: import('./support/ticket_access.js').AccountReference
+    ) =>
+      | import('./support/ticket_access.js').TicketAccount
+      | null
+      | Promise<import('./support/ticket_access.js').TicketAccount | null>
+  }
+  targetedSlas?: boolean
   mode: 'self-hosted' | 'synced' | 'cloud'
 
   locale?: string
@@ -451,6 +463,7 @@ export interface MacroAction {
  * Escalation rule condition
  */
 export interface EscalationCondition {
+  operator?: string
   field: string
   value: any
 }

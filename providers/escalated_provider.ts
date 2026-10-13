@@ -1,6 +1,7 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 import type { EscalatedConfig } from '../src/types.js'
 import { setLocale } from '../src/support/i18n.js'
+import { installTicketAccess, validateTicketAccess } from '../src/support/ticket_access.js'
 import { resetRenderer } from '../src/rendering/renderer.js'
 
 export default class EscalatedProvider {
@@ -122,6 +123,8 @@ export default class EscalatedProvider {
   async boot() {
     // Load config and store globally for services to access
     await this.loadConfig()
+    validateTicketAccess()
+    installTicketAccess()
 
     // Initialize the HookManager and PluginUIService singletons eagerly
     await this.app.container.make('escalated.hookManager')

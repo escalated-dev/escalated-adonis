@@ -29,6 +29,11 @@ const escalatedConfig: EscalatedConfig = {
   */
   mode: 'self-hosted',
 
+  // Optional department/account access restrictions; existing access is unchanged.
+  visibility: 'all',
+  accounts: { enabled: false, scopeAgents: false },
+  targetedSlas: false,
+
   /*
   |--------------------------------------------------------------------------
   | User Model

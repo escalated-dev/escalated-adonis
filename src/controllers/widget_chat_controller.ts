@@ -57,6 +57,7 @@ export default class WidgetChatController {
 
     // Attempt auto-assignment
     const agentId = await this.routingService.findAvailableAgent({
+      ticketId: ticket.id,
       departmentId: data.department_id || null,
       metadata: data.metadata || null,
     })

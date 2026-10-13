@@ -777,3 +777,5 @@ the tables and copy the rows across before pointing Escalated at them.
 ## License
 
 MIT - Copyright (c) Escalated.dev. See [LICENSE](LICENSE).
+
+See [ticket access and routing](docs/ticket-access-and-routing.md) for optional department/account visibility, account routing and targeted SLAs.
