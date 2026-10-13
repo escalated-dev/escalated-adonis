@@ -1,3 +1,4 @@
+import { accountCondition } from '../support/ticket_access.js'
 import { DateTime } from 'luxon'
 import Automation from '../models/automation.js'
 import Ticket from '../models/ticket.js'
@@ -62,6 +63,9 @@ export default class AutomationRunner {
           break
         }
 
+        case 'account':
+          accountCondition(query, value, condition.operator ?? 'equals')
+          break
         case 'status':
           query.where('status', value)
           break
@@ -78,6 +82,9 @@ export default class AutomationRunner {
           }
           break
 
+        case 'department_id':
+          query.where('department_id', value)
+          break
         case 'ticket_type':
           query.where('ticket_type', value)
           break

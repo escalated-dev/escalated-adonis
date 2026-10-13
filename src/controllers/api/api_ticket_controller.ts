@@ -30,6 +30,8 @@ export default class ApiTicketController {
       'assigned_to',
       'unassigned',
       'department_id',
+      'account_type',
+      'account_id',
       'search',
       'sla_breached',
       'tag_ids',
@@ -387,6 +389,9 @@ export default class ApiTicketController {
     return {
       id: ticket.id,
       reference: ticket.reference,
+      ticket_type: ticket.ticketType,
+      account_type: ticket.accountType,
+      account_id: ticket.accountId,
       subject: ticket.subject,
       status: ticket.status,
       status_label: STATUS_LABELS[ticket.status as TicketStatus] ?? ticket.status,
@@ -429,6 +434,9 @@ export default class ApiTicketController {
     const data: Record<string, any> = {
       id: ticket.id,
       reference: ticket.reference,
+      ticket_type: ticket.ticketType,
+      account_type: ticket.accountType,
+      account_id: ticket.accountId,
       subject: ticket.subject,
       description: ticket.description,
       status: ticket.status,

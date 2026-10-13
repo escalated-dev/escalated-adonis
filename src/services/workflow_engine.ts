@@ -1,3 +1,4 @@
+import { normalizeAccount } from '../support/ticket_access.js'
 import { DateTime } from 'luxon'
 import Ticket from '../models/ticket.js'
 import Tag from '../models/tag.js'
@@ -9,7 +10,7 @@ import { ESCALATED_EVENTS } from '../events/index.js'
 interface Condition {
   field: string
   operator: string
-  value: string
+  value: any
 }
 
 interface ConditionGroup {
@@ -202,6 +203,15 @@ export default class WorkflowEngine {
     const field = condition.field
     const operator = condition.operator || 'equals'
     const expected = condition.value
+    if (field === 'account') {
+      const actual = normalizeAccount({ type: ticket.accountType, id: ticket.accountId })
+      if (operator === 'is_empty') return actual === null
+      if (operator === 'is_not_empty') return actual !== null
+      const account = normalizeAccount(expected)
+      if (!account) return false
+      const equal = actual?.type === account.type && actual.id === account.id
+      return operator === 'equals' ? equal : operator === 'not_equals' ? !equal : false
+    }
     const actual = this.resolveField(field, ticket)
     return this.applyOperator(operator, actual, expected)
   }

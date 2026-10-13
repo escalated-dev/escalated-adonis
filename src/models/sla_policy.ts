@@ -18,6 +18,12 @@ export default class SlaPolicy extends EscalatedBaseModel {
   declare description: string | null
 
   @column()
+  declare departmentId: number | null
+
+  @column()
+  declare ticketType: string | null
+
+  @column()
   declare isDefault: boolean
 
   @column({

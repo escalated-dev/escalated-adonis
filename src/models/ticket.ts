@@ -1,6 +1,17 @@
+import {
+  assertTicketAccess,
+  withoutTicketAccess,
+  resolveTicketAccount,
+  restrictedTicketAccess,
+  ticketUser,
+  userCanAccessTicket,
+} from '../support/ticket_access.js'
+import { escalatedDb, getConfig } from '../helpers/config.js'
 import { type DateTime } from 'luxon'
 import {
   column,
+  beforeCreate,
+  afterCreate,
   belongsTo,
   hasMany,
   hasOne,
@@ -66,6 +77,12 @@ export default class Ticket extends EscalatedBaseModel {
 
   @column()
   declare departmentId: number | null
+
+  @column()
+  declare accountType: string | null
+
+  @column()
+  declare accountId: string | null
 
   @column()
   declare slaPolicyId: number | null
@@ -203,7 +220,7 @@ export default class Ticket extends EscalatedBaseModel {
   get isLiveChat(): boolean {
     // A "live" chat ticket is one whose channel is chat and whose status
     // hasn't been resolved/closed. (The earlier check for status === 'live'
-    // referred to a non-existent TicketStatus value — chat-session liveness
+    // referred to a non-existent TicketStatus value â€” chat-session liveness
     // lives on `ChatSession.status`, not on the ticket itself.)
     return this.channel === 'chat' && this.status !== 'resolved' && this.status !== 'closed'
   }
@@ -307,16 +324,43 @@ export default class Ticket extends EscalatedBaseModel {
     return isOpenStatus(this.status)
   }
 
+  @beforeCreate()
+  static async resolveAccount(ticket: Ticket) {
+    if (
+      !ticket.accountType &&
+      !ticket.accountId &&
+      ticket.requesterType &&
+      ticket.requesterId !== null &&
+      ticket.requesterId !== undefined
+    ) {
+      const account = await resolveTicketAccount({
+        kind: 'requester',
+        type: ticket.requesterType,
+        id: ticket.requesterId,
+      })
+      ticket.accountType = account?.type ?? null
+      ticket.accountId = account ? String(account.id) : null
+    }
+  }
+
+  @afterCreate()
+  static async attachTargetedSla(ticket: Ticket) {
+    if (getConfig().targetedSlas && getConfig().sla?.enabled) {
+      const { default: SlaService } = await import('../services/sla_service.js')
+      await new SlaService().attachDefaultPolicy(ticket)
+    }
+  }
+
   static async generateReference(): Promise<string> {
     const prefix = await EscalatedSetting.get('ticket_reference_prefix', 'ESC')
-    const latest = await Ticket.query().max('id as max_id').first()
+    const latest = await withoutTicketAccess(() => Ticket.query().max('id as max_id').first())
 
     const nextId = ((latest as any)?.$extras?.max_id ?? 0) + 1
     return `${prefix}-${String(nextId).padStart(5, '0')}`
   }
 
   async isFollowedBy(userId: UserId): Promise<boolean> {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const row = await db
       .from('escalated_ticket_followers')
       .where('ticket_id', this.id)
@@ -326,8 +370,8 @@ export default class Ticket extends EscalatedBaseModel {
   }
 
   async follow(userId: UserId): Promise<void> {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
-    // Lucid's `InsertQueryBuilderContract` doesn't expose `onConflict` —
+    const db = await escalatedDb()
+    // Lucid's `InsertQueryBuilderContract` doesn't expose `onConflict` â€”
     // drop into the underlying Knex builder for the upsert-ignore.
     await db
       .knexQuery()
@@ -338,7 +382,7 @@ export default class Ticket extends EscalatedBaseModel {
   }
 
   async unfollow(userId: UserId): Promise<void> {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     await db
       .from('escalated_ticket_followers')
       .where('ticket_id', this.id)
@@ -347,7 +391,7 @@ export default class Ticket extends EscalatedBaseModel {
   }
 
   async followersCount(): Promise<number> {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const result = await db
       .from('escalated_ticket_followers')
       .where('ticket_id', this.id)
@@ -358,19 +402,26 @@ export default class Ticket extends EscalatedBaseModel {
 
   /**
    * Host-user ids following this ticket, excluding the actor and de-duplicated.
-   * Ridden along on the reply/status events so the host can notify them — the
+   * Ridden along on the reply/status events so the host can notify them â€” the
    * package has no user emails of its own. See issue #94.
    */
   async followerUserIds(excludeUserId?: UserId): Promise<UserId[]> {
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const rows = await db
       .from('escalated_ticket_followers')
       .where('ticket_id', this.id)
       .select('user_id')
-    return followerRecipients(
+    const recipients = followerRecipients(
       rows.map((row) => row.user_id as UserId),
       excludeUserId
     )
+    if (!restrictedTicketAccess()) return recipients
+    const allowed: UserId[] = []
+    for (const id of recipients) {
+      const user = await ticketUser(id)
+      if (user && (await userCanAccessTicket(user, this))) allowed.push(id)
+    }
+    return allowed
   }
 
   /**
@@ -383,41 +434,52 @@ export default class Ticket extends EscalatedBaseModel {
     role: string | null = null,
     position?: number
   ): Promise<TicketSubjectLink> {
+    await assertTicketAccess(this)
     assertTicketSubjectTypeAllowed(subjectType)
-
-    const id = String(subjectId)
-    const existing = await TicketSubjectLink.query()
-      .where('ticket_id', this.id)
-      .where('subject_type', subjectType)
-      .where('subject_id', id)
-      .first()
-
-    if (existing) {
-      existing.role = role
-      if (position !== undefined) {
-        existing.position = position
-      }
-      await existing.save()
-      return existing
-    }
-
-    let nextPosition = position
-    if (nextPosition === undefined) {
-      const maxRow = await TicketSubjectLink.query()
+    const account =
+      !this.accountType && !this.accountId
+        ? await resolveTicketAccount({ kind: 'subject', type: subjectType, id: subjectId })
+        : null
+    const attach = async (client: any): Promise<TicketSubjectLink> => {
+      const id = String(subjectId)
+      let link = await TicketSubjectLink.query({ client })
         .where('ticket_id', this.id)
-        .max('position as max_position')
+        .where('subject_type', subjectType)
+        .where('subject_id', id)
         .first()
-      const maxPosition = Number((maxRow as any)?.$extras?.max_position ?? -1)
-      nextPosition = maxPosition + 1
+      if (link) {
+        link.role = role
+        if (position !== undefined) link.position = position
+        await link.save()
+      } else {
+        let nextPosition = position
+        if (nextPosition === undefined) {
+          const maxRow = await TicketSubjectLink.query({ client })
+            .where('ticket_id', this.id)
+            .max('position as max_position')
+            .first()
+          nextPosition = Number(maxRow?.$extras.max_position ?? -1) + 1
+        }
+        link = await TicketSubjectLink.create(
+          { ticketId: this.id, subjectType, subjectId: id, role, position: nextPosition },
+          { client }
+        )
+      }
+      if (account) {
+        await Ticket.query({ client })
+          .where('id', this.id)
+          .whereNull('account_type')
+          .whereNull('account_id')
+          .update({ accountType: account.type, accountId: String(account.id) })
+        const stored = await Ticket.query({ client }).where('id', this.id).firstOrFail()
+        this.accountType = stored.accountType
+        this.accountId = stored.accountId
+      }
+      return link
     }
-
-    return TicketSubjectLink.create({
-      ticketId: this.id,
-      subjectType,
-      subjectId: id,
-      role,
-      position: nextPosition,
-    })
+    if (this.$trx) return attach(this.$trx)
+    const db = await escalatedDb()
+    return db.transaction(attach)
   }
 
   /**

@@ -1,3 +1,4 @@
+import { restrictedTicketAccess, agentCanAccessTicket } from '../support/ticket_access.js'
 import type Ticket from '../models/ticket.js'
 import type Reply from '../models/reply.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
@@ -7,6 +8,11 @@ import type { UserId } from '../helpers/user_id_column.js'
  * Configuration for the broadcast service.
  */
 export interface BroadcastConfig {
+  /** Called for restricted payloads; the host must run canReceive immediately before each delivery. */
+  deliverAuthorized?: (
+    payload: BroadcastPayload,
+    canReceive: (userId: UserId) => Promise<boolean>
+  ) => void | Promise<void>
   enabled: boolean
   driver: 'transmit' | 'ws' | 'custom'
   events: {
@@ -148,7 +154,7 @@ export default class BroadcastService {
         authorize: async (user: any) => {
           const isAgent = await authConfig.isAgent(user)
           const isAdmin = await authConfig.isAdmin(user)
-          return isAgent || isAdmin
+          return isAdmin || (isAgent && !restrictedTicketAccess())
         },
       },
       {
@@ -156,7 +162,7 @@ export default class BroadcastService {
         authorize: async (user: any) => {
           const isAgent = await authConfig.isAgent(user)
           const isAdmin = await authConfig.isAdmin(user)
-          return isAgent || isAdmin
+          return isAdmin || (isAgent && !restrictedTicketAccess())
         },
       },
       {
@@ -164,7 +170,7 @@ export default class BroadcastService {
         authorize: async (user: any) => {
           const isAgent = await authConfig.isAgent(user)
           const isAdmin = await authConfig.isAdmin(user)
-          return isAgent || isAdmin
+          return isAdmin || (isAgent && !restrictedTicketAccess())
         },
       },
       {
@@ -312,7 +318,16 @@ export default class BroadcastService {
    * Dispatch a broadcast event to the configured transport.
    */
   protected async broadcast(channel: string, event: string, data: Record<string, any>) {
-    if (!this.config.enabled || !this.transport) return
-    await this.transport(channel, event, data)
+    if (!this.config.enabled) return
+    if (restrictedTicketAccess()) {
+      const ticketId = data.ticket_id ?? data.id
+      if (ticketId && this.config.deliverAuthorized) {
+        await this.config.deliverAuthorized(this.buildPayload(channel, event, data), (userId) =>
+          agentCanAccessTicket(userId, { id: ticketId })
+        )
+      }
+      return
+    }
+    if (this.transport) await this.transport(channel, event, data)
   }
 }

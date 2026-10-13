@@ -1,3 +1,4 @@
+import { accountCondition } from '../support/ticket_access.js'
 import { DateTime } from 'luxon'
 import Ticket from '../models/ticket.js'
 import EscalationRule from '../models/escalation_rule.js'
@@ -51,6 +52,9 @@ export default class EscalationService {
       const value = condition.value
 
       switch (field) {
+        case 'account':
+          accountCondition(query, value, condition.operator ?? 'equals')
+          break
         case 'status':
           query.where('status', value)
           break
@@ -86,6 +90,9 @@ export default class EscalationService {
           query.where((q) => {
             q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
           })
+          break
+        case 'ticket_type':
+          query.where('ticket_type', value)
           break
         case 'department_id':
           query.where('department_id', value)

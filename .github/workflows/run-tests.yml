@@ -51,3 +51,38 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  access-databases:
+    name: Ticket access - ${{ matrix.database }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database: [mysql, postgres]
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: mysql
+          MYSQL_DATABASE: escalated_access
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=15
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: escalated_access
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=5s --health-timeout=5s --health-retries=15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: node --import=tsx bin/test.ts --files=tests/integration/ticket_access_migration.spec.ts
+        env:
+          ESCALATED_TEST_DATABASE_URL: ${{ matrix.database == 'mysql' && 'mysql://root:mysql@localhost:3306/escalated_access' || 'postgres://postgres:postgres@localhost:5432/escalated_access' }}

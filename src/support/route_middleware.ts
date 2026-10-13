@@ -28,6 +28,7 @@ export type ConfiguredMiddleware = string | MiddlewareFn | ParsedNamedMiddleware
 /** Escalated's own middleware, as references a route can run. */
 export function escalatedMiddleware(router: Router) {
   return router.named({
+    ticketAccess: () => import('../middleware/ticket_access.js'),
     ensureIsAgent: () => import('../middleware/ensure_is_agent.js'),
     ensureIsAdmin: () => import('../middleware/ensure_is_admin.js'),
     ensureNewslettersEnabled: () => import('../middleware/ensure_newsletters_enabled.js'),

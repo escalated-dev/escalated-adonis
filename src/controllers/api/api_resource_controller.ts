@@ -1,3 +1,5 @@
+import Ticket from '../../models/ticket.js'
+import { agentCanAccessTicket } from '../../support/ticket_access.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import Department from '../../models/department.js'
 import Tag from '../../models/tag.js'
@@ -9,8 +11,15 @@ export default class ApiResourceController {
    * GET /agents — List all users who are agents or admins
    */
   async agents(ctx: HttpContext) {
-    const agents = await this.getAgents()
-
+    let agents = await this.getAgents()
+    const ticketId = ctx.request.input('ticket_id')
+    if (ticketId) {
+      const ticket = await Ticket.findOrFail(ticketId)
+      const eligibility = await Promise.all(
+        agents.map((agent) => agentCanAccessTicket(agent.id, ticket))
+      )
+      agents = agents.filter((_agent, index) => eligibility[index])
+    }
     return ctx.response.json({
       data: agents.map((a) => ({
         id: a.id,

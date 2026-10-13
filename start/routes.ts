@@ -137,7 +137,7 @@ function registerCoreRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/widget`)
-    .use([middleware.apiRateLimit()])
+    .use([middleware.apiRateLimit(), middleware.ticketAccess()])
 
   // ---- Widget Chat Routes (no auth, rate-limited) ----
   router
@@ -164,7 +164,7 @@ function registerCoreRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/widget/chat`)
-    .use([middleware.apiRateLimit()])
+    .use([middleware.apiRateLimit(), middleware.ticketAccess()])
 
   // ---- API Routes ----
   if ((config as any).api?.enabled) {
@@ -219,7 +219,7 @@ async function registerUiRoutes(config: any) {
         .use([middleware.resolveTicket()])
     })
     .prefix(prefix)
-    .use(authMiddleware)
+    .use([...authMiddleware, middleware.ticketAccess()])
 
   // ---- Agent Routes ----
   router
@@ -304,7 +304,7 @@ async function registerUiRoutes(config: any) {
         .use([middleware.resolveTicket()])
     })
     .prefix(`${prefix}/agent`)
-    .use([...adminMiddleware, middleware.ensureIsAgent()])
+    .use([...adminMiddleware, middleware.ensureIsAgent(), middleware.ticketAccess()])
 
   // ---- Agent Chat Routes ----
   router
@@ -321,7 +321,7 @@ async function registerUiRoutes(config: any) {
       router.post('/:id/typing', [ChatController, 'typing']).as('escalated.agent.chats.typing')
     })
     .prefix(`${prefix}/agent/chats`)
-    .use([...adminMiddleware, middleware.ensureIsAgent()])
+    .use([...adminMiddleware, middleware.ensureIsAgent(), middleware.ticketAccess()])
 
   // ---- Admin Routes ----
   router
@@ -749,7 +749,7 @@ async function registerUiRoutes(config: any) {
       }
     })
     .prefix(`${prefix}/admin`)
-    .use([...adminMiddleware, middleware.ensureIsAdmin()])
+    .use([...adminMiddleware, middleware.ensureIsAdmin(), middleware.ticketAccess()])
 
   // ---- Two-Factor Challenge (post-login, auth-only) ----
   router
@@ -762,7 +762,7 @@ async function registerUiRoutes(config: any) {
         .as('escalated.two-factor.verify')
     })
     .prefix(prefix)
-    .use(authMiddleware)
+    .use([...authMiddleware, middleware.ticketAccess()])
 
   // ---- Guest Routes (no auth) ----
   // Ticket creation and replies are rate-limited per client IP (see
@@ -790,6 +790,7 @@ async function registerUiRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/guest`)
+    .use([middleware.ticketAccess()])
 }
 
 /**
@@ -997,7 +998,11 @@ export function registerApiRoutes(config: any) {
         .as('escalated.api.realtime')
     })
     .prefix(apiPrefix)
-    .use([middleware.authenticateApiToken({ ability: 'agent' }), middleware.apiRateLimit()])
+    .use([
+      middleware.authenticateApiToken({ ability: 'agent' }),
+      middleware.apiRateLimit(),
+      middleware.ticketAccess(),
+    ])
 
   // Admin API: the token needs the `admin` ability, and its owner must be an
   // admin. The token is checked before the ticket is looked up.
@@ -1009,7 +1014,11 @@ export function registerApiRoutes(config: any) {
         .use([middleware.resolveTicket()])
     })
     .prefix(apiPrefix)
-    .use([middleware.authenticateApiToken({ ability: 'admin' }), middleware.apiRateLimit()])
+    .use([
+      middleware.authenticateApiToken({ ability: 'admin' }),
+      middleware.apiRateLimit(),
+      middleware.ticketAccess(),
+    ])
 
   // Public auth endpoints — credentials/token handling is delegated to host
   // callbacks (config.apiAuth.*), so these skip the API-token middleware.
@@ -1025,5 +1034,5 @@ export function registerApiRoutes(config: any) {
       router.patch('/auth/profile', [ApiAuthController, 'profile']).as('escalated.api.auth.profile')
     })
     .prefix(apiPrefix)
-    .use([middleware.apiRateLimit()])
+    .use([middleware.apiRateLimit(), middleware.ticketAccess()])
 }

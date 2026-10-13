@@ -9,7 +9,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { defineConfig as defineDatabaseConfig } from '@adonisjs/lucid'
 import { defineConfig as defineSessionConfig } from '@adonisjs/session'
-import type { TestUser } from '../fixtures/user.js'
+import User, { type TestUser } from '../fixtures/user.js'
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +44,7 @@ export const TEST_USER_HEADER = 'x-test-user-id'
 
 class InertiaStandIn {
   async handle(ctx: HttpContext, next: NextFn) {
+    ;(ctx as any).auth = { user: await User.find(ctx.request.header(TEST_USER_HEADER) ?? '') }
     ;(ctx as any).inertia = {
       render: (component: string, props: Record<string, unknown> = {}) =>
         ctx.response.json({ component, props, flash: ctx.session.flashMessages.all() }),

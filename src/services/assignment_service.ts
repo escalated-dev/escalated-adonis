@@ -1,3 +1,5 @@
+import { assertTicketAccess, agentCanAccessTicket } from '../support/ticket_access.js'
+import { escalatedDb } from '../helpers/config.js'
 import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
 import TicketActivity from '../models/ticket_activity.js'
@@ -10,6 +12,9 @@ export default class AssignmentService {
    * Assign a ticket to an agent.
    */
   async assign(ticket: Ticket, agentId: UserId, causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
+    if (!(await agentCanAccessTicket(agentId, ticket)))
+      throw Object.assign(new Error('Agent cannot access this ticket'), { status: 403 })
     ticket.assignedTo = agentId
     await ticket.save()
 
@@ -34,6 +39,7 @@ export default class AssignmentService {
    * Unassign a ticket.
    */
   async unassign(ticket: Ticket, causer?: any): Promise<Ticket> {
+    await assertTicketAccess(ticket)
     const previousAgentId = ticket.assignedTo
     ticket.assignedTo = null
     await ticket.save()
@@ -65,7 +71,7 @@ export default class AssignmentService {
     const department = await Department.find(ticket.departmentId)
     if (!department) return null
 
-    const { default: db } = await import('@adonisjs/lucid/services/db')
+    const db = await escalatedDb()
     const agentRows = await db
       .from('escalated_department_agent')
       .where('department_id', department.id)
@@ -74,10 +80,11 @@ export default class AssignmentService {
     if (agentRows.length === 0) return null
 
     // Find the agent with least open tickets
-    let bestAgentId = agentRows[0].agent_id
+    let bestAgentId: UserId | null = null
     let minCount = Infinity
 
     for (const row of agentRows) {
+      if (!(await agentCanAccessTicket(row.agent_id, ticket))) continue
       const count = await Ticket.query()
         .where('assigned_to', row.agent_id)
         .whereNotIn('status', ['resolved', 'closed'])
@@ -90,7 +97,7 @@ export default class AssignmentService {
       }
     }
 
-    return this.assign(ticket, bestAgentId)
+    return bestAgentId === null ? null : this.assign(ticket, bestAgentId)
   }
 
   /**

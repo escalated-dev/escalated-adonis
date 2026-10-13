@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add opt-in department/account ticket visibility across web, API, widget, reports and bulk paths, with account resolvers, account/type rule conditions and targeted SLA policies.
+
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
