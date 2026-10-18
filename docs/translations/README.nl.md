@@ -18,22 +18,22 @@
 # Escalated for AdonisJS
 
 [![Tests](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml/badge.svg)](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml)
-[![AdonisJS](https://img.shields.io/badge/adonisjs-v6-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
+[![AdonisJS](https://img.shields.io/badge/adonisjs-v7-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Een volledig uitgerust, inbedbaar support-ticketsysteem voor AdonisJS v6. Voeg het toe aan elke app — krijg een complete helpdesk met SLA-tracking, escalatieregels, agent-workflows en een klantenportaal. Geen externe diensten vereist.
+Een volledig uitgerust, inbedbaar support-ticketsysteem voor AdonisJS v7. Voeg het toe aan elke app — krijg een complete helpdesk met SLA-tracking, escalatieregels, agent-workflows en een klantenportaal. Geen externe diensten vereist.
 
 > **[escalated.dev](https://escalated.dev)** — Meer informatie, bekijk demo's en vergelijk Cloud- met Self-Hosted-opties.
 
 ## Vereisten
 
-- AdonisJS v6 (Core ^6.0)
-- @adonisjs/lucid ^21.0
-- @adonisjs/auth ^9.0
-- @adonisjs/inertia ^1.0
-- @adonisjs/drive ^3.0 (for file attachments)
-- @adonisjs/mail ^9.0 (optional, for notifications)
-- Node.js 20+
+- AdonisJS v7 (Core ^7.0)
+- @adonisjs/lucid ^22.0
+- @adonisjs/auth ^10.0
+- @adonisjs/inertia ^4.0 || ^5.0
+- @adonisjs/drive ^4.0 (for file attachments)
+- @adonisjs/mail ^10.0
+- Node.js 24+
 
 ## Installatie
 
@@ -508,7 +508,7 @@ export default definePlugin({
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer-pakket
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails-engine
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Herbruikbare Django-app
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6-pakket (u bent hier)
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v7-pakket (u bent hier)
 - **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3 admin-paneel-plugin
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UI-componenten
 
