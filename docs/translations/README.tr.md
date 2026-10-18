@@ -18,22 +18,22 @@
 # Escalated for AdonisJS
 
 [![Tests](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml/badge.svg)](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml)
-[![AdonisJS](https://img.shields.io/badge/adonisjs-v6-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
+[![AdonisJS](https://img.shields.io/badge/adonisjs-v7-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-AdonisJS v6 için tam özellikli, gömülebilir bir destek talep sistemi. Herhangi bir uygulamaya ekleyin — SLA takibi, eskalasyon kuralları, temsilci iş akışları ve müşteri portalı ile eksiksiz bir yardım masası elde edin. Harici hizmetler gerekmez.
+AdonisJS v7 için tam özellikli, gömülebilir bir destek talep sistemi. Herhangi bir uygulamaya ekleyin — SLA takibi, eskalasyon kuralları, temsilci iş akışları ve müşteri portalı ile eksiksiz bir yardım masası elde edin. Harici hizmetler gerekmez.
 
 > **[escalated.dev](https://escalated.dev)** — Daha fazla bilgi edinin, demoları görüntüleyin ve Bulut ile Kendi Sunucunuzda seçeneklerini karşılaştırın.
 
 ## Gereksinimler
 
-- AdonisJS v6 (Core ^6.0)
-- @adonisjs/lucid ^21.0
-- @adonisjs/auth ^9.0
-- @adonisjs/inertia ^1.0
-- @adonisjs/drive ^3.0 (for file attachments)
-- @adonisjs/mail ^9.0 (optional, for notifications)
-- Node.js 20+
+- AdonisJS v7 (Core ^7.0)
+- @adonisjs/lucid ^22.0
+- @adonisjs/auth ^10.0
+- @adonisjs/inertia ^4.0 || ^5.0
+- @adonisjs/drive ^4.0 (for file attachments)
+- @adonisjs/mail ^10.0
+- Node.js 24+
 
 ## Kurulum
 
@@ -508,7 +508,7 @@ export default definePlugin({
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Laravel Composer paketi
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Ruby on Rails motoru
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — Yeniden kullanılabilir Django uygulaması
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v6 paketi (buradasınız)
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — AdonisJS v7 paketi (buradasınız)
 - **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Filament v3 yönetim paneli eklentisi
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Vue 3 + Inertia.js UI bileşenleri
 

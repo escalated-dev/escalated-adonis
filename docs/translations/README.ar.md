@@ -18,22 +18,22 @@
 # Escalated for AdonisJS
 
 [![Tests](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml/badge.svg)](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml)
-[![AdonisJS](https://img.shields.io/badge/adonisjs-v6-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
+[![AdonisJS](https://img.shields.io/badge/adonisjs-v7-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-نظام تذاكر دعم متكامل وقابل للتضمين في AdonisJS v6. أضفه إلى أي تطبيق — واحصل على مكتب مساعدة كامل مع تتبع SLA وقواعد التصعيد وسير عمل الوكلاء وبوابة العملاء. لا حاجة لخدمات خارجية.
+نظام تذاكر دعم متكامل وقابل للتضمين في AdonisJS v7. أضفه إلى أي تطبيق — واحصل على مكتب مساعدة كامل مع تتبع SLA وقواعد التصعيد وسير عمل الوكلاء وبوابة العملاء. لا حاجة لخدمات خارجية.
 
 > **[escalated.dev](https://escalated.dev)** — اعرف المزيد، شاهد العروض التوضيحية، وقارن بين خيارات السحابة والاستضافة الذاتية.
 
 ## المتطلبات
 
-- AdonisJS v6 (Core ^6.0)
-- @adonisjs/lucid ^21.0
-- @adonisjs/auth ^9.0
-- @adonisjs/inertia ^1.0
-- @adonisjs/drive ^3.0 (for file attachments)
-- @adonisjs/mail ^9.0 (optional, for notifications)
-- Node.js 20+
+- AdonisJS v7 (Core ^7.0)
+- @adonisjs/lucid ^22.0
+- @adonisjs/auth ^10.0
+- @adonisjs/inertia ^4.0 || ^5.0
+- @adonisjs/drive ^4.0 (for file attachments)
+- @adonisjs/mail ^10.0
+- Node.js 24+
 
 ## التثبيت
 
@@ -508,7 +508,7 @@ export default definePlugin({
 - **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — حزمة Laravel Composer
 - **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — محرك Ruby on Rails
 - **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — تطبيق Django قابل لإعادة الاستخدام
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — حزمة AdonisJS v6 (أنت هنا)
+- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — حزمة AdonisJS v7 (أنت هنا)
 - **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — إضافة لوحة إدارة Filament v3
 - **[Shared Frontend](https://github.com/escalated-dev/escalated)** — مكونات واجهة المستخدم Vue 3 + Inertia.js
 

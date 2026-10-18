@@ -31,9 +31,9 @@ A full-featured, embeddable support ticket system for AdonisJS v7. Drop it into 
 - AdonisJS v7 (Core ^7.0)
 - @adonisjs/lucid ^22.0
 - @adonisjs/auth ^10.0
-- @adonisjs/inertia ^4.0
+- @adonisjs/inertia ^4.0 || ^5.0
 - @adonisjs/drive ^4.0 (for file attachments)
-- @adonisjs/mail ^10.0 (optional, for notifications)
+- @adonisjs/mail ^10.0
 - Node.js 24+
 
 ## Installation
@@ -773,6 +773,25 @@ node ace migration:run --connection=support
 
 Setting `connection` on an existing install does not move existing data. Migrate
 the tables and copy the rows across before pointing Escalated at them.
+
+## Development
+
+Use a current patched release of Node 24 or newer (`.nvmrc` selects Node 24.x).
+Install the committed dependency graph with its engine and peer checks enabled:
+
+```bash
+npm ci
+npm test
+npm run lint
+npm run format:check
+npm audit
+```
+
+`npm test` first builds the package, then runs the Node and Japa suites. CI tests
+the minimum Node 24 release, Node 25 and Node 26, plus the ticket-access migration
+against MySQL and PostgreSQL. See [dependency security](docs/dependency-security.md)
+for the rejected Nodemailer major upgrade and the remaining upstream advisories
+reported by the full audit.
 
 ## License
 
