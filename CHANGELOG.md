@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## [Unreleased]
+
+## [0.7.1] - 2026-10-19
 
 ### Changed
 - The bundled widget is now `@escalated-dev/escalated` 0.12.2. It hides its Check Status tab when `/config` returns `status_lookup_enabled: false`.
@@ -11,7 +13,6 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
 
 ## [0.7.0] - 2026-10-08
 
