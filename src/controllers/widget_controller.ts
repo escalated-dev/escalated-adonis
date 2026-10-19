@@ -6,6 +6,8 @@ import Article from '../models/article.js'
 import TicketService from '../services/ticket_service.js'
 import { sanitizeWidgetMetadata } from '../support/widget_metadata.js'
 import { WIDGET_ORIGIN } from '../support/widget_origins.js'
+import { activeDepartmentId, articleExcerpt } from '../support/widget_contract.js'
+import Department from '../models/department.js'
 
 /**
  * Public widget API controller.
@@ -20,19 +22,48 @@ export default class WidgetController {
    * GET /widget/config — Return widget configuration / branding
    */
   async config(ctx: HttpContext) {
-    const [widgetEnabled, brandName, accentColor, logoUrl, kbEnabled] = await Promise.all([
+    const [
+      widgetEnabled,
+      brandName,
+      accentColor,
+      logoUrl,
+      kbEnabled,
+      position,
+      greeting,
+      guestTicketsEnabled,
+    ] = await Promise.all([
       EscalatedSetting.getBool('widget_enabled', true),
       EscalatedSetting.get('brand_name', 'Support'),
       EscalatedSetting.get('widget_accent_color', '#3B82F6'),
       EscalatedSetting.get('widget_logo_url', null),
       EscalatedSetting.getBool('knowledge_base_enabled', false),
+      EscalatedSetting.get('widget_position', 'bottom-right'),
+      EscalatedSetting.get('widget_greeting', 'Hi there! How can we help?'),
+      EscalatedSetting.guestTicketsEnabled(),
     ])
 
     if (!widgetEnabled) {
-      return ctx.response.notFound({ error: 'Widget is disabled' })
+      return ctx.response.forbidden({ enabled: false, error: 'Widget is disabled' })
     }
 
+    const departments = await Department.query()
+      .withScopes((scopes) => scopes.active())
+      .orderBy('name', 'asc')
+      .select('id', 'name')
+
     return ctx.response.json({
+      enabled: true,
+      // Keys read by the shared widget (`@escalated-dev/escalated`).
+      color: accentColor,
+      position,
+      greeting,
+      departments: departments.map((d) => ({ id: d.id, name: d.name })),
+      kb_enabled: kbEnabled,
+      guest_tickets_enabled: guestTicketsEnabled,
+      // Ticket status needs mailbox verification, which this package does not
+      // offer, so the widget hides its status tab.
+      status_lookup_enabled: false,
+      // Keys earlier clients read.
       brand_name: brandName,
       accent_color: accentColor,
       logo_url: logoUrl,
@@ -103,13 +134,18 @@ export default class WidgetController {
       .limit(5)
       .select('id', 'title', 'slug')
 
+    const detail = {
+      ...serializeSummary(article),
+      body: article.body,
+      view_count: article.viewCount,
+      published_at: article.publishedAt?.toISO() ?? null,
+    }
+
+    // The shared widget reads the article's fields at the top level; earlier
+    // clients read them under `article`.
     return ctx.response.json({
-      article: {
-        ...serializeSummary(article),
-        body: article.body,
-        view_count: article.viewCount,
-        published_at: article.publishedAt?.toISO() ?? null,
-      },
+      ...detail,
+      article: detail,
       related: related.map((r) => ({ id: r.id, title: r.title, slug: r.slug })),
     })
   }
@@ -123,12 +159,11 @@ export default class WidgetController {
       return ctx.response.notFound({ error: 'Widget is disabled' })
     }
 
-    const data = ctx.request.only(['name', 'email', 'subject', 'description'])
+    const data = ctx.request.only(['name', 'email', 'subject', 'description', 'department_id'])
 
     if (!data.email || !data.subject || !data.description) {
-      return ctx.response.badRequest({
-        error: 'Missing required fields: email, subject, description',
-      })
+      const error = 'Missing required fields: email, subject, description'
+      return ctx.response.badRequest({ message: error, error })
     }
 
     const hostMetadata = sanitizeWidgetMetadata(
@@ -136,8 +171,10 @@ export default class WidgetController {
       (ctx as any)[WIDGET_ORIGIN] ?? null
     )
     if (!hostMetadata.valid) {
-      return ctx.response.badRequest({ error: hostMetadata.error })
+      return ctx.response.badRequest({ message: hostMetadata.error, error: hostMetadata.error })
     }
+
+    const departmentId = await activeDepartmentId(data.department_id)
 
     const { randomBytes } = await import('node:crypto')
     const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
@@ -162,12 +199,15 @@ export default class WidgetController {
       priority: 'medium',
       ticketType: 'question',
       channel: 'widget',
+      departmentId,
       metadata: { ...hostMetadata.metadata, source: 'widget' },
       slaFirstResponseBreached: false,
       slaResolutionBreached: false,
     })
 
     return ctx.response.created({
+      message: 'Ticket created successfully.',
+      reference: ticket.reference,
       ticket_reference: ticket.reference,
       guest_token: guestToken,
     })
@@ -209,6 +249,7 @@ function serializeSummary(article: Article) {
     id: article.id,
     title: article.title,
     slug: article.slug,
+    excerpt: articleExcerpt(article.body),
     category: article.category ? { id: article.category.id, name: article.category.name } : null,
   }
 }

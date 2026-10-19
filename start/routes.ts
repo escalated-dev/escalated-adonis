@@ -165,6 +165,15 @@ function registerCoreRoutes(config: any) {
         .post('/:token/message', [WidgetChatController, 'message'])
         .as('escalated.widget.chat.message')
         .where('token', /^[A-Za-z0-9]{64}$/)
+      // The shared widget polls and posts the transcript here.
+      router
+        .get('/:token/messages', [WidgetChatController, 'messages'])
+        .as('escalated.widget.chat.messages')
+        .where('token', /^[A-Za-z0-9]{64}$/)
+      router
+        .post('/:token/messages', [WidgetChatController, 'storeMessage'])
+        .as('escalated.widget.chat.messages.store')
+        .where('token', /^[A-Za-z0-9]{64}$/)
       router
         .post('/:token/typing', [WidgetChatController, 'typing'])
         .as('escalated.widget.chat.typing')
