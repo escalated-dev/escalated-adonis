@@ -4,6 +4,8 @@ import Contact from '../models/contact.js'
 import EscalatedSetting from '../models/escalated_setting.js'
 import Article from '../models/article.js'
 import TicketService from '../services/ticket_service.js'
+import { sanitizeWidgetMetadata } from '../support/widget_metadata.js'
+import { WIDGET_ORIGIN } from '../support/widget_origins.js'
 
 /**
  * Public widget API controller.
@@ -35,6 +37,8 @@ export default class WidgetController {
       accent_color: accentColor,
       logo_url: logoUrl,
       knowledge_base_enabled: kbEnabled,
+      // Widget tickets and chats store the host parameters a page sends.
+      accepts_metadata: true,
     })
   }
 
@@ -127,6 +131,14 @@ export default class WidgetController {
       })
     }
 
+    const hostMetadata = sanitizeWidgetMetadata(
+      ctx.request.input('metadata'),
+      (ctx as any)[WIDGET_ORIGIN] ?? null
+    )
+    if (!hostMetadata.valid) {
+      return ctx.response.badRequest({ error: hostMetadata.error })
+    }
+
     const { randomBytes } = await import('node:crypto')
     const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
     const guestToken = randomBytes(32).toString('hex')
@@ -150,7 +162,7 @@ export default class WidgetController {
       priority: 'medium',
       ticketType: 'question',
       channel: 'widget',
-      metadata: { source: 'widget' },
+      metadata: { ...hostMetadata.metadata, source: 'widget' },
       slaFirstResponseBreached: false,
       slaResolutionBreached: false,
     })

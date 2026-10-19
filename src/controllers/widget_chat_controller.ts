@@ -3,6 +3,8 @@ import ChatSessionService from '../services/chat_session_service.js'
 import ChatAvailabilityService from '../services/chat_availability_service.js'
 import ChatRoutingService from '../services/chat_routing_service.js'
 import Reply from '../models/reply.js'
+import { sanitizeWidgetMetadata } from '../support/widget_metadata.js'
+import { WIDGET_ORIGIN } from '../support/widget_origins.js'
 
 /**
  * Public widget chat controller.
@@ -46,20 +48,26 @@ export default class WidgetChatController {
       return ctx.response.badRequest({ error: 'message is required' })
     }
 
+    const hostMetadata = sanitizeWidgetMetadata(data.metadata, (ctx as any)[WIDGET_ORIGIN] ?? null)
+    if (!hostMetadata.valid) {
+      return ctx.response.badRequest({ error: hostMetadata.error })
+    }
+    const metadata = hostMetadata.metadata
+
     const { ticket, session, visitorToken } = await this.chatService.startChat({
       visitorName: data.name || undefined,
       visitorEmail: data.email || undefined,
       subject: data.subject || undefined,
       message: data.message,
       departmentId: data.department_id || undefined,
-      metadata: data.metadata || undefined,
+      metadata: metadata ?? undefined,
     })
 
     // Attempt auto-assignment
     const agentId = await this.routingService.findAvailableAgent({
       ticketId: ticket.id,
       departmentId: data.department_id || null,
-      metadata: data.metadata || null,
+      metadata,
     })
 
     if (agentId) {

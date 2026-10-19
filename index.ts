@@ -29,6 +29,8 @@ export * from './src/events/index.js'
 export { default as ApiToken } from './src/models/api_token.js'
 export { default as AuthenticateApiToken } from './src/middleware/authenticate_api_token.js'
 export { default as ApiRateLimit } from './src/middleware/api_rate_limit.js'
+// Embedding the widget on other sites: for shield's `csrf.exceptRoutes`.
+export { isWidgetCsrfExempt } from './src/support/widget_origins.js'
 // Two-factor authentication (TOTP + recovery codes)
 export { default as TwoFactor } from './src/models/two_factor.js'
 export { default as TwoFactorService } from './src/services/two_factor_service.js'

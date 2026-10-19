@@ -312,6 +312,23 @@ export interface EscalatedConfig {
   guestRateLimit?: GuestRateLimitConfig
 
   /**
+   * Embedding the widget on other sites. Nothing changes until an origin is
+   * listed here or in the `widget_allowed_origins` admin setting.
+   */
+  widget?: {
+    /**
+     * Sites that may embed the widget: `scheme://host[:port]` origins, or
+     * `https://*.example.com` for any subdomain. An array, or a comma
+     * separated string such as ESCALATED_WIDGET_ALLOWED_ORIGINS.
+     */
+    allowedOrigins?: string[] | string
+    /** Seconds a browser may cache a preflight answer. Default 600. */
+    preflightMaxAge?: number
+    /** Mount `{prefix}/widget/embed.js`. Default true. */
+    serveScript?: boolean
+  }
+
+  /**
    * Outbound webhooks: admin webhooks and the workflow send_webhook action.
    */
   webhooks?: {

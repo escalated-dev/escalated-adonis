@@ -61,6 +61,7 @@ const InboundEmailController = () => import('../src/controllers/inbound_email_co
 const WidgetController = () => import('../src/controllers/widget_controller.js')
 const ChatController = () => import('../src/controllers/chat_controller.js')
 const WidgetChatController = () => import('../src/controllers/widget_chat_controller.js')
+const WidgetScriptController = () => import('../src/controllers/widget_script_controller.js')
 
 // API controllers
 const ApiAuthController = () => import('../src/controllers/api/api_auth_controller.js')
@@ -119,9 +120,23 @@ function registerCoreRoutes(config: any) {
       .prefix(`${prefix}/inbound`)
   }
 
+  // ---- Widget script (any site may load it) ----
+  if ((config as any).widget?.serveScript !== false) {
+    router
+      .get(`${prefix}/widget/embed.js`, [WidgetScriptController, 'show'])
+      .as('escalated.widget.script')
+  }
+
   // ---- Widget Routes (no auth, rate-limited) ----
+  // widgetCors runs first so CORS headers reach every answer from an allowed
+  // embedding site, including 4xx and the rate limiters' 429.
   router
     .group(() => {
+      // Preflights are answered by widgetCors; this route only makes OPTIONS
+      // reach it (for the chat routes too) instead of the router's 404.
+      router
+        .route('/*', ['OPTIONS'], async ({ response }) => response.noContent())
+        .as('escalated.widget.preflight')
       router.get('/config', [WidgetController, 'config']).as('escalated.widget.config')
       router.get('/articles', [WidgetController, 'articles']).as('escalated.widget.articles')
       router
@@ -137,7 +152,7 @@ function registerCoreRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/widget`)
-    .use([middleware.apiRateLimit(), middleware.ticketAccess()])
+    .use([middleware.widgetCors(), middleware.apiRateLimit(), middleware.ticketAccess()])
 
   // ---- Widget Chat Routes (no auth, rate-limited) ----
   router
@@ -164,7 +179,7 @@ function registerCoreRoutes(config: any) {
         .where('token', /^[A-Za-z0-9]{64}$/)
     })
     .prefix(`${prefix}/widget/chat`)
-    .use([middleware.apiRateLimit(), middleware.ticketAccess()])
+    .use([middleware.widgetCors(), middleware.apiRateLimit(), middleware.ticketAccess()])
 
   // ---- API Routes ----
   if ((config as any).api?.enabled) {
