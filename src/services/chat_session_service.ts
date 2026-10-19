@@ -12,16 +12,26 @@ import type { UserId } from '../helpers/user_id_column.js'
 export default class ChatSessionService {
   /**
    * Start a new chat session, creating a ticket with channel='chat'.
+   *
+   * The opening message is optional: without one the chat starts empty and
+   * the visitor writes first through the message route.
    */
   async startChat(data: {
     visitorName?: string
     visitorEmail?: string
     visitorId?: number
     subject?: string
-    message: string
+    message?: string | null
     departmentId?: number | null
     metadata?: Record<string, any>
-  }): Promise<{ ticket: Ticket; session: ChatSession; visitorToken: string }> {
+  }): Promise<{
+    ticket: Ticket
+    session: ChatSession
+    visitorToken: string
+    firstReply: Reply | null
+  }> {
+    const message =
+      typeof data.message === 'string' && data.message.trim() !== '' ? data.message : ''
     const { randomBytes } = await import('node:crypto')
     const visitorToken = randomBytes(32).toString('hex')
     const reference = await Ticket.generateReference()
@@ -34,7 +44,7 @@ export default class ChatSessionService {
       guestEmail: data.visitorEmail ?? null,
       guestToken: data.visitorId ? null : visitorToken,
       subject: data.subject || 'Live Chat',
-      description: data.message,
+      description: message,
       status: 'open' as TicketStatus,
       priority: 'medium',
       ticketType: 'question',
@@ -54,25 +64,27 @@ export default class ChatSessionService {
       visitorToken,
       status: 'waiting' as ChatSessionStatus,
       departmentId: data.departmentId ?? null,
-      messagesCount: 1,
+      messagesCount: message ? 1 : 0,
       lastActivityAt: DateTime.now(),
       metadata: data.metadata ?? null,
     })
 
-    // Store initial message as a reply
-    await Reply.create({
-      ticketId: ticket.id,
-      authorType: data.visitorId ? 'User' : null,
-      authorId: data.visitorId ?? null,
-      body: data.message,
-      isInternalNote: false,
-      isPinned: false,
-      type: 'chat_message',
-    })
+    // Store the opening message, if any, as a reply
+    const firstReply = message
+      ? await Reply.create({
+          ticketId: ticket.id,
+          authorType: data.visitorId ? 'User' : null,
+          authorId: data.visitorId ?? null,
+          body: message,
+          isInternalNote: false,
+          isPinned: false,
+          type: 'chat_message',
+        })
+      : null
 
     await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
 
-    return { ticket, session, visitorToken }
+    return { ticket, session, visitorToken, firstReply }
   }
 
   /**

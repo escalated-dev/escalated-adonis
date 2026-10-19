@@ -3,8 +3,17 @@ import ChatSessionService from '../services/chat_session_service.js'
 import ChatAvailabilityService from '../services/chat_availability_service.js'
 import ChatRoutingService from '../services/chat_routing_service.js'
 import Reply from '../models/reply.js'
+import type ChatSession from '../models/chat_session.js'
 import { sanitizeWidgetMetadata } from '../support/widget_metadata.js'
 import { WIDGET_ORIGIN } from '../support/widget_origins.js'
+import { activeDepartmentId, isAgentReply } from '../support/widget_contract.js'
+import { getConfig } from '../helpers/config.js'
+
+/** Replies a chat transcript returns, newest kept when a chat runs longer. */
+const TRANSCRIPT_LIMIT = 100
+
+/** Name shown for an agent whose user record has no name. */
+const AGENT_FALLBACK_NAME = 'Support'
 
 /**
  * Public widget chat controller.
@@ -44,29 +53,30 @@ export default class WidgetChatController {
       'metadata',
     ])
 
-    if (!data.message) {
-      return ctx.response.badRequest({ error: 'message is required' })
+    if (data.message !== undefined && data.message !== null && typeof data.message !== 'string') {
+      return error(ctx, 'message must be text')
     }
 
     const hostMetadata = sanitizeWidgetMetadata(data.metadata, (ctx as any)[WIDGET_ORIGIN] ?? null)
     if (!hostMetadata.valid) {
-      return ctx.response.badRequest({ error: hostMetadata.error })
+      return error(ctx, hostMetadata.error)
     }
     const metadata = hostMetadata.metadata
+    const departmentId = await activeDepartmentId(data.department_id)
 
-    const { ticket, session, visitorToken } = await this.chatService.startChat({
+    const { ticket, session, visitorToken, firstReply } = await this.chatService.startChat({
       visitorName: data.name || undefined,
       visitorEmail: data.email || undefined,
       subject: data.subject || undefined,
-      message: data.message,
-      departmentId: data.department_id || undefined,
+      message: data.message ?? null,
+      departmentId,
       metadata: metadata ?? undefined,
     })
 
     // Attempt auto-assignment
     const agentId = await this.routingService.findAvailableAgent({
       ticketId: ticket.id,
-      departmentId: data.department_id || null,
+      departmentId,
       metadata,
     })
 
@@ -74,12 +84,59 @@ export default class WidgetChatController {
       await this.chatService.assignAgent(session.id, agentId)
     }
 
+    const names = new AgentNames()
+    const visitorName = guestName(session, ticket)
+
     return ctx.response.created({
+      // The shared widget addresses the chat by `id` in every chat path. It is
+      // the visitor token: random, and the only key the chat routes accept.
+      id: visitorToken,
       session_id: session.id,
       ticket_reference: ticket.reference,
       visitor_token: visitorToken,
       status: agentId ? 'active' : 'waiting',
+      messages: firstReply ? [await serializeMessage(firstReply, session, visitorName, names)] : [],
+      agent: agentId ? { name: await names.nameOf(agentId) } : null,
     })
+  }
+
+  /**
+   * GET /widget/chat/:token/messages — The chat transcript the widget polls.
+   */
+  async messages(ctx: HttpContext) {
+    const session = await this.chatService.findByVisitorToken(ctx.params.token)
+    if (!session) {
+      return notFound(ctx)
+    }
+
+    const replies = await Reply.query()
+      .where('ticket_id', session.ticketId)
+      .where('is_internal_note', false)
+      .orderBy('id', 'desc')
+      .limit(TRANSCRIPT_LIMIT)
+
+    const names = new AgentNames()
+    const visitorName = guestName(session, session.ticket)
+    const messages = []
+    for (const reply of replies.reverse()) {
+      messages.push(await serializeMessage(reply, session, visitorName, names))
+    }
+
+    return ctx.response.json({
+      messages,
+      agent: session.agentId ? { name: await names.nameOf(session.agentId) } : null,
+      // Agent typing is broadcast, not stored, so a polling widget sees none.
+      typing: null,
+      ended: session.status === 'ended' || session.status === 'abandoned',
+    })
+  }
+
+  /**
+   * POST /widget/chat/:token/messages — Send a message as a visitor (the
+   * shared widget's path; `/:token/message` is the same action).
+   */
+  async storeMessage(ctx: HttpContext) {
+    return this.message(ctx)
   }
 
   /**
@@ -90,16 +147,16 @@ export default class WidgetChatController {
     const { body } = ctx.request.only(['body'])
 
     if (!body) {
-      return ctx.response.badRequest({ error: 'body is required' })
+      return error(ctx, 'body is required')
     }
 
     const session = await this.chatService.findByVisitorToken(token)
     if (!session) {
-      return ctx.response.notFound({ error: 'Chat session not found' })
+      return notFound(ctx)
     }
 
     if (session.status === 'ended' || session.status === 'abandoned') {
-      return ctx.response.badRequest({ error: 'Chat session has ended' })
+      return error(ctx, 'Chat session has ended')
     }
 
     const reply = await this.chatService.sendMessage(
@@ -130,10 +187,15 @@ export default class WidgetChatController {
 
     const session = await this.chatService.findByVisitorToken(token)
     if (!session) {
-      return ctx.response.notFound({ error: 'Chat session not found' })
+      return notFound(ctx)
     }
 
-    const payload = this.chatService.updateTyping(session.id, session.visitorId ?? 0, !!isTyping)
+    // The shared widget posts no body: a call means "typing".
+    const payload = this.chatService.updateTyping(
+      session.id,
+      session.visitorId ?? 0,
+      isTyping === undefined ? true : !!isTyping
+    )
 
     return ctx.response.json(payload)
   }
@@ -146,11 +208,11 @@ export default class WidgetChatController {
 
     const session = await this.chatService.findByVisitorToken(token)
     if (!session) {
-      return ctx.response.notFound({ error: 'Chat session not found' })
+      return notFound(ctx)
     }
 
     if (session.status === 'ended') {
-      return ctx.response.badRequest({ error: 'Chat session already ended' })
+      return error(ctx, 'Chat session already ended')
     }
 
     await this.chatService.endChat(session.id)
@@ -166,12 +228,12 @@ export default class WidgetChatController {
     const { rating, comment } = ctx.request.only(['rating', 'comment'])
 
     if (!rating || rating < 1 || rating > 5) {
-      return ctx.response.badRequest({ error: 'rating is required (1-5)' })
+      return error(ctx, 'rating is required (1-5)')
     }
 
     const session = await this.chatService.findByVisitorToken(token)
     if (!session) {
-      return ctx.response.notFound({ error: 'Chat session not found' })
+      return notFound(ctx)
     }
 
     await this.chatService.rateChat(session.id, rating, comment)
@@ -192,5 +254,75 @@ export default class WidgetChatController {
         created_at: m.createdAt?.toISO(),
       })),
     })
+  }
+}
+
+/**
+ * A refused request: `message` is what the shared widget shows, `error` what
+ * earlier clients read.
+ */
+function error(ctx: HttpContext, message: string) {
+  return ctx.response.badRequest({ message, error: message })
+}
+
+function notFound(ctx: HttpContext) {
+  const message = 'Chat session not found'
+  return ctx.response.notFound({ message, error: message })
+}
+
+/** The visitor's name as the transcript shows it. */
+function guestName(
+  session: ChatSession,
+  ticket: { guestName?: string | null } | null | undefined
+): string {
+  return session.visitorName || ticket?.guestName || 'Visitor'
+}
+
+/** A chat message in the shape the shared widget renders. */
+async function serializeMessage(
+  reply: Reply,
+  session: ChatSession,
+  visitorName: string,
+  names: AgentNames
+) {
+  const fromAgent = isAgentReply(reply, session)
+  return {
+    id: reply.id,
+    body: reply.body,
+    is_agent: fromAgent,
+    author: { name: fromAgent ? await names.nameOf(reply.authorId) : visitorName },
+    author_type: reply.authorType,
+    created_at: reply.createdAt?.toISO() ?? null,
+  }
+}
+
+/**
+ * Looks agents' names up in the host's user model (`config.userModel`), once
+ * per user per request.
+ */
+class AgentNames {
+  protected cache = new Map<string, Promise<string>>()
+
+  nameOf(userId: unknown): Promise<string> {
+    const key = String(userId)
+    let name = this.cache.get(key)
+    if (!name) {
+      name = this.lookup(userId)
+      this.cache.set(key, name)
+    }
+    return name
+  }
+
+  protected async lookup(userId: unknown): Promise<string> {
+    if (userId === null || userId === undefined) return AGENT_FALLBACK_NAME
+    try {
+      const userModelPath = (getConfig() as any).userModel ?? '#models/user'
+      const { default: UserModel } = await import(userModelPath)
+      const user = await UserModel.find(userId)
+      const name = user?.name ?? user?.fullName ?? user?.full_name
+      return typeof name === 'string' && name.trim() !== '' ? name : AGENT_FALLBACK_NAME
+    } catch {
+      return AGENT_FALLBACK_NAME
+    }
   }
 }

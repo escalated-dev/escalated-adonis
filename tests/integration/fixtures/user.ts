@@ -19,6 +19,11 @@ export default class User implements TestUser {
     this.role = role
   }
 
+  /** Read where a person is shown by name, such as the widget's chat transcript. */
+  get name(): string {
+    return `${this.role[0].toUpperCase()}${this.role.slice(1)} ${this.id}`
+  }
+
   /** Read by inbound email, which compares a sender to the requester's address. */
   get email(): string {
     return `user${this.id}@example.test`
