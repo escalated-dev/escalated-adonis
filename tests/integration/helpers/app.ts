@@ -10,6 +10,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import { defineConfig as defineDatabaseConfig } from '@adonisjs/lucid'
 import { defineConfig as defineSessionConfig } from '@adonisjs/session'
 import User, { type TestUser } from '../fixtures/user.js'
+import { isWidgetCsrfExempt } from '../../../src/support/widget_origins.js'
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +49,31 @@ class InertiaStandIn {
     ;(ctx as any).inertia = {
       render: (component: string, props: Record<string, unknown> = {}) =>
         ctx.response.json({ component, props, flash: ctx.session.flashMessages.all() }),
+    }
+    return next()
+  }
+}
+
+/**
+ * Plays `@adonisjs/shield`'s CSRF guard, configured the way the embedding guide
+ * tells a host to: `csrf.exceptRoutes: (ctx) => isWidgetCsrfExempt(ctx)`. Like
+ * shield 9 it calls a function `exceptRoutes` with the context, then refuses a
+ * state-changing request without a valid token with 403.
+ *
+ * Off unless a spec sets `globalThis.__escalated_test_csrf`, so suites that
+ * post forms without tokens are unaffected.
+ */
+class CsrfStandIn {
+  async handle(ctx: HttpContext, next: NextFn) {
+    if (!(globalThis as any).__escalated_test_csrf) return next()
+    if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(ctx.request.method())) return next()
+
+    const exceptRoutes = (context: HttpContext) => isWidgetCsrfExempt(context)
+    if (exceptRoutes(ctx)) return next()
+
+    const token = ctx.request.header('x-csrf-token')
+    if (!token || token !== ctx.session.get('csrf-secret')) {
+      return ctx.response.forbidden({ error: 'Invalid or expired CSRF token' })
     }
     return next()
   }
@@ -153,6 +179,7 @@ async function boot() {
         () => import('@adonisjs/core/bodyparser_middleware'),
         () => import('@adonisjs/session/session_middleware'),
         async () => ({ default: InertiaStandIn }) as any,
+        async () => ({ default: CsrfStandIn }) as any,
       ])
     })
     .create(new URL('../../../', import.meta.url), {

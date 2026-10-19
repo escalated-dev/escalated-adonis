@@ -184,6 +184,26 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | Embedding the Widget on Other Sites
+  |--------------------------------------------------------------------------
+  |
+  | Sites that may load the widget from {prefix}/widget/embed.js and call the
+  | widget routes from the browser. Entries are origins, scheme://host[:port],
+  | or https://*.example.com for any subdomain. Admins can add more under
+  | Admin > Settings (`widget_allowed_origins`); both lists are combined.
+  | Nothing changes until an origin is listed. With @adonisjs/shield, also
+  | set `csrf.exceptRoutes: (ctx) => isWidgetCsrfExempt(ctx)` (see
+  | docs/embedding-the-widget.md).
+  |
+  */
+  widget: {
+    allowedOrigins: process.env.ESCALATED_WIDGET_ALLOWED_ORIGINS ?? '',
+    preflightMaxAge: 600,
+    serveScript: true,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Storage (Attachments)
   |--------------------------------------------------------------------------
   */

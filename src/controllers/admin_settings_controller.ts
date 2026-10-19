@@ -5,6 +5,7 @@ import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
+import { invalidOriginEntries, rememberWidgetOriginSetting } from '../support/widget_origins.js'
 
 export default class AdminSettingsController {
   async index(ctx: HttpContext) {
@@ -35,6 +36,7 @@ export default class AdminSettingsController {
       'imap_password',
       'imap_mailbox',
       'show_powered_by',
+      'widget_allowed_origins',
     ])
 
     const sensitiveKeys = ['mailgun_signing_key', 'postmark_inbound_token', 'imap_password']
@@ -43,6 +45,19 @@ export default class AdminSettingsController {
     if (data.ticket_reference_prefix !== undefined && !this.isValidTicketReferencePrefix(prefix)) {
       session.flash('error', 'Ticket reference prefix cannot contain hyphens.')
       return response.redirect().back()
+    }
+
+    if (data.widget_allowed_origins !== undefined && data.widget_allowed_origins !== null) {
+      const invalid = invalidOriginEntries(String(data.widget_allowed_origins))
+      if (invalid.length > 0) {
+        session.flash(
+          'error',
+          `Sites that can embed the widget must be origins such as https://shop.example.com ` +
+            `or https://*.example.com, without a path. Not valid: ${invalid.join(', ')}`
+        )
+        return response.redirect().back()
+      }
+      data.widget_allowed_origins = String(data.widget_allowed_origins).trim()
     }
 
     const changed: Record<string, any> = {}
@@ -57,6 +72,10 @@ export default class AdminSettingsController {
       await EscalatedSetting.set(key, strValue)
       // Record which keys changed; redact secret values from the audit trail.
       changed[key] = sensitiveKeys.includes(key) ? '[redacted]' : strValue
+    }
+
+    if ('widget_allowed_origins' in changed) {
+      rememberWidgetOriginSetting(changed.widget_allowed_origins)
     }
 
     await AuditService.fromContext({ auth, request }, AUDIT_ACTIONS.SETTINGS_UPDATED, {
@@ -82,6 +101,7 @@ export default class AdminSettingsController {
       max_attachment_size_kb: await EscalatedSetting.getInt('max_attachment_size_kb', 10240),
       ticket_reference_prefix: await EscalatedSetting.get('ticket_reference_prefix', 'ESC'),
       show_powered_by: await EscalatedSetting.getBool('show_powered_by', true),
+      widget_allowed_origins: (await EscalatedSetting.get('widget_allowed_origins', '')) ?? '',
       inbound_email_enabled: await EscalatedSetting.getBool(
         'inbound_email_enabled',
         config.inboundEmail?.enabled ?? false

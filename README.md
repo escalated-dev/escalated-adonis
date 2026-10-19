@@ -248,7 +248,7 @@ commands: [
 - **Ticket Splitting:** Split a reply into a new standalone ticket while preserving the original context
 - **Ticket Snooze:** Snooze tickets with presets (1h, 4h, tomorrow, next week); `node ace escalated:wake-snoozed-tickets` Ace command auto-wakes them on schedule
 - **Saved Views / Custom Queues:** Save, name, and share filter presets as reusable ticket views
-- **Embeddable Support Widget:** Lightweight `<script>` widget with KB search, ticket form, and status check
+- **Embeddable Support Widget:** Lightweight `<script>` widget with KB search, ticket form, and status check, served at `{prefix}/widget/embed.js` and embeddable on the sites you list; see [embedding the widget](docs/embedding-the-widget.md)
 - **Email Threading:** Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
 - **Branded Email Templates:** Configurable logo, primary color, and footer text for all outbound emails
 - **Real-time Broadcasting:** Opt-in broadcasting via AdonisJS Transmit with automatic polling fallback

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add cross-origin widget embedding. List the sites that may embed the widget in `widget.allowedOrigins` (`ESCALATED_WIDGET_ALLOWED_ORIGINS`) or the `widget_allowed_origins` admin setting; their requests to the widget routes get CORS headers (including on 4xx and 429), run as guests, and can skip shield's CSRF check through `isWidgetCsrfExempt` in `csrf.exceptRoutes`. Widget tickets and live chats store sanitised host `metadata` (with `embedded_on` set from the Origin), `/widget/config` returns `accepts_metadata: true`, and `{prefix}/widget/embed.js` serves the standalone widget bundle. Nothing changes until an origin is listed. See `docs/embedding-the-widget.md`.
 - Add opt-in department/account ticket visibility across web, API, widget, reports and bulk paths, with account resolvers, account/type rule conditions and targeted SLA policies.
 
 All notable changes to this project will be documented in this file.

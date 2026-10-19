@@ -30,6 +30,8 @@ copyTree(
   'resources/views/newsletter_themes',
   'newsletter_themes'
 )
+// The standalone widget bundle served at {prefix}/widget/embed.js.
+copyTree('resources/widget', 'resources/widget', 'widget bundle')
 
 // The commands loader (build/src/commands/main.js) reads its index at runtime.
 mkdirSync(join(BUILD, 'src/commands'), { recursive: true })
