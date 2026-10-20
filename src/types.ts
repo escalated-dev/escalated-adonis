@@ -206,7 +206,12 @@ export interface EscalatedConfig {
 
   locale?: string
 
-  userModel: string
+  /**
+   * The host's user model: an import specifier resolved through the host's
+   * import map (`'#models/user'`), the class itself, or a loader such as
+   * `() => import('#models/user')`. See src/support/user_model.ts.
+   */
+  userModel: import('./support/user_model.js').UserModelReference
 
   hosted: {
     apiUrl: string

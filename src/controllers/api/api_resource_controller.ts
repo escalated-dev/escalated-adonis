@@ -5,6 +5,7 @@ import Department from '../../models/department.js'
 import Tag from '../../models/tag.js'
 import CannedResponse from '../../models/canned_response.js'
 import Macro from '../../models/macro.js'
+import { resolveUserModel } from '../../support/user_model.js'
 
 export default class ApiResourceController {
   /**
@@ -114,8 +115,7 @@ export default class ApiResourceController {
   protected async getAgents(): Promise<{ id: number; name: string; email: string }[]> {
     const config = (globalThis as any).__escalated_config
     try {
-      const userModelPath = config?.userModel ?? '#models/user'
-      const { default: UserModel } = await import(userModelPath)
+      const UserModel = await resolveUserModel()
       const users = await UserModel.all()
 
       const agents: { id: number; name: string; email: string }[] = []

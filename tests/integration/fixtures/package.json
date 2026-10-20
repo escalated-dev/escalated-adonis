@@ -1,0 +1,9 @@
+{
+  "name": "escalated-integration-host",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#models/*": "./*.ts",
+    "#start/*": "./*.ts"
+  }
+}

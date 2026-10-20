@@ -38,6 +38,11 @@ const escalatedConfig: EscalatedConfig = {
   |--------------------------------------------------------------------------
   | User Model
   |--------------------------------------------------------------------------
+  |
+  | An alias in this app's package.json imports, resolved through the app's
+  | importer. The model class or a loader (`() => import('#models/user')`)
+  | works too.
+  |
   */
   userModel: '#models/user',
 

@@ -38,6 +38,7 @@ import type {
   User,
 } from '@escalated-dev/plugin-sdk'
 import PluginStoreRecord from '../models/plugin_store_record.js'
+import { resolveUserModel } from '../support/user_model.js'
 
 export default class NativeContext implements PluginContext {
   readonly config: ConfigStore
@@ -450,30 +451,7 @@ export default class NativeContext implements PluginContext {
   // ---------------------------------------------------------------------------
 
   private buildContactRepository(): ContactRepository {
-    const getModel = async () => {
-      const config: any = (globalThis as any).__escalated_config ?? {}
-      const modelName: string = config.userModel ?? 'User'
-      // Dynamic import of the host application's user model
-      try {
-        const mod = await import(`#models/${modelName.toLowerCase()}`)
-        return mod.default
-      } catch {
-        // Fallback: try common AdonisJS paths
-        const paths = [
-          `${process.cwd()}/app/models/${modelName.toLowerCase()}.js`,
-          `${process.cwd()}/app/models/user.js`,
-        ]
-        for (const p of paths) {
-          try {
-            const { default: M } = await import(`file:///${p.replace(/\\/g, '/')}`)
-            return M
-          } catch {
-            // continue
-          }
-        }
-        throw new Error(`[Escalated Bridge] Could not resolve user model "${modelName}"`)
-      }
-    }
+    const getModel = () => resolveUserModel()
 
     return {
       async find(id): Promise<Contact | null> {
@@ -547,28 +525,7 @@ export default class NativeContext implements PluginContext {
   // ---------------------------------------------------------------------------
 
   private buildAgentRepository(): AgentRepository {
-    const getModel = async () => {
-      const config: any = (globalThis as any).__escalated_config ?? {}
-      const modelName: string = config.userModel ?? 'User'
-      try {
-        const mod = await import(`#models/${modelName.toLowerCase()}`)
-        return mod.default
-      } catch {
-        const paths = [
-          `${process.cwd()}/app/models/${modelName.toLowerCase()}.js`,
-          `${process.cwd()}/app/models/user.js`,
-        ]
-        for (const p of paths) {
-          try {
-            const { default: M } = await import(`file:///${p.replace(/\\/g, '/')}`)
-            return M
-          } catch {
-            // continue
-          }
-        }
-        throw new Error(`[Escalated Bridge] Could not resolve user model "${modelName}"`)
-      }
-    }
+    const getModel = () => resolveUserModel()
 
     return {
       async all(): Promise<Agent[]> {

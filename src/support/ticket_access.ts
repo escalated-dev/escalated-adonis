@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { ModelQueryBuilder } from '@adonisjs/lucid/orm'
 import { DatabaseQueryBuilder } from '@adonisjs/lucid/database'
 import { getConfig } from '../helpers/config.js'
+import { findHostUser } from './user_model.js'
 
 export interface TicketAccount {
   type: string
@@ -226,8 +227,7 @@ export async function userCanAccessTicket(user: any, ticket: { id: number }): Pr
 
 /** Agent candidates and notification recipients resolve through the host's own database. */
 export async function ticketUser(userId: string | number): Promise<any> {
-  const { default: User } = await import(getConfig().userModel || '#models/user')
-  return User.find(userId)
+  return findHostUser(userId)
 }
 
 export async function agentCanAccessTicket(

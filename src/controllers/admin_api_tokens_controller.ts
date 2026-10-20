@@ -5,6 +5,7 @@ import AuditService from '../services/audit_service.js'
 import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
+import { resolveUserModel } from '../support/user_model.js'
 
 export default class AdminApiTokensController {
   /**
@@ -59,8 +60,7 @@ export default class AdminApiTokensController {
 
     // Load the user model
     const config = (globalThis as any).__escalated_config
-    const userModelPath = config?.userModel ?? '#models/user'
-    const { default: UserModel } = await import(userModelPath)
+    const UserModel = await resolveUserModel()
     const user = await UserModel.findOrFail(userId)
 
     const expiresAt = expiresInDays ? DateTime.now().plus({ days: Number(expiresInDays) }) : null
@@ -131,8 +131,7 @@ export default class AdminApiTokensController {
   protected async getAgentUsers(): Promise<{ id: number; name: string; email: string }[]> {
     const config = (globalThis as any).__escalated_config
     try {
-      const userModelPath = config?.userModel ?? '#models/user'
-      const { default: UserModel } = await import(userModelPath)
+      const UserModel = await resolveUserModel()
       const users = await UserModel.all()
 
       const agents: { id: number; name: string; email: string }[] = []
