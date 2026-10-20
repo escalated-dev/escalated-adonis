@@ -36,6 +36,7 @@ export default class AdminSettingsController {
       'imap_password',
       'imap_mailbox',
       'show_powered_by',
+      'widget_enabled',
       'widget_allowed_origins',
     ])
 
@@ -101,6 +102,8 @@ export default class AdminSettingsController {
       max_attachment_size_kb: await EscalatedSetting.getInt('max_attachment_size_kb', 10240),
       ticket_reference_prefix: await EscalatedSetting.get('ticket_reference_prefix', 'ESC'),
       show_powered_by: await EscalatedSetting.getBool('show_powered_by', true),
+      // Defaults on, as the widget routes read it, so existing installs keep their widget.
+      widget_enabled: await EscalatedSetting.getBool('widget_enabled', true),
       widget_allowed_origins: (await EscalatedSetting.get('widget_allowed_origins', '')) ?? '',
       inbound_email_enabled: await EscalatedSetting.getBool(
         'inbound_email_enabled',
