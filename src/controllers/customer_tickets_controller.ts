@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { Exception } from '@adonisjs/core/exceptions'
 import Department from '../models/department.js'
 import TicketService from '../services/ticket_service.js'
 import { getConfig } from '../helpers/config.js'
@@ -144,9 +145,25 @@ export default class CustomerTicketsController {
     return ctx.response.redirect().back()
   }
 
+  /**
+   * Only the ticket's requester may act on it. Refuses with 403 (an
+   * exception carrying its status, which the host's exception handler
+   * renders) rather than a bare Error, which answered 500. Keys compare as
+   * strings: drivers return bigint keys as strings while hosts may hold
+   * numbers.
+   */
   protected authorizeCustomer(ticket: any, user: any): void {
-    if (ticket.requesterType !== user.constructor.name || ticket.requesterId !== user.id) {
-      throw new Error('Unauthorized')
+    const owns =
+      user &&
+      ticket.requesterType === user.constructor.name &&
+      ticket.requesterId !== null &&
+      ticket.requesterId !== undefined &&
+      String(ticket.requesterId) === String(user.id)
+    if (!owns) {
+      throw new Exception('This action is unauthorized.', {
+        status: 403,
+        code: 'E_AUTHORIZATION_FAILURE',
+      })
     }
   }
 }
