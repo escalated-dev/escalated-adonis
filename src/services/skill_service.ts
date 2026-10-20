@@ -7,6 +7,7 @@ import SkillRoutingDepartment from '../models/skill_routing_department.js'
 import Tag from '../models/tag.js'
 import Department from '../models/department.js'
 import type { UserId } from '../helpers/user_id_column.js'
+import { resolveUserModel } from '../support/user_model.js'
 
 export type SkillStorePayload = {
   name: string
@@ -209,9 +210,6 @@ export default class SkillService {
   }
 
   protected async loadUserModel(): Promise<any> {
-    const config = (globalThis as any).__escalated_config
-    const userModelPath = config?.userModel ?? '#models/user'
-    const mod: any = await import(userModelPath)
-    return mod.default
+    return resolveUserModel()
   }
 }

@@ -3,6 +3,7 @@ import AuditLog from '../models/audit_log.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { laravelPaginatorShape } from '../support/pagination.js'
 import { AUDIT_ACTIONS } from '../support/audit_events.js'
+import { resolveUserModel } from '../support/user_model.js'
 
 /**
  * Read-only admin surface for the system-wide audit trail: a filtered,
@@ -144,9 +145,6 @@ export default class AdminAuditLogsController {
    * other admin controllers import the user model from).
    */
   protected async loadUserModel(): Promise<any> {
-    const config = (globalThis as any).__escalated_config
-    const userModelPath = config?.userModel ?? '#models/user'
-    const mod: any = await import(userModelPath)
-    return mod.default
+    return resolveUserModel()
   }
 }

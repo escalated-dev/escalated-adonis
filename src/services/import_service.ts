@@ -21,6 +21,7 @@ import ImportContext from '../support/import_context.js'
 import type { ImportAdapter, ExtractResult } from '../contracts/import_adapter.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import { escalated_applyFilters, escalated_doAction } from '../support/helpers.js'
+import { resolveUserModel, userModelTypeName } from '../support/user_model.js'
 
 export default class ImportService {
   // --------------------------------------------------------------------------
@@ -261,12 +262,10 @@ export default class ImportService {
     record: Record<string, any>,
     _mappings: Record<string, string>
   ): Promise<string | number> {
-    const config = (globalThis as any).__escalated_config
-    const userModelName: string = config?.userModel ?? 'User'
     const { default: db } = await import('@adonisjs/lucid/services/db')
 
     const user = await db
-      .from(this.inferUserTable(userModelName))
+      .from(await this.userTable())
       .where('email', record['email'])
       .first()
 
@@ -284,10 +283,8 @@ export default class ImportService {
     record: Record<string, any>,
     _mappings: Record<string, string>
   ): Promise<string | number> {
-    const config = (globalThis as any).__escalated_config
-    const userModelName: string = config?.userModel ?? 'User'
     const { default: db } = await import('@adonisjs/lucid/services/db')
-    const table = this.inferUserTable(userModelName)
+    const table = await this.userTable()
 
     let user = await db.from(table).where('email', record['email']).first()
 
@@ -338,8 +335,7 @@ export default class ImportService {
       ? await ImportSourceMap.resolve(job.id, 'departments', record['department_source_id'])
       : null
 
-    const config = (globalThis as any).__escalated_config
-    const userModelName: string = config?.userModel ?? 'User'
+    const userModelName = await userModelTypeName()
 
     const reference = await Ticket.generateReference()
 
@@ -406,8 +402,7 @@ export default class ImportService {
       )
     }
 
-    const config = (globalThis as any).__escalated_config
-    const userModelName: string = config?.userModel ?? 'User'
+    const userModelName = await userModelTypeName()
 
     let authorId: number | null = null
     let authorType: string | null = null
@@ -550,6 +545,15 @@ export default class ImportService {
    * Naively infer the DB table name from a user model name.
    * Host apps typically follow `User → users` or `AppUser → app_users`.
    */
+  /** The host user model's table: the model's own `table`, else inferred from its class name. */
+  private async userTable(): Promise<string> {
+    const User = await resolveUserModel()
+    if (typeof User.boot === 'function') User.boot()
+    return typeof User.table === 'string' && User.table !== ''
+      ? User.table
+      : this.inferUserTable(User.name)
+  }
+
   private inferUserTable(modelName: string): string {
     // CamelCase → snake_case → pluralize
     const snake = modelName.replace(/([A-Z])/g, (m, c, i) => (i > 0 ? '_' : '') + c.toLowerCase())

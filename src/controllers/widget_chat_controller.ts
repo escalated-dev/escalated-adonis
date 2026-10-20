@@ -8,6 +8,7 @@ import { sanitizeWidgetMetadata } from '../support/widget_metadata.js'
 import { WIDGET_ORIGIN } from '../support/widget_origins.js'
 import { activeDepartmentId, isAgentReply } from '../support/widget_contract.js'
 import { getConfig } from '../helpers/config.js'
+import { resolveUserModel } from '../support/user_model.js'
 
 /** Replies a chat transcript returns, newest kept when a chat runs longer. */
 const TRANSCRIPT_LIMIT = 100
@@ -316,8 +317,7 @@ class AgentNames {
   protected async lookup(userId: unknown): Promise<string> {
     if (userId === null || userId === undefined) return AGENT_FALLBACK_NAME
     try {
-      const userModelPath = (getConfig() as any).userModel ?? '#models/user'
-      const { default: UserModel } = await import(userModelPath)
+      const UserModel = await resolveUserModel()
       const user = await UserModel.find(userId)
       const name = user?.name ?? user?.fullName ?? user?.full_name
       return typeof name === 'string' && name.trim() !== '' ? name : AGENT_FALLBACK_NAME

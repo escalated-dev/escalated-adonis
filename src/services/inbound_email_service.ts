@@ -11,6 +11,7 @@ import TicketService from './ticket_service.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import { verifyReplyTo } from './email/message_id_util.js'
 import { BLOCKED_EXTENSIONS, ALLOWED_HTML_TAGS, type InboundMessage } from '../types.js'
+import { resolveUserModel } from '../support/user_model.js'
 
 export default class InboundEmailService {
   constructor(protected ticketService: TicketService = new TicketService()) {}
@@ -148,9 +149,7 @@ export default class InboundEmailService {
    */
   protected async findRequester(ticket: Ticket): Promise<any | null> {
     try {
-      const config = (globalThis as any).__escalated_config
-      const userModelPath = config?.userModel ?? '#models/user'
-      const { default: UserModel } = await import(userModelPath)
+      const UserModel = await resolveUserModel()
       const user = await UserModel.find(ticket.requesterId)
       if (!user || user.constructor?.name !== ticket.requesterType) return null
       return user
@@ -174,9 +173,7 @@ export default class InboundEmailService {
    */
   protected async findUserByEmail(email: string): Promise<any | null> {
     try {
-      const config = (globalThis as any).__escalated_config
-      const userModelPath = config?.userModel ?? '#models/user'
-      const { default: UserModel } = await import(userModelPath)
+      const UserModel = await resolveUserModel()
       const user = await UserModel.query().where('email', email).first()
       return user
     } catch {

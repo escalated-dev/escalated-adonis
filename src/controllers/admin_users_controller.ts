@@ -3,6 +3,7 @@ import AuditService from '../services/audit_service.js'
 import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
+import { resolveUserModel } from '../support/user_model.js'
 
 /**
  * Surface enough of the host User table for an admin to grant or revoke
@@ -153,10 +154,7 @@ export default class AdminUsersController {
    * import the user model from).
    */
   protected async loadUserModel(): Promise<any> {
-    const config = (globalThis as any).__escalated_config
-    const userModelPath = config?.userModel ?? '#models/user'
-    const mod: any = await import(userModelPath)
-    return mod.default
+    return resolveUserModel()
   }
 
   /**

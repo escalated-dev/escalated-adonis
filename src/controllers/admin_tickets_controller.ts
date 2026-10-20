@@ -15,6 +15,7 @@ import type { TicketStatus, TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
 import { requireAuthUser } from '../support/auth_user.js'
 import TicketSubjectService from '../services/ticket_subject_service.js'
+import { resolveUserModel } from '../support/user_model.js'
 
 export default class AdminTicketsController {
   protected ticketService = new TicketService()
@@ -334,8 +335,7 @@ export default class AdminTicketsController {
   protected async getAgents(): Promise<{ id: number; name: string; email: string }[]> {
     const config = (globalThis as any).__escalated_config
     try {
-      const userModelPath = config?.userModel ?? '#models/user'
-      const { default: UserModel } = await import(userModelPath)
+      const UserModel = await resolveUserModel()
       const users = await UserModel.all()
 
       const agents: { id: number; name: string; email: string }[] = []

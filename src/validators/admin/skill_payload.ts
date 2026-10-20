@@ -3,6 +3,7 @@ import Department from '../../models/department.js'
 import Skill from '../../models/skill.js'
 import type { SkillStorePayload } from '../../services/skill_service.js'
 import type { UserId } from '../../helpers/user_id_column.js'
+import { resolveUserModel } from '../../support/user_model.js'
 
 export type SkillPayloadResult =
   { ok: true; data: SkillStorePayload } | { ok: false; message: string }
@@ -51,10 +52,7 @@ function parseAgentRows(value: unknown): { user_id: UserId; proficiency: number 
 }
 
 async function loadUserModel(): Promise<any> {
-  const config = (globalThis as any).__escalated_config
-  const userModelPath = config?.userModel ?? '#models/user'
-  const mod: any = await import(userModelPath)
-  return mod.default
+  return resolveUserModel()
 }
 
 async function userIsEligibleAgent(userId: UserId): Promise<boolean> {

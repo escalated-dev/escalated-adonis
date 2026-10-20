@@ -10,6 +10,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import { defineConfig as defineDatabaseConfig } from '@adonisjs/lucid'
 import { defineConfig as defineSessionConfig } from '@adonisjs/session'
 import User, { type TestUser } from '../fixtures/user.js'
+import { hostImporter } from '../fixtures/importer.js'
 import { isWidgetCsrfExempt } from '../../../src/support/widget_origins.js'
 
 /*
@@ -28,7 +29,9 @@ import { isWidgetCsrfExempt } from '../../../src/support/widget_origins.js'
 | when the run ends.
 |
 | The host application is played by `tests/integration/fixtures`: its
-| `start/kernel.ts` (named middleware), its `auth` middleware and its user model.
+| `start/kernel.ts` (named middleware), its `auth` middleware and its user model,
+| reached through the aliases in that directory's package.json `imports`, as a
+| host reaches `#start/kernel` and `#models/user`.
 |
 | The one stand-in is Inertia. Controllers render through `ctx.inertia.render`;
 | the double below answers with the component and props as JSON, plus the flash
@@ -36,9 +39,6 @@ import { isWidgetCsrfExempt } from '../../../src/support/widget_origins.js'
 | the root view and Vite.
 |
 */
-
-const HOST_KERNEL = new URL('../fixtures/kernel.ts', import.meta.url).href
-const HOST_USER_MODEL = new URL('../fixtures/user.ts', import.meta.url).href
 
 /** The header the fixture `auth` middleware reads the signed-in user's id from. */
 export const TEST_USER_HEADER = 'x-test-user-id'
@@ -153,7 +153,9 @@ async function boot() {
           stores: {},
         }),
         escalated: {
-          userModel: HOST_USER_MODEL,
+          // The default from the config stub: an alias in the host's import map,
+          // which only the host's importer can resolve.
+          userModel: '#models/user',
           routes: {
             enabled: true,
             prefix: 'support',
@@ -183,9 +185,8 @@ async function boot() {
       ])
     })
     .create(new URL('../../../', import.meta.url), {
-      // A host resolves `#start/kernel` through its own import map.
-      importer: (specifier: string) =>
-        import(specifier === '#start/kernel' ? HOST_KERNEL : specifier),
+      // A host resolves `#start/kernel` and `#models/user` through its own import map.
+      importer: hostImporter,
     })
 
   const app = ignitor.createApp('web')

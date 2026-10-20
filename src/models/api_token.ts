@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import { column, scope } from '@adonisjs/lucid/orm'
 import EscalatedBaseModel from './base_model.js'
 import { randomBytes, createHash } from 'node:crypto'
+import { resolveUserModel } from '../support/user_model.js'
 
 export default class ApiToken extends EscalatedBaseModel {
   static table = 'escalated_api_tokens'
@@ -51,10 +52,8 @@ export default class ApiToken extends EscalatedBaseModel {
    * we resolve it manually via the config's userModel path.
    */
   async loadTokenable(): Promise<any> {
-    const config = (globalThis as any).__escalated_config
     try {
-      const userModelPath = config?.userModel ?? '#models/user'
-      const { default: UserModel } = await import(userModelPath)
+      const UserModel = await resolveUserModel()
       return UserModel.find(this.tokenableId)
     } catch {
       return null

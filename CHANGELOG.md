@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Fixed
+- `userModel: '#models/user'` (the config stub's default) now resolves. The package imported the alias itself, which Node resolves against the package's own package.json, so it always failed: API tokens answered 401, inbound replies from registered customers opened new guest tickets, restricted ticket access failed with 500 and the widget named every agent "Support". Every lookup now goes through one helper that imports via the application's importer (`app.import()`), so it resolves the host's import map. `userModel` also accepts the model class or a loader such as `() => import('#models/user')`.
+- The widget's `POST /widget/tickets` now honours the guest tickets setting (403 when off, as Laravel), validates email format and field lengths, and creates the ticket through the guest ticket path shared with the guest form: guest policy, contact, default SLA and `TICKET_CREATED` (so notifications, webhooks, workflows and plugins see widget tickets). A disabled widget answers 403 here too. Mailbox verification, which Laravel requires, is not implemented in this package yet.
+- The guest form's tokens are 64 hex characters, so the redirect to the guest ticket page no longer 404s when a random token contained `-` or `_`.
+- The `guest_user` guest policy records the user model's class name and the user's own key (UUID and string keys included), instead of the config's import path and an int-parsed key. A key that names no user falls back to unassigned.
+- A customer opening, replying to, closing or reopening someone else's ticket gets 403 instead of 500. Owner keys compare as strings.
+- The admin settings page shows and saves `widget_enabled`, so the widget can be switched off. It still defaults to on.
+
 ## [0.7.2] - 2026-10-19
 
 ## [0.7.1] - 2026-10-19

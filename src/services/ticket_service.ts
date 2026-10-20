@@ -93,6 +93,94 @@ export default class TicketService {
   }
 
   /**
+   * Create a ticket from a guest: the guest form and the widget.
+   *
+   * Applies the admin's guest policy, dedupes the submitter into a Contact,
+   * attaches the default SLA and emits TICKET_CREATED, the same as
+   * `create()`, so notifications, webhooks, workflows and plugin hooks see
+   * guest tickets too. Whether guest tickets are allowed at all is the
+   * caller's check (`EscalatedSetting.guestTicketsEnabled()`).
+   */
+  async createGuest(data: {
+    name?: string | null
+    email: string
+    subject: string
+    description: string
+    priority?: string | null
+    channel: string
+    departmentId?: number | null
+    metadata?: Record<string, any> | null
+    attachments?: any[]
+  }): Promise<Ticket> {
+    const { randomBytes } = await import('node:crypto')
+    const { getConfig } = await import('../helpers/config.js')
+    const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
+    const { default: Contact } = await import('../models/contact.js')
+    const config = getConfig()
+
+    const policy = await resolveGuestPolicy()
+    // Dedupe repeat guests by email (Pattern B). Inline guest_* fields
+    // remain populated for the backwards-compat dual-read period.
+    const contact = await Contact.findOrCreateByEmail(data.email, data.name)
+    const account = policy.requester
+      ? await resolveTicketAccount({
+          kind: 'requester',
+          type: policy.requesterType!,
+          id: policy.requesterId!,
+          model: policy.requester,
+        })
+      : null
+
+    const priorities: readonly string[] = config.priorities?.length
+      ? config.priorities
+      : ['low', 'medium', 'high', 'urgent', 'critical']
+    const priority =
+      data.priority && priorities.includes(data.priority)
+        ? data.priority
+        : config.defaultPriority || 'medium'
+
+    const ticket = await Ticket.create({
+      accountType: account?.type ?? null,
+      accountId: account ? String(account.id) : null,
+      reference: await Ticket.generateReference(),
+      requesterType: policy.requesterType,
+      requesterId: policy.requesterId,
+      guestName: data.name || null,
+      guestEmail: data.email,
+      // 64 hex characters: the shape the guest and widget token routes accept.
+      guestToken: randomBytes(32).toString('hex'),
+      contactId: contact.id,
+      subject: data.subject,
+      description: data.description,
+      status: 'open' as TicketStatus,
+      priority: priority as TicketPriority,
+      ticketType: 'question',
+      channel: data.channel,
+      departmentId: data.departmentId ?? null,
+      metadata: data.metadata ?? null,
+      slaFirstResponseBreached: false,
+      slaResolutionBreached: false,
+    })
+
+    if (config.sla?.enabled && !ticket.slaPolicyId)
+      await new SlaService().attachDefaultPolicy(ticket)
+
+    if (data.attachments && data.attachments.length > 0) {
+      await this.attachmentService.storeMany('Ticket', ticket.id, data.attachments)
+    }
+
+    await this.logActivity(ticket, 'status_changed', policy.requester ?? null, {
+      new_status: 'open',
+    })
+
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
+    }
+
+    return ticket.refresh()
+  }
+
+  /**
    * Update a ticket's basic fields.
    */
   async update(
