@@ -1,6 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
-import Contact from '../models/contact.js'
 import EscalatedSetting from '../models/escalated_setting.js'
 import Article from '../models/article.js'
 import TicketService from '../services/ticket_service.js'
@@ -152,18 +151,29 @@ export default class WidgetController {
 
   /**
    * POST /widget/tickets — Create a ticket from the widget (guest)
+   *
+   * As Laravel's WidgetController::createTicket: refused with 403 while the
+   * widget or guest tickets are switched off, validated, then created through
+   * the guest ticket path (guest policy, contact, SLA, TICKET_CREATED).
+   * Laravel also requires mailbox verification here; this package has no
+   * guest verification yet, so that step is not enforced.
    */
   async createTicket(ctx: HttpContext) {
     const widgetEnabled = await EscalatedSetting.getBool('widget_enabled', true)
     if (!widgetEnabled) {
-      return ctx.response.notFound({ error: 'Widget is disabled' })
+      return ctx.response.forbidden({ message: 'Widget is disabled.', error: 'Widget is disabled' })
+    }
+
+    if (!(await EscalatedSetting.guestTicketsEnabled())) {
+      const error = 'Guest tickets are disabled.'
+      return ctx.response.forbidden({ message: error, error })
     }
 
     const data = ctx.request.only(['name', 'email', 'subject', 'description', 'department_id'])
 
-    if (!data.email || !data.subject || !data.description) {
-      const error = 'Missing required fields: email, subject, description'
-      return ctx.response.badRequest({ message: error, error })
+    const invalid = validateWidgetTicket(data)
+    if (invalid) {
+      return ctx.response.badRequest({ message: invalid, error: invalid })
     }
 
     const hostMetadata = sanitizeWidgetMetadata(
@@ -174,42 +184,21 @@ export default class WidgetController {
       return ctx.response.badRequest({ message: hostMetadata.error, error: hostMetadata.error })
     }
 
-    const departmentId = await activeDepartmentId(data.department_id)
-
-    const { randomBytes } = await import('node:crypto')
-    const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
-    const guestToken = randomBytes(32).toString('hex')
-    const reference = await Ticket.generateReference()
-    const policy = await resolveGuestPolicy()
-
-    // Dedupe repeat submitters by email (Pattern B).
-    const contact = await Contact.findOrCreateByEmail(data.email, data.name)
-
-    const ticket = await Ticket.create({
-      reference,
-      requesterType: policy.requesterType,
-      requesterId: policy.requesterId,
-      guestName: data.name || null,
-      guestEmail: data.email,
-      guestToken,
-      contactId: contact.id,
-      subject: data.subject,
+    const ticket = await this.ticketService.createGuest({
+      name: typeof data.name === 'string' && data.name.trim() !== '' ? data.name.trim() : null,
+      email: data.email.trim(),
+      subject: data.subject.trim(),
       description: data.description,
-      status: 'open',
-      priority: 'medium',
-      ticketType: 'question',
       channel: 'widget',
-      departmentId,
+      departmentId: await activeDepartmentId(data.department_id),
       metadata: { ...hostMetadata.metadata, source: 'widget' },
-      slaFirstResponseBreached: false,
-      slaResolutionBreached: false,
     })
 
     return ctx.response.created({
       message: 'Ticket created successfully.',
       reference: ticket.reference,
       ticket_reference: ticket.reference,
-      guest_token: guestToken,
+      guest_token: ticket.guestToken,
     })
   }
 
@@ -238,6 +227,32 @@ export default class WidgetController {
       })),
     })
   }
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * The widget ticket's field rules, as Laravel validates them: email, subject
+ * and description are required; name, email and subject at most 255
+ * characters; description at most 5000. Returns the first problem, or null.
+ */
+function validateWidgetTicket(data: Record<string, any>): string | null {
+  const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+  if (!text(data.email) || !text(data.subject) || !text(data.description)) {
+    return 'Missing required fields: email, subject, description'
+  }
+  if (data.name !== undefined && data.name !== null && typeof data.name !== 'string') {
+    return 'The name must be text.'
+  }
+  if (text(data.name).length > 255) return 'The name may not be longer than 255 characters.'
+  if (text(data.email).length > 255 || !EMAIL_PATTERN.test(text(data.email))) {
+    return 'The email must be a valid email address.'
+  }
+  if (text(data.subject).length > 255) return 'The subject may not be longer than 255 characters.'
+  if (String(data.description).length > 5000) {
+    return 'The description may not be longer than 5000 characters.'
+  }
+  return null
 }
 
 /**

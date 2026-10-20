@@ -1,21 +1,20 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import emitter from '@adonisjs/core/services/emitter'
-import string from '@adonisjs/core/helpers/string'
 import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
-import Contact from '../models/contact.js'
 import Department from '../models/department.js'
 import EscalatedSetting from '../models/escalated_setting.js'
 import AttachmentService from '../services/attachment_service.js'
+import TicketService from '../services/ticket_service.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { redirectToRoute } from '../support/routing.js'
-import type { TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
 
 export default class GuestTicketsController {
   protected attachmentService = new AttachmentService()
+  protected ticketService = new TicketService(this.attachmentService)
 
   /**
    * GET /support/guest/create — Guest create ticket form
@@ -44,7 +43,6 @@ export default class GuestTicketsController {
       return response.notFound()
     }
 
-    const config = getConfig()
     const data = request.only([
       'guest_name',
       'guest_email',
@@ -54,37 +52,16 @@ export default class GuestTicketsController {
       'department_id',
     ])
 
-    // Dedupe repeat guests by email (Pattern B). Inline guest_* fields
-    // remain populated for the backwards-compat dual-read period.
-    const contact = await Contact.findOrCreateByEmail(data.guest_email, data.guest_name)
-
-    const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
-    const policy = await resolveGuestPolicy()
-
-    const ticket = await Ticket.create({
-      reference: await Ticket.generateReference(),
-      requesterType: policy.requesterType,
-      requesterId: policy.requesterId,
-      guestName: data.guest_name,
-      guestEmail: data.guest_email,
-      guestToken: string.random(64),
-      contactId: contact.id,
+    const ticket = await this.ticketService.createGuest({
+      name: data.guest_name,
+      email: data.guest_email,
       subject: data.subject,
       description: data.description,
-      status: 'open',
-      priority: (data.priority || config.defaultPriority) as TicketPriority,
+      priority: data.priority,
       channel: 'web',
       departmentId: data.department_id || null,
-      slaFirstResponseBreached: false,
-      slaResolutionBreached: false,
+      attachments: request.files('attachments'),
     })
-
-    const attachments = request.files('attachments')
-    if (attachments && attachments.length > 0) {
-      await this.attachmentService.storeMany('Ticket', ticket.id, attachments)
-    }
-
-    await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
 
     session.flash('success', t('guest.created'))
     return redirectToRoute(response, 'escalated.guest.tickets.show', {
