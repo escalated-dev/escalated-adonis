@@ -1,4 +1,5 @@
-import { readdirSync } from 'node:fs'
+import { mkdtempSync, readdirSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { join } from 'node:path'
@@ -9,6 +10,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { defineConfig as defineDatabaseConfig } from '@adonisjs/lucid'
 import { defineConfig as defineSessionConfig } from '@adonisjs/session'
+import { defineConfig as defineDriveConfig, services as driveServices } from '@adonisjs/drive'
 import User, { type TestUser } from '../fixtures/user.js'
 import { hostImporter } from '../fixtures/importer.js'
 import { isWidgetCsrfExempt } from '../../../src/support/widget_origins.js'
@@ -125,6 +127,7 @@ async function boot() {
         providers: [
           () => import('@adonisjs/lucid/database_provider'),
           () => import('@adonisjs/session/session_provider'),
+          () => import('@adonisjs/drive/drive_provider'),
           () => import('../../../providers/escalated_provider.js'),
         ],
         // As a host's adonisrc registers them, via `configure`.
@@ -141,6 +144,22 @@ async function boot() {
               // A single connection: each new one would open its own empty database.
               pool: { min: 1, max: 1 },
             },
+          },
+        }),
+        // Two disks in temporary directories, neither served over HTTP: the
+        // default one stands in for a private disk, `public` for the disk
+        // earlier releases stored attachments on.
+        drive: defineDriveConfig({
+          default: 'private',
+          services: {
+            private: driveServices.fs({
+              location: mkdtempSync(join(tmpdir(), 'escalated-private-')),
+              visibility: 'private',
+            }),
+            public: driveServices.fs({
+              location: mkdtempSync(join(tmpdir(), 'escalated-public-')),
+              visibility: 'public',
+            }),
           },
         }),
         session: defineSessionConfig({

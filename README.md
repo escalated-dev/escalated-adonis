@@ -225,7 +225,7 @@ commands: [
 - **Escalation Rules:** Automated ticket escalation based on configurable conditions; run the `node ace escalated:run-escalations` Ace command on a schedule (e.g. every 5 minutes) so rules fire periodically
 - **Canned Responses:** Pre-written reply templates (shared or per-agent)
 - **Activity Log:** Full audit trail of all ticket changes
-- **Attachments:** File uploads on replies with configurable storage
+- **Attachments:** Private file uploads, served only through an access-checked, expiring download link (see [docs/private-attachments.md](docs/private-attachments.md))
 - **Notifications:** Webhook-based notifications with HMAC signing
 - **Outbound Webhooks:** Signed deliveries with a delivery log and retries. Webhook URLs that resolve to loopback, private-network, link-local or other non-public addresses are refused when saved and before every delivery, as are the workflow `send_webhook` action's; set `webhooks.allowPrivateUrls` to allow them
 - **Admin Settings:** Runtime-configurable settings stored in the database

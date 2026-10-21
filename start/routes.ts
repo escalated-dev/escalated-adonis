@@ -60,6 +60,7 @@ const TicketSubjectsController = () => import('../src/controllers/ticket_subject
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
 const WidgetController = () => import('../src/controllers/widget_controller.js')
 const ChatController = () => import('../src/controllers/chat_controller.js')
+const AttachmentsController = () => import('../src/controllers/attachments_controller.js')
 const WidgetChatController = () => import('../src/controllers/widget_chat_controller.js')
 const WidgetScriptController = () => import('../src/controllers/widget_script_controller.js')
 
@@ -119,6 +120,16 @@ function registerCoreRoutes(config: any) {
       })
       .prefix(`${prefix}/inbound`)
   }
+
+  // ---- Attachment downloads (access checked per request) ----
+  // Registered without the UI's auth middleware: guests follow links issued
+  // by the guest page, API clients send their bearer token, and the
+  // controller resolves a session user itself.
+  router
+    .get(`${prefix}/attachments/:attachment/download`, [AttachmentsController, 'download'])
+    .as('escalated.attachments.download')
+    .where('attachment', /^\d+$/)
+    .use(middleware.ticketAccess())
 
   // ---- Widget script (any site may load it) ----
   if ((config as any).widget?.serveScript !== false) {

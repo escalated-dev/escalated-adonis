@@ -1,4 +1,5 @@
 import { agentCanAccessTicket } from '../support/ticket_access.js'
+import { signAttachments } from '../support/attachment_access.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import type Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
@@ -83,12 +84,9 @@ export default class AdminTicketsController {
       })
     })
 
-    // Resolve attachment URLs (url() is async on the Attachment model)
-    for (const reply of ticket.replies ?? []) {
-      for (const attachment of reply.attachments ?? []) {
-        ;(attachment as any).$extras.url = await attachment.url()
-      }
-    }
+    // Short-lived links to the access-checked download route.
+    await ticket.load('attachments')
+    await signAttachments([ticket, ...(ticket.replies ?? [])])
 
     const departments = await Department.query()
       .withScopes((scopes) => scopes.active())

@@ -26,10 +26,10 @@ export default class Attachment extends EscalatedBaseModel {
   @column()
   declare size: number
 
-  @column()
+  @column({ serializeAs: null })
   declare disk: string
 
-  @column()
+  @column({ serializeAs: null })
   declare path: string
 
   @column.dateTime({ autoCreate: true })
@@ -39,20 +39,17 @@ export default class Attachment extends EscalatedBaseModel {
   declare updatedAt: DateTime
 
   /**
-   * Synchronous download URL included in JSON serialization via @computed.
-   * For the actual storage driver URL, use the async url() method instead.
+   * The short-lived download link, serialized as `url`. Controllers set it
+   * with `signAttachments()` (support/attachment_access) before rendering;
+   * it is null otherwise. Disk names and storage paths are never a link:
+   * attachments are private and only the download route serves them.
    */
   @computed()
-  get downloadUrl(): string {
-    return `/escalated/attachments/${this.id}/download`
+  get url(): string | null {
+    return this.$extras.downloadUrl ?? null
   }
 
   // ---- Helpers ----
-
-  async url(): Promise<string> {
-    const { default: drive } = await import('@adonisjs/drive/services/main')
-    return drive.use(this.disk as any).getUrl(this.path)
-  }
 
   sizeForHumans(): string {
     let bytes = this.size

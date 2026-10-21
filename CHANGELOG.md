@@ -2,15 +2,25 @@
 
 ## [Unreleased]
 
+### Security
+- Attachments are private, as in escalated-laravel. Pages and the API no longer carry a Drive URL; an attachment serializes with `url`, a link to the new `GET {prefix}/attachments/:attachment/download` route (`escalated.attachments.download`) that expires after `storage.downloadTtlMinutes` (default 10, 1 to 60). The route checks current access on every request: agents and admins who can see the ticket get everything, the requester gets the ticket's and its public replies' attachments (never internal notes), guests only links issued by the guest page and bound to the ticket's current guest token, and API clients their bearer token (a bad bearer is 401, with no fallback to the session). Downloads are `attachment` with a sanitised name, `nosniff`, `private, no-store`, `no-referrer`, and `application/octet-stream` unless the type is PDF, GIF, JPEG, PNG, WebP or plain text. See `docs/private-attachments.md`.
+- New uploads and inbound email attachments are written with private visibility to `storage.disk`, or the application's default Drive disk when unset (it was hard-coded to `public`).
+
 ### Changed
 - Webhooks and workflow triggers use the shared event vocabulary (escalated-developer-context ADR 2026-10-21). The names live in `src/support/event_names.ts`. Webhooks already sent the canonical ticket, reply, note, tag and SLA names, so nothing changes for those deliveries.
 
 ### Added
 - Live chat emits `escalated:chat:started`, `escalated:chat:assigned` (new), `escalated:chat:transferred`, `escalated:chat:message` and `escalated:chat:ended`. They were defined but never emitted. Webhooks can subscribe to `chat.started`, `chat.assigned`, `chat.transferred`, `chat.message` and `chat.ended`; the payload carries `ticket` and `chat.session_id` (plus `agent_id`, `chat.from_agent_id`/`to_agent_id`, or `chat.reply_id`/`author_type` where they apply). Workflows can trigger on `chat.started` and `chat.ended`, as in Laravel.
 
+### Fixed
+- Uploads were moved with the Drive 1 `moveToDisk` signature, which Drive 4 reads differently: files landed on the wrong disk and path. They are now written where the attachment row says.
+- Ticket-level attachments (stored on create) are loaded as `ticket.attachments` on the agent, admin, customer and guest pages.
+
 ### Upgrade notes
 - Stored names are read as aliases, not rewritten: `ticket.replied`, `internal_note.added`, `internal_note.created`, `tag.added`, `ticket.tagged`, `tag.removed`, `ticket.untagged`, `chat.session_started` and `chat.session_ended`. A webhook subscribed under one of them receives the event under the canonical name, and a workflow stored with `ticket.replied` runs on `reply.created`. The admin pages show them, and saving stores them, under the canonical names.
 - `ChatMessageData.authorId` and the chat transfer agent ids are typed `UserId`, as elsewhere.
+- Set `storage.disk` to a disk that is not publicly served. The old stub set `disk: 'public'`; with that, new files are still written to a public disk. Files already on the public disk stay readable through the download route; stop serving or move them as `docs/private-attachments.md` describes.
+- `Attachment#url()` (the Drive URL) and the `downloadUrl` getter are removed. `url` is now the signed download link, set by `signAttachments()` / `attachmentDownloadUrl()` from `support/attachment_access`. `disk` and `path` are no longer serialized. Clients that cached attachment URLs must refetch the ticket.
 
 ## [0.7.3] - 2026-10-20
 

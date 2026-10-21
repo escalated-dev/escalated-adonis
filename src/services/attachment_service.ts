@@ -1,6 +1,33 @@
 import { randomUUID } from 'node:crypto'
 import { extname } from 'node:path'
 import Attachment from '../models/attachment.js'
+import { getConfig } from '../helpers/config.js'
+
+/**
+ * The Drive disk new attachments are written to: `storage.disk`, or the
+ * application's default disk. It must be private (not served by
+ * `serveFiles`, a public bucket or a CDN); the download route is the only way
+ * attachments are read. See docs/private-attachments.md.
+ */
+export async function attachmentDisk(): Promise<string> {
+  const configured = (getConfig() as any).storage?.disk
+  if (typeof configured === 'string' && configured !== '') return configured
+  // config/drive.ts holds a config provider; resolve it the way Drive does.
+  const { default: app } = await import('@adonisjs/core/services/app')
+  const { configProvider } = await import('@adonisjs/core')
+  const driveConfig = app.config.get<any>('drive')
+  const resolved: any = driveConfig ? await configProvider.resolve(app, driveConfig) : null
+  const name = resolved?.config?.default ?? resolved?.default ?? driveConfig?.default
+  if (typeof name !== 'string' || name === '') {
+    throw new Error('Escalated: set `storage.disk` or configure a default Drive disk.')
+  }
+  return name
+}
+
+/** The directory inside the disk new attachments are written to. */
+export function attachmentBasePath(): string {
+  return (getConfig() as any).storage?.path ?? 'escalated/attachments'
+}
 
 export default class AttachmentService {
   /**
@@ -11,15 +38,19 @@ export default class AttachmentService {
     attachableId: number,
     file: any // MultipartFile from AdonisJS
   ): Promise<Attachment> {
-    const config = (globalThis as any).__escalated_config
-    const disk = config?.storage?.disk ?? 'public'
-    const basePath = config?.storage?.path ?? 'escalated/attachments'
+    const disk = await attachmentDisk()
+    const basePath = attachmentBasePath()
 
-    const ext = file.extname || extname(file.clientName || '')
+    const rawExt = String(file.extname || extname(file.clientName || '')).replace(
+      /[^A-Za-z0-9]/g,
+      ''
+    )
+    const ext = rawExt ? `.${rawExt}` : ''
     const filename = `${randomUUID()}${ext}`
 
-    // Move the file using Adonis Drive
-    await file.moveToDisk(basePath, { name: filename }, disk)
+    // Drive 4: moveToDisk(key, disk, options). Written private; only the
+    // download route reads it back.
+    await file.moveToDisk(`${basePath}/${filename}`, disk, { visibility: 'private' })
 
     const attachment = await Attachment.create({
       attachableType,
@@ -27,9 +58,9 @@ export default class AttachmentService {
       filename,
       originalFilename: file.clientName || filename,
       mimeType:
-        file.headers?.['content-type'] || file.type
+        file.type && file.subtype
           ? `${file.type}/${file.subtype}`
-          : 'application/octet-stream',
+          : file.headers?.['content-type'] || 'application/octet-stream',
       size: file.size || 0,
       disk,
       path: `${basePath}/${filename}`,

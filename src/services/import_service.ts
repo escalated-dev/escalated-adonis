@@ -463,8 +463,9 @@ export default class ImportService {
       )
     }
 
-    const config = (globalThis as any).__escalated_config
-    const disk: string = config?.storage?.disk ?? 'local'
+    // Imported rows point at files already on this disk; nothing is copied.
+    const { attachmentDisk } = await import('./attachment_service.js')
+    const disk: string = await attachmentDisk()
 
     const attachment = await Attachment.create({
       attachableType: parentType === 'ticket' ? 'Ticket' : 'Reply',

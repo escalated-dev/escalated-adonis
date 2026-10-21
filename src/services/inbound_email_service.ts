@@ -315,8 +315,9 @@ export default class InboundEmailService {
     if (!attachments || attachments.length === 0) return
 
     const config = (globalThis as any).__escalated_config
-    const disk = config?.storage?.disk ?? 'public'
-    const basePath = config?.storage?.path ?? 'escalated/attachments'
+    const { attachmentDisk, attachmentBasePath } = await import('./attachment_service.js')
+    const disk = await attachmentDisk()
+    const basePath = attachmentBasePath()
     const maxSize = (config?.tickets?.maxAttachmentSizeKb ?? 10240) * 1024
     const maxCount = config?.tickets?.maxAttachmentsPerReply ?? 5
 
@@ -351,7 +352,8 @@ export default class InboundEmailService {
             path,
             typeof attachment.content === 'string'
               ? Buffer.from(attachment.content)
-              : attachment.content
+              : attachment.content,
+            { visibility: 'private' }
           )
 
         await Attachment.create({
