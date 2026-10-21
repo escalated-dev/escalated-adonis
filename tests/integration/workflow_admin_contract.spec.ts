@@ -34,13 +34,19 @@ const EXAMPLE_BODY = {
   is_active: true,
 }
 
-/** The five Workflow triggers in `domain-model/workflows-automations-macros.md`. */
+/**
+ * The five Workflow triggers in `domain-model/workflows-automations-macros.md`,
+ * plus the live-chat start and end Laravel also offers (shown running in
+ * event_vocabulary.spec.ts).
+ */
 const CANONICAL_TRIGGERS = [
   'ticket.created',
   'ticket.updated',
   'ticket.assigned',
   'ticket.status_changed',
   'reply.created',
+  'chat.started',
+  'chat.ended',
 ]
 
 /** The contract's core action catalog: every backend must handle these. */

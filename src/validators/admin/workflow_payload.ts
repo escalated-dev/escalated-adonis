@@ -1,4 +1,5 @@
 import { TRIGGER_EVENTS } from '../../services/workflow_engine.js'
+import { canonicalEvent } from '../../support/event_names.js'
 
 /**
  * Validates the create/update body the shared admin UI sends for a Workflow.
@@ -87,7 +88,10 @@ export function validateWorkflowPayload(input: Record<string, unknown>): Workflo
     fail('name', 'The name may be at most 255 characters.')
   }
 
-  const triggerEvent = input.trigger_event
+  // A legacy name (ADR 2026-10-21) is accepted and stored as its canonical name.
+  const triggerEvent = isNonEmptyString(input.trigger_event)
+    ? canonicalEvent(input.trigger_event)
+    : input.trigger_event
   if (!isNonEmptyString(triggerEvent)) {
     fail('trigger_event', 'Choose the event that triggers this workflow.')
   } else if (!(TRIGGER_EVENTS as readonly string[]).includes(triggerEvent)) {

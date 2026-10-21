@@ -4,6 +4,7 @@ import WebhookDelivery from '../models/webhook_delivery.js'
 import WebhookDispatcher from '../services/webhook_dispatcher.js'
 import AuditService from '../services/audit_service.js'
 import { WEBHOOK_EVENTS } from '../support/webhook_events.js'
+import { canonicalEvents } from '../support/event_names.js'
 import { assertPublicHttpUrl, UnsafeOutboundUrlError } from '../support/outbound_url.js'
 import { allowPrivateWebhookUrls } from '../helpers/config.js'
 import { AUDIT_ACTIONS } from '../support/audit_events.js'
@@ -29,7 +30,9 @@ export default class AdminWebhooksController {
       return {
         id: webhook.id,
         url: webhook.url,
-        events: webhook.events,
+        // A subscription saved under a legacy name is shown under its canonical
+        // name, so the form ticks it and saving keeps it.
+        events: webhook.subscribedEvents(),
         active: webhook.active,
         has_secret: Boolean(webhook.secret),
         deliveries_count: Number(webhook.$extras.deliveries_count ?? 0),
@@ -173,11 +176,14 @@ export default class AdminWebhooksController {
 
   // ---- Private helpers ----
 
-  /** Coerce the incoming events value into a clean array of known event names. */
+  /**
+   * Coerce the incoming events value into a clean array of known event names.
+   * Legacy names are stored as their canonical names.
+   */
   protected normalizeEvents(events: unknown): string[] {
     const list = Array.isArray(events) ? events : events ? [events] : []
     const allowed = new Set<string>(WEBHOOK_EVENTS)
-    return [...new Set(list.map((e) => String(e)))].filter((e) => allowed.has(e))
+    return canonicalEvents(list.map((e) => String(e))).filter((e) => allowed.has(e))
   }
 
   /** Returns an error message string when the payload is invalid, else null. */

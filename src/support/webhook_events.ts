@@ -14,6 +14,10 @@ import { createHmac } from 'node:crypto'
  * The canonical set of outbound webhook event names (the "wire" names sent in
  * the `X-Escalated-Event` header and the JSON body's `event` field). This is
  * the list surfaced to admins when subscribing a webhook.
+ *
+ * It is the shared vocabulary of ADR 2026-10-21, kept literal so this module
+ * stays a leaf; `webhook_dispatcher.spec.ts` asserts it equals
+ * `CANONICAL_EVENTS` in `event_names.ts`, where the legacy aliases live.
  */
 export const WEBHOOK_EVENTS = [
   'ticket.created',
@@ -33,6 +37,11 @@ export const WEBHOOK_EVENTS = [
   'sla.warning',
   'ticket.tag_added',
   'ticket.tag_removed',
+  'chat.started',
+  'chat.assigned',
+  'chat.transferred',
+  'chat.message',
+  'chat.ended',
 ] as const
 
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number]
@@ -63,6 +72,11 @@ export const ESCALATED_EVENT_WEBHOOK_MAP: Record<string, WebhookEvent> = {
   'escalated:sla:warning': 'sla.warning',
   'escalated:tag:added': 'ticket.tag_added',
   'escalated:tag:removed': 'ticket.tag_removed',
+  'escalated:chat:started': 'chat.started',
+  'escalated:chat:assigned': 'chat.assigned',
+  'escalated:chat:transferred': 'chat.transferred',
+  'escalated:chat:message': 'chat.message',
+  'escalated:chat:ended': 'chat.ended',
 }
 
 /** Maximum number of characters persisted from a webhook response body. */
@@ -114,6 +128,17 @@ export function buildWebhookPayload(data: any): Record<string, any> {
 
   if (data?.agentId !== undefined && data?.agentId !== null) {
     payload.agent_id = data.agentId
+  }
+
+  // Live chat events carry the session; chat.message names its ticket by id.
+  if (data?.sessionId !== undefined && data?.sessionId !== null) {
+    if (!payload.ticket && data.ticketId !== undefined) payload.ticket = { id: data.ticketId }
+    const chat: Record<string, any> = { session_id: data.sessionId }
+    if (data.fromAgentId !== undefined) chat.from_agent_id = data.fromAgentId ?? null
+    if (data.toAgentId !== undefined) chat.to_agent_id = data.toAgentId ?? null
+    if (data.replyId !== undefined) chat.reply_id = data.replyId
+    if (data.authorType !== undefined) chat.author_type = data.authorType ?? null
+    payload.chat = chat
   }
 
   return payload

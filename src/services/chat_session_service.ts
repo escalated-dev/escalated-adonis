@@ -83,6 +83,7 @@ export default class ChatSessionService {
       : null
 
     await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
+    await emitter.emit(ESCALATED_EVENTS.CHAT_STARTED, { ticket, sessionId: session.id })
 
     return { ticket, session, visitorToken, firstReply }
   }
@@ -110,6 +111,7 @@ export default class ChatSessionService {
       ticket,
       agentId,
     })
+    await emitter.emit(ESCALATED_EVENTS.CHAT_ASSIGNED, { ticket, sessionId: session.id, agentId })
 
     return session.refresh()
   }
@@ -130,6 +132,7 @@ export default class ChatSessionService {
     await ticket.save()
 
     await emitter.emit(ESCALATED_EVENTS.TICKET_RESOLVED, { ticket, causer })
+    await emitter.emit(ESCALATED_EVENTS.CHAT_ENDED, { ticket, sessionId: session.id, causer })
 
     return session.refresh()
   }
@@ -163,6 +166,13 @@ export default class ChatSessionService {
       })
     }
 
+    await emitter.emit(ESCALATED_EVENTS.CHAT_TRANSFERRED, {
+      ticket,
+      sessionId: session.id,
+      fromAgentId: previousAgentId ?? null,
+      toAgentId: newAgentId,
+    })
+
     return session.refresh()
   }
 
@@ -190,6 +200,14 @@ export default class ChatSessionService {
     })
 
     await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply })
+    await emitter.emit(ESCALATED_EVENTS.CHAT_MESSAGE, {
+      ticketId: session.ticketId,
+      sessionId: session.id,
+      replyId: reply.id,
+      authorType: author.type ?? null,
+      authorId: author.id ?? null,
+      body,
+    })
 
     return reply.refresh()
   }

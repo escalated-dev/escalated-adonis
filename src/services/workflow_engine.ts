@@ -6,6 +6,7 @@ import Reply from '../models/reply.js'
 import { allowPrivateWebhookUrls, escalatedDb } from '../helpers/config.js'
 import { assertPublicHttpUrl } from '../support/outbound_url.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
+import { aliasesOf } from '../support/event_names.js'
 
 interface Condition {
   field: string
@@ -66,9 +67,10 @@ export const ACTION_TYPES = [
 
 /**
  * The package events that run workflows, keyed by emitter event name: the five
- * Workflow triggers in the domain model. The provider subscribes the engine to
- * exactly these, and `TRIGGER_EVENTS` is derived from them, so the builder only
- * offers triggers that fire.
+ * Workflow triggers in the domain model, plus the live-chat start and end that
+ * Laravel also offers. Names follow ADR 2026-10-21. The provider subscribes
+ * the engine to exactly these, and `TRIGGER_EVENTS` is derived from them, so
+ * the builder only offers triggers that fire.
  */
 export const WORKFLOW_TRIGGER_EVENT_MAP = {
   [ESCALATED_EVENTS.TICKET_CREATED]: 'ticket.created',
@@ -76,6 +78,8 @@ export const WORKFLOW_TRIGGER_EVENT_MAP = {
   [ESCALATED_EVENTS.TICKET_ASSIGNED]: 'ticket.assigned',
   [ESCALATED_EVENTS.TICKET_STATUS_CHANGED]: 'ticket.status_changed',
   [ESCALATED_EVENTS.REPLY_CREATED]: 'reply.created',
+  [ESCALATED_EVENTS.CHAT_STARTED]: 'chat.started',
+  [ESCALATED_EVENTS.CHAT_ENDED]: 'chat.ended',
 } as const
 
 export const TRIGGER_EVENTS = Object.values(WORKFLOW_TRIGGER_EVENT_MAP)
@@ -83,9 +87,11 @@ export const TRIGGER_EVENTS = Object.values(WORKFLOW_TRIGGER_EVENT_MAP)
 export default class WorkflowEngine {
   async processEvent(eventName: string, ticket: Ticket, _context: Record<string, any> = {}) {
     const db = await escalatedDb()
+    // A workflow stored under a legacy name of this event (ADR 2026-10-21,
+    // e.g. `ticket.replied`) runs on it too.
     const workflows = await db
       .from('escalated_workflows')
-      .where('trigger_event', eventName)
+      .whereIn('trigger_event', aliasesOf(eventName))
       .where('is_active', true)
       .orderBy('position', 'asc')
 

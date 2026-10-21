@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Changed
+- Webhooks and workflow triggers use the shared event vocabulary (escalated-developer-context ADR 2026-10-21). The names live in `src/support/event_names.ts`. Webhooks already sent the canonical ticket, reply, note, tag and SLA names, so nothing changes for those deliveries.
+
+### Added
+- Live chat emits `escalated:chat:started`, `escalated:chat:assigned` (new), `escalated:chat:transferred`, `escalated:chat:message` and `escalated:chat:ended`. They were defined but never emitted. Webhooks can subscribe to `chat.started`, `chat.assigned`, `chat.transferred`, `chat.message` and `chat.ended`; the payload carries `ticket` and `chat.session_id` (plus `agent_id`, `chat.from_agent_id`/`to_agent_id`, or `chat.reply_id`/`author_type` where they apply). Workflows can trigger on `chat.started` and `chat.ended`, as in Laravel.
+
+### Upgrade notes
+- Stored names are read as aliases, not rewritten: `ticket.replied`, `internal_note.added`, `internal_note.created`, `tag.added`, `ticket.tagged`, `tag.removed`, `ticket.untagged`, `chat.session_started` and `chat.session_ended`. A webhook subscribed under one of them receives the event under the canonical name, and a workflow stored with `ticket.replied` runs on `reply.created`. The admin pages show them, and saving stores them, under the canonical names.
+- `ChatMessageData.authorId` and the chat transfer agent ids are typed `UserId`, as elsewhere.
+
 ## [0.7.3] - 2026-10-20
 
 ### Changed

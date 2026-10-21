@@ -115,24 +115,32 @@ export interface ChatStartedData {
   sessionId: number
 }
 
+export interface ChatAssignedData {
+  ticket: Ticket
+  sessionId: number
+  agentId: UserId
+}
+
 export interface ChatEndedData {
   ticket: Ticket
   sessionId: number
+  causer?: any
 }
 
 export interface ChatMessageData {
   ticketId: number
   sessionId: number
+  replyId?: number
   authorType: string | null
-  authorId: number | null
+  authorId: UserId | null
   body: string
 }
 
 export interface ChatTransferredData {
   ticket: Ticket
   sessionId: number
-  fromAgentId: number | null
-  toAgentId: number
+  fromAgentId: UserId | null
+  toAgentId: UserId
 }
 
 export interface TicketCustomActionTriggeredData {
@@ -164,6 +172,7 @@ export const ESCALATED_EVENTS = {
   TAG_ADDED: 'escalated:tag:added',
   TAG_REMOVED: 'escalated:tag:removed',
   CHAT_STARTED: 'escalated:chat:started',
+  CHAT_ASSIGNED: 'escalated:chat:assigned',
   CHAT_ENDED: 'escalated:chat:ended',
   CHAT_MESSAGE: 'escalated:chat:message',
   CHAT_TRANSFERRED: 'escalated:chat:transferred',
@@ -191,6 +200,7 @@ export interface EscalatedEventsList {
   [ESCALATED_EVENTS.TAG_ADDED]: TagAddedToTicketData
   [ESCALATED_EVENTS.TAG_REMOVED]: TagRemovedFromTicketData
   [ESCALATED_EVENTS.CHAT_STARTED]: ChatStartedData
+  [ESCALATED_EVENTS.CHAT_ASSIGNED]: ChatAssignedData
   [ESCALATED_EVENTS.CHAT_ENDED]: ChatEndedData
   [ESCALATED_EVENTS.CHAT_MESSAGE]: ChatMessageData
   [ESCALATED_EVENTS.CHAT_TRANSFERRED]: ChatTransferredData
@@ -231,6 +241,7 @@ declare module '@adonisjs/core/types' {
     'escalated:tag:added': TagAddedToTicketData
     'escalated:tag:removed': TagRemovedFromTicketData
     'escalated:chat:started': ChatStartedData
+    'escalated:chat:assigned': ChatAssignedData
     'escalated:chat:ended': ChatEndedData
     'escalated:chat:message': ChatMessageData
     'escalated:chat:transferred': ChatTransferredData

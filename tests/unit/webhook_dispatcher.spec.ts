@@ -15,10 +15,19 @@ import {
   deliverWebhook,
 } from '../../src/support/webhook_events.ts'
 import { ESCALATED_EVENTS } from '../../src/events/index.ts'
+import {
+  CANONICAL_EVENTS,
+  aliasesOf,
+  canonicalEvent,
+  canonicalEvents,
+} from '../../src/support/event_names.ts'
 
 describe('webhook event catalogue', () => {
-  it('exposes the canonical 17 wire event names', () => {
-    assert.equal(WEBHOOK_EVENTS.length, 17)
+  it('exposes the 22 names of the shared vocabulary (ADR 2026-10-21)', () => {
+    assert.deepEqual([...WEBHOOK_EVENTS].sort(), [...CANONICAL_EVENTS].sort())
+    assert.equal(WEBHOOK_EVENTS.length, 22)
+    assert.ok(WEBHOOK_EVENTS.includes('chat.started'))
+    assert.ok(WEBHOOK_EVENTS.includes('chat.ended'))
     assert.ok(WEBHOOK_EVENTS.includes('ticket.created'))
     assert.ok(WEBHOOK_EVENTS.includes('reply.created'))
     assert.ok(WEBHOOK_EVENTS.includes('note.created'))
@@ -52,7 +61,40 @@ describe('webhook event catalogue', () => {
   })
 })
 
+describe('event name aliases', () => {
+  it('reads legacy names as canonical names and passes unknown names through', () => {
+    assert.equal(canonicalEvent('ticket.replied'), 'reply.created')
+    assert.equal(canonicalEvent('chat.session_ended'), 'chat.ended')
+    assert.equal(canonicalEvent('ticket.created'), 'ticket.created')
+    assert.equal(canonicalEvent('toString'), 'toString')
+    assert.deepEqual(canonicalEvents(['tag.added', 'ticket.tag_added', 7, 'note.created']), [
+      'ticket.tag_added',
+      'note.created',
+    ])
+    assert.deepEqual(aliasesOf('ticket.tag_added').sort(), [
+      'tag.added',
+      'ticket.tag_added',
+      'ticket.tagged',
+    ])
+  })
+})
+
 describe('buildWebhookPayload', () => {
+  it('shapes a chat payload with the session and the ticket id', () => {
+    const payload = buildWebhookPayload({
+      ticketId: 9,
+      sessionId: 4,
+      replyId: 12,
+      authorType: 'Guest',
+      authorId: 0,
+      body: 'hi',
+    })
+    assert.deepEqual(payload, {
+      ticket: { id: 9 },
+      chat: { session_id: 4, reply_id: 12, author_type: 'Guest' },
+    })
+  })
+
   it('shapes a ticket payload from a ticket event', () => {
     const payload = buildWebhookPayload({
       ticket: { id: 7, reference: 'TKT-7', subject: 'Broken', status: 'open', priority: 'high' },
