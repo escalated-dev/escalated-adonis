@@ -3,6 +3,7 @@ import { column, hasMany, scope } from '@adonisjs/lucid/orm'
 import EscalatedBaseModel from './base_model.js'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import WebhookDelivery from './webhook_delivery.js'
+import { canonicalEvent, canonicalEvents } from '../support/event_names.js'
 
 /**
  * An outbound webhook subscription. When a supported lifecycle event fires,
@@ -49,8 +50,16 @@ export default class Webhook extends EscalatedBaseModel {
 
   // ---- Helpers ----
 
-  /** Whether this webhook is subscribed to the given event name. */
+  /**
+   * The subscribed events, with names stored by earlier releases read as their
+   * canonical names (ADR 2026-10-21).
+   */
+  subscribedEvents(): string[] {
+    return canonicalEvents(this.events)
+  }
+
+  /** Whether this webhook is subscribed to the given event name, legacy names included. */
   subscribedTo(event: string): boolean {
-    return (this.events ?? []).includes(event)
+    return this.subscribedEvents().includes(canonicalEvent(event))
   }
 }

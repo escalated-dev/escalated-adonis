@@ -504,28 +504,35 @@ The provider automatically shares the following data via Inertia on every reques
 
 ## Events
 
-The package emits the following events that you can listen to:
+The package emits these events on the Adonis emitter (`ESCALATED_EVENTS` from `@escalated-dev/escalated-adonis/events`). Outbound webhooks and workflow triggers use the shared names in the second column (escalated-developer-context ADR 2026-10-21).
 
-| Event | Description |
-|-------|-------------|
-| `escalated:ticket:created` | New ticket created |
-| `escalated:ticket:updated` | Ticket fields updated |
-| `escalated:ticket:status_changed` | Status transition |
-| `escalated:ticket:assigned` | Agent assigned |
-| `escalated:ticket:unassigned` | Agent unassigned |
-| `escalated:ticket:priority_changed` | Priority changed |
-| `escalated:ticket:department_changed` | Department changed |
-| `escalated:ticket:tags_added` | Tags added |
-| `escalated:ticket:tags_removed` | Tags removed |
-| `escalated:ticket:escalated` | Ticket escalated |
-| `escalated:ticket:resolved` | Ticket resolved |
-| `escalated:ticket:closed` | Ticket closed |
-| `escalated:ticket:reopened` | Ticket reopened |
-| `escalated:reply:created` | Reply added |
-| `escalated:note:created` | Internal note added |
-| `escalated:sla:breached` | SLA target breached |
-| `escalated:rating:created` | CSAT rating submitted |
-| `escalated:ticket:customActionTriggered` | Agent triggered a custom ticket action |
+| Emitter event | Webhook / workflow name | Description |
+|---------------|-------------------------|-------------|
+| `escalated:ticket:created` | `ticket.created` | New ticket created |
+| `escalated:ticket:updated` | `ticket.updated` | Ticket fields updated |
+| `escalated:ticket:statusChanged` | `ticket.status_changed` | Status transition |
+| `escalated:ticket:resolved` | `ticket.resolved` | Ticket resolved |
+| `escalated:ticket:closed` | `ticket.closed` | Ticket closed |
+| `escalated:ticket:reopened` | `ticket.reopened` | Ticket reopened |
+| `escalated:ticket:assigned` | `ticket.assigned` | Agent assigned |
+| `escalated:ticket:unassigned` | `ticket.unassigned` | Agent unassigned |
+| `escalated:ticket:escalated` | `ticket.escalated` | Ticket escalated |
+| `escalated:ticket:priorityChanged` | `ticket.priority_changed` | Priority changed |
+| `escalated:ticket:departmentChanged` | `ticket.department_changed` | Department changed |
+| `escalated:tag:added` | `ticket.tag_added` | Tag added |
+| `escalated:tag:removed` | `ticket.tag_removed` | Tag removed |
+| `escalated:reply:created` | `reply.created` | Public reply added |
+| `escalated:reply:noteAdded` | `note.created` | Internal note added |
+| `escalated:sla:warning` | `sla.warning` | SLA target near |
+| `escalated:sla:breached` | `sla.breached` | SLA target breached |
+| `escalated:chat:started` | `chat.started` | Live chat started |
+| `escalated:chat:assigned` | `chat.assigned` | Agent accepted a chat |
+| `escalated:chat:transferred` | `chat.transferred` | Chat moved to another agent |
+| `escalated:chat:message` | `chat.message` | Chat message sent |
+| `escalated:chat:ended` | `chat.ended` | Live chat ended |
+| `escalated:ticket:customActionTriggered` | (none) | Agent triggered a custom ticket action |
+
+Webhooks and workflows saved under older names keep working: `ticket.replied`, `internal_note.added`, `internal_note.created`, `tag.added`, `ticket.tagged`, `tag.removed`, `ticket.untagged`, `chat.session_started` and `chat.session_ended` are read as the names above.
 
 ## Custom Ticket Actions
 

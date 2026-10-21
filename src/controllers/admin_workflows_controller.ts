@@ -9,6 +9,7 @@ import WorkflowEngine, {
   TRIGGER_EVENTS,
 } from '../services/workflow_engine.js'
 import Ticket from '../models/ticket.js'
+import { canonicalEvent } from '../support/event_names.js'
 import {
   validateWorkflowPayload,
   type WorkflowValidationMessage,
@@ -29,7 +30,9 @@ const INDEX_ROUTE = 'escalated.admin.workflows.index'
 function workflowJson(row: Record<string, any>) {
   return {
     ...row,
-    trigger: row.trigger_event,
+    // A trigger stored under a legacy name reads as its canonical name.
+    trigger_event: canonicalEvent(row.trigger_event),
+    trigger: canonicalEvent(row.trigger_event),
     conditions: typeof row.conditions === 'string' ? JSON.parse(row.conditions) : row.conditions,
     actions: typeof row.actions === 'string' ? JSON.parse(row.actions) : row.actions,
     // MySQL and SQLite hand booleans back as 1 and 0.
@@ -49,8 +52,8 @@ function logJson(row: Record<string, any>) {
     id: row.id,
     workflow_id: row.workflow_id,
     ticket_id: row.ticket_id,
-    trigger_event: row.trigger_event,
-    event: row.trigger_event,
+    trigger_event: canonicalEvent(row.trigger_event),
+    event: canonicalEvent(row.trigger_event),
     workflow_name: row.workflow_name ?? null,
     ticket_reference: row.ticket_reference ?? null,
     matched: !!row.conditions_matched,
