@@ -62,6 +62,11 @@ const WidgetController = () => import('../src/controllers/widget_controller.js')
 const ChatController = () => import('../src/controllers/chat_controller.js')
 const AttachmentsController = () => import('../src/controllers/attachments_controller.js')
 const WidgetChatController = () => import('../src/controllers/widget_chat_controller.js')
+const GuestVerificationController = () =>
+  import('../src/controllers/guest_verification_controller.js')
+
+/** A guest grant (base64url), or a legacy 64-character token when those are allowed. */
+const GUEST_TOKEN = /^[A-Za-z0-9_-]{20,4096}$/
 const WidgetScriptController = () => import('../src/controllers/widget_script_controller.js')
 
 // API controllers
@@ -157,10 +162,18 @@ function registerCoreRoutes(config: any) {
         .post('/tickets', [WidgetController, 'createTicket'])
         .as('escalated.widget.tickets.create')
         .use(middleware.guestRateLimit({ scope: 'ticket' }))
+      // Status with `Authorization: Bearer <grant>`; see docs/guest-access.md.
       router
-        .get('/tickets/:token', [WidgetController, 'lookupTicket'])
+        .get('/tickets/:reference', [WidgetController, 'lookupTicket'])
         .as('escalated.widget.tickets.lookup')
-        .where('token', /^[A-Za-z0-9]{64}$/)
+      router
+        .post('/verification', [GuestVerificationController, 'verification'])
+        .as('escalated.widget.verification')
+        .use(middleware.guestRateLimit({ scope: 'ticket' }))
+      router
+        .post('/lookup', [GuestVerificationController, 'lookup'])
+        .as('escalated.widget.lookup')
+        .use(middleware.guestRateLimit({ scope: 'reply' }))
     })
     .prefix(`${prefix}/widget`)
     .use([middleware.widgetCors(), middleware.apiRateLimit(), middleware.ticketAccess()])
@@ -807,22 +820,30 @@ async function registerUiRoutes(config: any) {
     .group(() => {
       router.get('/create', [GuestTicketsController, 'create']).as('escalated.guest.tickets.create')
       router
+        .post('/verification', [GuestVerificationController, 'verification'])
+        .as('escalated.guest.verification')
+        .use(middleware.guestRateLimit({ scope: 'ticket' }))
+      router
+        .post('/lookup', [GuestVerificationController, 'lookup'])
+        .as('escalated.guest.lookup')
+        .use(middleware.guestRateLimit({ scope: 'reply' }))
+      router
         .post('/', [GuestTicketsController, 'store'])
         .as('escalated.guest.tickets.store')
         .use(middleware.guestRateLimit({ scope: 'ticket' }))
       router
         .get('/:token', [GuestTicketsController, 'show'])
         .as('escalated.guest.tickets.show')
-        .where('token', /^[A-Za-z0-9]{64}$/)
+        .where('token', GUEST_TOKEN)
       router
         .post('/:token/reply', [GuestTicketsController, 'reply'])
         .as('escalated.guest.tickets.reply')
         .use(middleware.guestRateLimit({ scope: 'reply' }))
-        .where('token', /^[A-Za-z0-9]{64}$/)
+        .where('token', GUEST_TOKEN)
       router
         .post('/:token/rate', [SatisfactionRatingController, 'storeGuest'])
         .as('escalated.guest.tickets.rate')
-        .where('token', /^[A-Za-z0-9]{64}$/)
+        .where('token', GUEST_TOKEN)
     })
     .prefix(`${prefix}/guest`)
     .use([middleware.ticketAccess()])

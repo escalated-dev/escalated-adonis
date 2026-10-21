@@ -9,6 +9,16 @@ import { WIDGET_ORIGIN } from '../support/widget_origins.js'
 import { activeDepartmentId, isAgentReply } from '../support/widget_contract.js'
 import { getConfig } from '../helpers/config.js'
 import { resolveUserModel } from '../support/user_model.js'
+import Ticket from '../models/ticket.js'
+import {
+  InvalidCode,
+  consume,
+  isValidEmail,
+  markVerified,
+  normalizeEmail,
+  privateResponse,
+} from '../support/guest_access.js'
+import { proofErrors, validationError } from './guest_verification_controller.js'
 
 /** Replies a chat transcript returns, newest kept when a chat runs longer. */
 const TRANSCRIPT_LIMIT = 100
@@ -65,14 +75,43 @@ export default class WidgetChatController {
     const metadata = hostMetadata.metadata
     const departmentId = await activeDepartmentId(data.department_id)
 
-    const { ticket, session, visitorToken, firstReply } = await this.chatService.startChat({
-      visitorName: data.name || undefined,
-      visitorEmail: data.email || undefined,
-      subject: data.subject || undefined,
-      message: data.message ?? null,
-      departmentId,
-      metadata: metadata ?? undefined,
-    })
+    // A chat needs a `chat` code for the visitor's email (docs/guest-access.md).
+    const email = normalizeEmail(data.email)
+    const errors: Record<string, string> = {}
+    if (!isValidEmail(email)) errors.email = 'Enter a valid email address.'
+    Object.assign(errors, proofErrors(ctx.request.all()))
+    if (Object.keys(errors).length > 0) return validationError(ctx, errors)
+
+    let started: Awaited<ReturnType<ChatSessionService['startChat']>>
+    try {
+      started = await consume(
+        ctx.request.input('verification_id'),
+        ctx.request.input('verification_code'),
+        email,
+        'chat',
+        async () => {
+          const result = await this.chatService.startChat({
+            visitorName: data.name || undefined,
+            visitorEmail: email,
+            subject: data.subject || undefined,
+            message: data.message ?? null,
+            departmentId,
+            metadata: metadata ?? undefined,
+          })
+          // The chat's ticket carries a proven address.
+          const chatTicket = await Ticket.findOrFail(result.ticket.id)
+          await markVerified(chatTicket, email)
+          await chatTicket.save()
+          return result
+        }
+      )
+    } catch (failure) {
+      if (failure instanceof InvalidCode) {
+        return validationError(ctx, { verification_code: failure.message })
+      }
+      throw failure
+    }
+    const { ticket, session, visitorToken, firstReply } = started
 
     // Attempt auto-assignment
     const agentId = await this.routingService.findAvailableAgent({
@@ -88,6 +127,7 @@ export default class WidgetChatController {
     const names = new AgentNames()
     const visitorName = guestName(session, ticket)
 
+    privateResponse(ctx.response)
     return ctx.response.created({
       // The shared widget addresses the chat by `id` in every chat path. It is
       // the visitor token: random, and the only key the chat routes accept.

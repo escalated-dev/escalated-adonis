@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import { withGuestProof } from './fixtures/guest_codes.js'
 import { InertiaClient, sqlTimestamp, testApp, type TestApp } from './helpers/app.js'
 import { MemoryGuestRateLimitStore } from '../../src/support/guest_rate_limit.js'
 
@@ -47,10 +48,12 @@ test.group('Guest endpoint rate limiting', (group) => {
 
   let sequence = 0
 
+  /** A verified guest ticket; returns its grant, which opens the reply route. */
   async function guestTicket() {
     const { default: Ticket } = await import('../../src/models/ticket.js')
+    const { issue, markVerified } = await import('../../src/support/guest_access.js')
     const token = `${'a'.repeat(54)}${String(Date.now()).slice(-6)}${String(++sequence).padStart(4, '0')}`
-    await Ticket.create({
+    const ticket = await Ticket.create({
       reference: `GRL-${Date.now()}-${sequence}`,
       requesterType: null,
       requesterId: null,
@@ -65,7 +68,8 @@ test.group('Guest endpoint rate limiting', (group) => {
       slaFirstResponseBreached: false,
       slaResolutionBreached: false,
     } as any)
-    return token
+    await markVerified(ticket, ticket.guestEmail)
+    return issue(ticket)
   }
 
   async function statuses(times: number, send: (n: number) => Promise<{ status: number }>) {
@@ -77,22 +81,26 @@ test.group('Guest endpoint rate limiting', (group) => {
     return out
   }
 
-  function widgetTicket(n: number) {
+  async function widgetTicket(n: number) {
     // A distinct email per call, so only the per-IP limit can be what trips.
-    return new InertiaClient(running.baseUrl).visit('POST', '/support/widget/tickets', {
-      data: { email: `widget${n}-${Date.now()}@example.com`, subject: 'Help', description: 'd' },
+    const data = await withGuestProof('POST', '/support/widget/tickets', {
+      email: `widget${n}-${Date.now()}@example.com`,
+      subject: 'Help',
+      description: 'd',
     })
+    return new InertiaClient(running.baseUrl).visit('POST', '/support/widget/tickets', { data })
   }
 
-  function guestFormTicket(n: number) {
+  async function guestFormTicket(n: number) {
+    const data = await withGuestProof('POST', '/support/guest', {
+      guest_name: 'Guest',
+      guest_email: `guest${n}-${Date.now()}@example.com`,
+      subject: 'Help',
+      description: 'd',
+      priority: 'low',
+    })
     return new InertiaClient(running.baseUrl).visit('POST', '/support/guest', {
-      data: {
-        guest_name: 'Guest',
-        guest_email: `guest${n}-${Date.now()}@example.com`,
-        subject: 'Help',
-        description: 'd',
-        priority: 'low',
-      },
+      data,
       referer: '/support/guest/create',
     })
   }

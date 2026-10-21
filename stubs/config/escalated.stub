@@ -189,6 +189,25 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | Verified Guest Access
+  |--------------------------------------------------------------------------
+  |
+  | Guest tickets, widget chats and ticket lookups need an eight-digit code
+  | emailed to the guest (sent with @adonisjs/mail, or `sendCode`). Guests
+  | then open their ticket with an expiring grant. `legacyTokens: true`
+  | keeps the permanent links issued before this working during a
+  | transition. See docs/guest-access.md.
+  |
+  */
+  guestAccess: {
+    ttlMinutes: 1440,
+    challengesPerClientPerHour: 3,
+    challengesPerMailboxPerHour: 10,
+    legacyTokens: false,
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Embedding the Widget on Other Sites
   |--------------------------------------------------------------------------
   |

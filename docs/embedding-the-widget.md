@@ -141,11 +141,14 @@ stay, so existing clients keep working.
 
 | Route | Answer |
 |---|---|
-| `GET /config` | `enabled`, `color` (the `widget_accent_color` setting), `position` (`widget_position`, default `bottom-right`), `greeting` (`widget_greeting`), `departments` (active ones, `[{ id, name }]`), `kb_enabled`, `guest_tickets_enabled`, `accepts_metadata`, `status_lookup_enabled: false`, plus `brand_name`, `accent_color`, `logo_url`, `knowledge_base_enabled`. A disabled widget answers 403 `{ enabled: false }`. |
+| `GET /config` | `enabled`, `color` (the `widget_accent_color` setting), `position` (`widget_position`, default `bottom-right`), `greeting` (`widget_greeting`), `departments` (active ones, `[{ id, name }]`), `kb_enabled`, `guest_tickets_enabled`, `accepts_metadata`, `guest_verification_required: true`, `status_lookup_enabled: true`, plus `brand_name`, `accent_color`, `logo_url`, `knowledge_base_enabled`. A disabled widget answers 403 `{ enabled: false }`. |
 | `GET /articles?q=` | `articles: [{ id, title, slug, excerpt, category }]` |
 | `GET /articles/:slug` | `title`, `slug`, `body`, `category` at the top level, also under `article`, plus `related` |
-| `POST /tickets` | 201 `{ message, reference, ticket_reference, guest_token }`. An active `department_id` is kept; any other is ignored. |
-| `POST /chat/start` | 201 `{ id, session_id, visitor_token, ticket_reference, status, messages, agent }`. `message` is optional. `id` is the visitor token, the random key of every chat path below. |
+| `POST /verification` | `{ email, purpose }` (`ticket`, `chat` or `lookup`): 202 `{ verification_id, expires_in, message }`; the code is emailed. See [guest access](guest-access.md). |
+| `POST /tickets` | Needs `verification_id` and `verification_code` (a `ticket` code). 201 `{ message, reference, ticket_reference, guest_access_token, expires_at }`. An active `department_id` is kept; any other is ignored. |
+| `POST /lookup` | `{ email, reference, verification_id, verification_code }` (a `lookup` code): `{ data: [{ reference, subject, guest_access_token, expires_at }] }` |
+| `GET /tickets/:reference` | With `Authorization: Bearer <guest_access_token>`: `reference`, `subject`, `status`, `status_label`, `status_color`, `created_at`, `department`, `replies` |
+| `POST /chat/start` | Needs a `chat` code for `email`. 201 `{ id, session_id, visitor_token, ticket_reference, status, messages, agent }`. `message` is optional. `id` is the visitor token, the random key of every chat path below. |
 | `GET /chat/:id/messages` | `{ messages: [{ id, body, is_agent, author: { name }, created_at }], agent, typing, ended }` (the latest 100 messages) |
 | `POST /chat/:id/messages` | `{ body }`, the same action as `POST /chat/:id/message` |
 | `POST /chat/:id/typing`, `/end`, `/rate` | as before; `typing` without a body means "typing" |
@@ -154,11 +157,10 @@ Refusals answer 400 with `message` (shown by the widget) and `error`; an
 unknown chat token answers 404. Agent typing is broadcast rather than stored,
 so `typing` is always `null` for a polling widget.
 
-Ticket status lookup is not offered to embedded visitors: it would need the
-mailbox verification flow (`/verification`, `/lookup`), which this package does
-not have, so `/config` returns `status_lookup_enabled: false` and the widget
-hides its status tab. `GET /tickets/:token` (by the 64-character guest token)
-is unchanged.
+Tickets, chats and status lookups need an emailed code; see
+[verified guest access](guest-access.md). Missing or wrong proof answers 422
+with `{ message, errors }`. The old `GET /tickets/:token` (by a 64-character
+guest token) only works with `guestAccess.legacyTokens`.
 
 ### The script
 

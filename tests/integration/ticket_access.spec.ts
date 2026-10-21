@@ -109,7 +109,17 @@ test.group('Configurable ticket access', (group) => {
     assert.equal(hiddenApiResponse.status, 404)
   })
 
-  test('scopes the widget even when an agent knows a valid guest token', async ({ assert }) => {
+  test('scopes the widget even when an agent knows a valid guest token', async ({
+    assert,
+    cleanup,
+  }) => {
+    // A permanent guest token, as earlier releases issued (docs/guest-access.md).
+    const config = getConfig() as any
+    const previousGuestAccess = config.guestAccess
+    config.guestAccess = { ...previousGuestAccess, legacyTokens: true }
+    cleanup(() => {
+      config.guestAccess = previousGuestAccess
+    })
     const agentWidgetResponse = await client.visit(
       'GET',
       '/support/widget/tickets/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'

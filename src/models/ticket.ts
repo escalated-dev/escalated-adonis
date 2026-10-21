@@ -11,6 +11,7 @@ import { type DateTime } from 'luxon'
 import {
   column,
   beforeCreate,
+  beforeUpdate,
   afterCreate,
   belongsTo,
   hasMany,
@@ -125,6 +126,20 @@ export default class Ticket extends EscalatedBaseModel {
   @column()
   declare guestToken: string | null
 
+  // Verified guest access (docs/guest-access.md). Only the hash of the
+  // grant's nonce and a keyed digest of the verified address are stored.
+  @column({ serializeAs: null })
+  declare guestAccessHash: string | null
+
+  @column.dateTime({ serializeAs: null })
+  declare guestAccessExpiresAt: DateTime | null
+
+  @column({ serializeAs: null })
+  declare guestVerifiedEmail: string | null
+
+  @column.dateTime({ serializeAs: null })
+  declare guestEmailVerifiedAt: DateTime | null
+
   // First-class Contact FK (Pattern B convergence)
   @column({ columnName: 'contact_id' })
   declare contactId: number | null
@@ -214,7 +229,8 @@ export default class Ticket extends EscalatedBaseModel {
 
   @computed()
   get isGuest(): boolean {
-    return this.requesterType === null && this.guestToken !== null
+    // Verified guest tickets no longer keep a permanent token.
+    return this.requesterType === null && (this.guestToken !== null || !!this.guestEmail)
   }
 
   @computed()
@@ -350,6 +366,20 @@ export default class Ticket extends EscalatedBaseModel {
       ticket.accountType = account?.type ?? null
       ticket.accountId = account ? String(account.id) : null
     }
+  }
+
+  /**
+   * Changing the guest email revokes its proof and every grant: the new
+   * address has not been verified.
+   */
+  @beforeUpdate()
+  static revokeGuestAccessOnEmailChange(ticket: Ticket) {
+    if (!('guestEmail' in ticket.$dirty)) return
+    ticket.guestAccessHash = null
+    ticket.guestAccessExpiresAt = null
+    ticket.guestVerifiedEmail = null
+    ticket.guestEmailVerifiedAt = null
+    ticket.guestToken = null
   }
 
   @afterCreate()

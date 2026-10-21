@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import { withGuestProof } from './fixtures/guest_codes.js'
 import {
   InertiaClient,
   sqlTimestamp,
@@ -148,6 +149,7 @@ test.group('Event vocabulary', (group) => {
   }
 
   async function widget(method: string, path: string, body: unknown = null) {
+    body = await withGuestProof(method, WIDGET + path, body)
     const response = await fetch(running.baseUrl + WIDGET + path, {
       method,
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },

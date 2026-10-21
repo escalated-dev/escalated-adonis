@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Ticket from '../models/ticket.js'
+import type Ticket from '../models/ticket.js'
 import SatisfactionRating from '../models/satisfaction_rating.js'
 import { t } from '../support/i18n.js'
 import { requireAuthUser } from '../support/auth_user.js'
@@ -49,7 +49,9 @@ export default class SatisfactionRatingController {
    * POST /support/guest/:token/rate — Rate a ticket as guest
    */
   async storeGuest({ params, request, response, session }: HttpContext) {
-    const ticket = await Ticket.query().where('guest_token', params.token).firstOrFail()
+    const { ticketForToken } = await import('../support/guest_access.js')
+    const ticket = await ticketForToken(params.token)
+    if (!ticket) return response.notFound()
 
     const { rating, comment } = request.only(['rating', 'comment'])
 

@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import { withGuestProof } from './fixtures/guest_codes.js'
 import { InertiaClient, sqlTimestamp, testApp, type TestApp } from './helpers/app.js'
 import { MemoryGuestRateLimitStore } from '../../src/support/guest_rate_limit.js'
 import { getConfig } from '../../src/helpers/config.js'
@@ -67,17 +68,18 @@ test.group('Guest ticket intake', (group) => {
   }
 
   async function widgetTicket(body: Record<string, unknown> = {}) {
+    const payload = await withGuestProof('POST', WIDGET + '/tickets', {
+      name: 'Jane Doe',
+      email: `${unique('jane')}@example.com`,
+      subject: unique('Where is my order?'),
+      description: 'It has not arrived yet.',
+      department_id: null,
+      ...body,
+    })
     const response = await fetch(running.baseUrl + WIDGET + '/tickets', {
       method: 'POST',
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Jane Doe',
-        email: `${unique('jane')}@example.com`,
-        subject: unique('Where is my order?'),
-        description: 'It has not arrived yet.',
-        department_id: null,
-        ...body,
-      }),
+      body: JSON.stringify(payload),
     })
     const text = await response.text()
     let data: any = text
@@ -187,14 +189,15 @@ test.group('Guest ticket intake', (group) => {
 
   test('a guest form ticket emits TICKET_CREATED once', async ({ assert }) => {
     const subject = unique('Guest form')
+    const data = await withGuestProof('POST', '/support/guest', {
+      guest_name: 'Gus Guest',
+      guest_email: `${unique('gus')}@example.com`,
+      subject,
+      description: 'Sent from the guest form.',
+    })
     const { result: visit, created } = await captureCreated(() =>
       new InertiaClient(running.baseUrl).visit('POST', '/support/guest', {
-        data: {
-          guest_name: 'Gus Guest',
-          guest_email: `${unique('gus')}@example.com`,
-          subject,
-          description: 'Sent from the guest form.',
-        },
+        data,
         referer: '/support/guest/create',
       })
     )
@@ -203,7 +206,7 @@ test.group('Guest ticket intake', (group) => {
     assert.lengthOf(created, 1)
     assert.equal(created[0].subject, subject)
     // The guest ticket route accepts only [A-Za-z0-9]{64} tokens.
-    assert.match(String(visit.location), /\/support\/guest\/[0-9a-f]{64}$/)
+    assert.match(String(visit.location), /\/support\/guest\/[A-Za-z0-9_-]{20,}$/)
   })
 
   // ---- Guest policy ----------------------------------------------------------

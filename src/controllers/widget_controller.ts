@@ -7,6 +7,17 @@ import { sanitizeWidgetMetadata } from '../support/widget_metadata.js'
 import { WIDGET_ORIGIN } from '../support/widget_origins.js'
 import { activeDepartmentId, articleExcerpt } from '../support/widget_contract.js'
 import Department from '../models/department.js'
+import Reply from '../models/reply.js'
+import { STATUS_LABELS, type TicketStatus } from '../types.js'
+import {
+  InvalidCode,
+  consume,
+  issue,
+  legacyTokensEnabled,
+  privateResponse,
+  resolve,
+} from '../support/guest_access.js'
+import { proofErrors, validationError } from './guest_verification_controller.js'
 
 /**
  * Public widget API controller.
@@ -59,9 +70,10 @@ export default class WidgetController {
       departments: departments.map((d) => ({ id: d.id, name: d.name })),
       kb_enabled: kbEnabled,
       guest_tickets_enabled: guestTicketsEnabled,
-      // Ticket status needs mailbox verification, which this package does not
-      // offer, so the widget hides its status tab.
-      status_lookup_enabled: false,
+      // Tickets, chats and status lookups need an emailed code
+      // (docs/guest-access.md).
+      guest_verification_required: true,
+      status_lookup_enabled: true,
       // Keys earlier clients read.
       brand_name: brandName,
       accent_color: accentColor,
@@ -155,8 +167,8 @@ export default class WidgetController {
    * As Laravel's WidgetController::createTicket: refused with 403 while the
    * widget or guest tickets are switched off, validated, then created through
    * the guest ticket path (guest policy, contact, SLA, TICKET_CREATED).
-   * Laravel also requires mailbox verification here; this package has no
-   * guest verification yet, so that step is not enforced.
+   * Requires a `ticket` code for the email (docs/guest-access.md) and answers
+   * with an expiring grant.
    */
   async createTicket(ctx: HttpContext) {
     const widgetEnabled = await EscalatedSetting.getBool('widget_enabled', true)
@@ -175,6 +187,8 @@ export default class WidgetController {
     if (invalid) {
       return ctx.response.badRequest({ message: invalid, error: invalid })
     }
+    const proof = proofErrors(ctx.request.all())
+    if (Object.keys(proof).length > 0) return validationError(ctx, proof)
 
     const hostMetadata = sanitizeWidgetMetadata(
       ctx.request.input('metadata'),
@@ -184,44 +198,93 @@ export default class WidgetController {
       return ctx.response.badRequest({ message: hostMetadata.error, error: hostMetadata.error })
     }
 
-    const ticket = await this.ticketService.createGuest({
-      name: typeof data.name === 'string' && data.name.trim() !== '' ? data.name.trim() : null,
-      email: data.email.trim(),
-      subject: data.subject.trim(),
-      description: data.description,
-      channel: 'widget',
-      departmentId: await activeDepartmentId(data.department_id),
-      metadata: { ...hostMetadata.metadata, source: 'widget' },
-    })
+    const departmentId = await activeDepartmentId(data.department_id)
+    let created: { ticket: Ticket; token: string }
+    try {
+      created = await consume(
+        ctx.request.input('verification_id'),
+        ctx.request.input('verification_code'),
+        data.email,
+        'ticket',
+        async () => {
+          const ticket = await this.ticketService.createGuest({
+            name:
+              typeof data.name === 'string' && data.name.trim() !== '' ? data.name.trim() : null,
+            email: data.email.trim(),
+            subject: data.subject.trim(),
+            description: data.description,
+            channel: 'widget',
+            departmentId,
+            metadata: { ...hostMetadata.metadata, source: 'widget' },
+            verified: true,
+          })
+          return { ticket, token: await issue(ticket) }
+        }
+      )
+    } catch (error) {
+      if (error instanceof InvalidCode) {
+        return validationError(ctx, { verification_code: error.message })
+      }
+      throw error
+    }
 
+    privateResponse(ctx.response)
     return ctx.response.created({
       message: 'Ticket created successfully.',
-      reference: ticket.reference,
-      ticket_reference: ticket.reference,
-      guest_token: ticket.guestToken,
+      reference: created.ticket.reference,
+      ticket_reference: created.ticket.reference,
+      guest_access_token: created.token,
+      expires_at: created.ticket.guestAccessExpiresAt?.toISO() ?? null,
     })
   }
 
   /**
-   * GET /widget/tickets/:token — Lookup a ticket by guest token
+   * GET /widget/tickets/:reference — Ticket status, with the guest's grant in
+   * `Authorization: Bearer <grant>` (docs/guest-access.md). The grant must
+   * name this reference. With `guestAccess.legacyTokens`, the old
+   * `/widget/tickets/:token` form (a 64-character guest token) still works.
    */
   async lookupTicket(ctx: HttpContext) {
-    const { token } = ctx.params
+    const widgetEnabled = await EscalatedSetting.getBool('widget_enabled', true)
+    if (!widgetEnabled) {
+      return ctx.response.forbidden({ message: 'Widget is disabled.', error: 'Widget is disabled' })
+    }
 
-    const ticket = await Ticket.query()
-      .where('guest_token', token)
-      .preload('replies', (query) => {
-        query.where('is_internal_note', false).orderBy('created_at', 'asc')
-      })
-      .firstOrFail()
+    const reference = String(ctx.params.reference ?? '')
+    const header = ctx.request.header('Authorization') ?? ''
+    let ticket: Ticket | null = null
+    if (header.startsWith('Bearer ')) {
+      ticket = await resolve(header.substring(7).trim())
+      if (ticket && ticket.reference !== reference) ticket = null
+    } else if (legacyTokensEnabled() && /^[A-Za-z0-9]{64}$/.test(reference)) {
+      ticket = await Ticket.query().where('guest_token', reference).first()
+    }
+    if (!ticket) {
+      const message = 'Ticket not found.'
+      return ctx.response.notFound({ message, error: message })
+    }
 
+    const found = ticket
+    const replies = await Reply.query()
+      .where('ticket_id', found.id)
+      .where('is_internal_note', false)
+      .orderBy('created_at', 'desc')
+      .limit(20)
+    await found.load('department')
+
+    privateResponse(ctx.response)
     return ctx.response.json({
-      reference: ticket.reference,
-      subject: ticket.subject,
-      status: ticket.status,
-      created_at: ticket.createdAt.toISO(),
-      replies: ticket.replies.map((r) => ({
+      reference: found.reference,
+      subject: found.subject,
+      status: found.status,
+      status_label: STATUS_LABELS[found.status as TicketStatus] ?? found.status,
+      status_color: STATUS_COLORS[found.status] ?? '#6B7280',
+      created_at: found.createdAt.toISO(),
+      department: found.department?.name ?? null,
+      replies: replies.map((r) => ({
         body: r.body,
+        author: r.authorType && r.authorType !== 'Guest' ? 'Support' : 'You',
+        is_agent: r.authorType !== null && r.authorType !== 'Guest',
         author_type: r.authorType,
         created_at: r.createdAt.toISO(),
       })),
@@ -267,4 +330,17 @@ function serializeSummary(article: Article) {
     excerpt: articleExcerpt(article.body),
     category: article.category ? { id: article.category.id, name: article.category.name } : null,
   }
+}
+
+/** Status badge colours, as escalated-laravel's TicketStatus::color(). */
+const STATUS_COLORS: Record<string, string> = {
+  open: '#3B82F6',
+  in_progress: '#8B5CF6',
+  waiting_on_customer: '#F59E0B',
+  waiting_on_agent: '#F97316',
+  escalated: '#EF4444',
+  resolved: '#10B981',
+  closed: '#6B7280',
+  reopened: '#3B82F6',
+  live: '#06B6D4',
 }

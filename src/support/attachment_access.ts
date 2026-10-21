@@ -47,9 +47,14 @@ export function downloadTtlMinutes(): number {
   return Math.max(1, Math.min(60, Math.floor(raw)))
 }
 
-/** The digest a guest link carries. Rotating the guest credential changes it. */
-export function guestCredentialDigest(ticket: Pick<Ticket, 'guestToken'>): string | null {
-  const credential = ticket.guestToken
+/**
+ * The digest a guest link carries: of the ticket's active grant (or, with
+ * `guestAccess.legacyTokens`, its legacy token). Rotating, expiring or
+ * revoking the grant changes it, which kills the links issued under it.
+ */
+export async function guestCredentialDigest(ticket: Ticket): Promise<string | null> {
+  const { guestCredential } = await import('./guest_access.js')
+  const credential = await guestCredential(ticket)
   if (!credential) return null
   return createHash('sha256').update(`escalated-attachment:${credential}`).digest('hex')
 }
@@ -76,13 +81,24 @@ function routePrefix(): string {
  */
 export async function attachmentDownloadUrl(
   attachment: Pick<Attachment, 'id'>,
-  options: { guestTicket?: Pick<Ticket, 'guestToken'> } = {}
+  options: { guestTicket?: Ticket } = {}
 ): Promise<string> {
   const { default: encryption } = await import('@adonisjs/core/services/encryption')
   const payload: AttachmentTokenPayload = { attachment: Number(attachment.id) }
-  const guest = options.guestTicket ? guestCredentialDigest(options.guestTicket) : null
-  if (guest) payload.guest = guest
-  const token = encryption.encrypt(payload, `${downloadTtlMinutes()}m`, ATTACHMENT_TOKEN_PURPOSE)
+  const guest = options.guestTicket ? await guestCredentialDigest(options.guestTicket) : null
+  let seconds = downloadTtlMinutes() * 60
+  if (guest) {
+    payload.guest = guest
+    // A guest link never outlives the grant it was issued under.
+    const grantEnds = options.guestTicket?.guestAccessExpiresAt
+    if (grantEnds) {
+      seconds = Math.max(
+        1,
+        Math.min(seconds, Math.floor(grantEnds.toSeconds() - Date.now() / 1000))
+      )
+    }
+  }
+  const token = encryption.encrypt(payload, `${seconds}s`, ATTACHMENT_TOKEN_PURPOSE)
   return `${routePrefix()}/attachments/${attachment.id}/download?token=${encodeURIComponent(token)}`
 }
 
@@ -139,7 +155,7 @@ export async function isStaff(user: any): Promise<boolean> {
  */
 export async function signAttachments(
   owners: Array<{ attachments?: Attachment[] } | null | undefined>,
-  options: { guestTicket?: Pick<Ticket, 'guestToken'> } = {}
+  options: { guestTicket?: Ticket } = {}
 ): Promise<void> {
   for (const owner of owners) {
     for (const attachment of owner?.attachments ?? []) {
