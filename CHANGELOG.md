@@ -2,35 +2,33 @@
 
 ## [Unreleased]
 
-### Added
-- Ticket merge, as escalated-laravel's TicketMergeService: `POST {prefix}/admin/tickets/:ticket/merge` (`{target_reference}`) moves the source's replies to the target, leaves a system note on both, closes the source with `merged_into_id` pointing at the target (new column, migration 0066), all in one transaction, then emits the source's `TICKET_STATUS_CHANGED` and `TICKET_CLOSED`. `GET {prefix}/admin/tickets/merge-search?q=` finds unmerged tickets by reference or subject. A merged ticket cannot be merged again or chosen as a target.
-- Routes for the existing ticket-link and side-conversation services, under the names the shared frontend calls: `escalated.admin.tickets.links.index|store|destroy` and `escalated.admin.tickets.side-conversations.index|store|reply|close`. A link or conversation is reached only through its own ticket.
-- Routes for the mentions controller: `GET {prefix}/agent/mentions`, `POST {prefix}/agent/mentions/read` and `GET {prefix}/admin/agents/search` (the mention picker's default endpoint).
+## [0.7.4] - 2026-10-21
 
-### Security
-- Verified guest access, as in escalated-laravel (see `docs/guest-access.md`). `POST {prefix}/guest/verification` and `{prefix}/widget/verification` email an eight-digit code (purposes `ticket`, `chat`, `lookup`; 10 minutes; 5 guesses; single use; 3 codes per mailbox per client IP and 10 per mailbox per hour, 429 with `Retry-After`). The guest form, `POST /widget/tickets` and `POST /widget/chat/start` require one. Guest tickets are opened by expiring grants (default 24 h, `guestAccess.ttlMinutes`) whose nonce is stored only as a hash; renewal rotates them and changing the guest email revokes them. `POST {prefix}/guest/lookup` and `{prefix}/widget/lookup` renew access by reference and proven email. `GET /widget/tickets/:reference` answers with `Authorization: Bearer <grant>`. Widget `/config` returns `guest_verification_required: true` and `status_lookup_enabled: true`. Guest answers are `no-store` and `no-referrer`, and the guest page no longer carries ticket or reply metadata. Guest attachment links are bound to the active grant.
-
-### Security
-- Attachments are private, as in escalated-laravel. Pages and the API no longer carry a Drive URL; an attachment serializes with `url`, a link to the new `GET {prefix}/attachments/:attachment/download` route (`escalated.attachments.download`) that expires after `storage.downloadTtlMinutes` (default 10, 1 to 60). The route checks current access on every request: agents and admins who can see the ticket get everything, the requester gets the ticket's and its public replies' attachments (never internal notes), guests only links issued by the guest page and bound to the ticket's current guest token, and API clients their bearer token (a bad bearer is 401, with no fallback to the session). Downloads are `attachment` with a sanitised name, `nosniff`, `private, no-store`, `no-referrer`, and `application/octet-stream` unless the type is PDF, GIF, JPEG, PNG, WebP or plain text. See `docs/private-attachments.md`.
-- New uploads and inbound email attachments are written with private visibility to `storage.disk`, or the application's default Drive disk when unset (it was hard-coded to `public`).
-
-### Changed
-- Webhooks and workflow triggers use the shared event vocabulary (escalated-developer-context ADR 2026-10-21). The names live in `src/support/event_names.ts`. Webhooks already sent the canonical ticket, reply, note, tag and SLA names, so nothing changes for those deliveries.
-
-### Added
-- Live chat emits `escalated:chat:started`, `escalated:chat:assigned` (new), `escalated:chat:transferred`, `escalated:chat:message` and `escalated:chat:ended`. They were defined but never emitted. Webhooks can subscribe to `chat.started`, `chat.assigned`, `chat.transferred`, `chat.message` and `chat.ended`; the payload carries `ticket` and `chat.session_id` (plus `agent_id`, `chat.from_agent_id`/`to_agent_id`, or `chat.reply_id`/`author_type` where they apply). Workflows can trigger on `chat.started` and `chat.ended`, as in Laravel.
-
-### Fixed
-- Uploads were moved with the Drive 1 `moveToDisk` signature, which Drive 4 reads differently: files landed on the wrong disk and path. They are now written where the attachment row says.
-- Ticket-level attachments (stored on create) are loaded as `ticket.attachments` on the agent, admin, customer and guest pages.
-
-### Upgrade notes
+### Upgrading
 - Run the migrations (`0065_verified_guest_access`) and configure `@adonisjs/mail` (or `guestAccess.sendCode`) so codes can be sent. Deploy a shared frontend with the email-code step: older clients cannot create guest tickets or start widget chats.
 - Permanent guest links (`{prefix}/guest/<64-hex token>`, `GET /widget/tickets/<token>`) stop working; guests renew through lookup. `guestAccess.legacyTokens: true` keeps them working during a transition. `POST /widget/tickets` returns `guest_access_token` and `expires_at` instead of `guest_token`. `TicketService.createGuest` takes `verified: true` from callers that consumed a code.
 - Stored names are read as aliases, not rewritten: `ticket.replied`, `internal_note.added`, `internal_note.created`, `tag.added`, `ticket.tagged`, `tag.removed`, `ticket.untagged`, `chat.session_started` and `chat.session_ended`. A webhook subscribed under one of them receives the event under the canonical name, and a workflow stored with `ticket.replied` runs on `reply.created`. The admin pages show them, and saving stores them, under the canonical names.
 - `ChatMessageData.authorId` and the chat transfer agent ids are typed `UserId`, as elsewhere.
 - Set `storage.disk` to a disk that is not publicly served. The old stub set `disk: 'public'`; with that, new files are still written to a public disk. Files already on the public disk stay readable through the download route; stop serving or move them as `docs/private-attachments.md` describes.
 - `Attachment#url()` (the Drive URL) and the `downloadUrl` getter are removed. `url` is now the signed download link, set by `signAttachments()` / `attachmentDownloadUrl()` from `support/attachment_access`. `disk` and `path` are no longer serialized. Clients that cached attachment URLs must refetch the ticket.
+
+### Added
+- Ticket merge, as escalated-laravel's TicketMergeService: `POST {prefix}/admin/tickets/:ticket/merge` (`{target_reference}`) moves the source's replies to the target, leaves a system note on both, closes the source with `merged_into_id` pointing at the target (new column, migration 0066), all in one transaction, then emits the source's `TICKET_STATUS_CHANGED` and `TICKET_CLOSED`. `GET {prefix}/admin/tickets/merge-search?q=` finds unmerged tickets by reference or subject. A merged ticket cannot be merged again or chosen as a target.
+- Routes for the existing ticket-link and side-conversation services, under the names the shared frontend calls: `escalated.admin.tickets.links.index|store|destroy` and `escalated.admin.tickets.side-conversations.index|store|reply|close`. A link or conversation is reached only through its own ticket.
+- Routes for the mentions controller: `GET {prefix}/agent/mentions`, `POST {prefix}/agent/mentions/read` and `GET {prefix}/admin/agents/search` (the mention picker's default endpoint).
+- Live chat emits `escalated:chat:started`, `escalated:chat:assigned` (new), `escalated:chat:transferred`, `escalated:chat:message` and `escalated:chat:ended`. They were defined but never emitted. Webhooks can subscribe to `chat.started`, `chat.assigned`, `chat.transferred`, `chat.message` and `chat.ended`; the payload carries `ticket` and `chat.session_id` (plus `agent_id`, `chat.from_agent_id`/`to_agent_id`, or `chat.reply_id`/`author_type` where they apply). Workflows can trigger on `chat.started` and `chat.ended`, as in Laravel.
+
+### Security
+- Verified guest access, as in escalated-laravel (see `docs/guest-access.md`). `POST {prefix}/guest/verification` and `{prefix}/widget/verification` email an eight-digit code (purposes `ticket`, `chat`, `lookup`; 10 minutes; 5 guesses; single use; 3 codes per mailbox per client IP and 10 per mailbox per hour, 429 with `Retry-After`). The guest form, `POST /widget/tickets` and `POST /widget/chat/start` require one. Guest tickets are opened by expiring grants (default 24 h, `guestAccess.ttlMinutes`) whose nonce is stored only as a hash; renewal rotates them and changing the guest email revokes them. `POST {prefix}/guest/lookup` and `{prefix}/widget/lookup` renew access by reference and proven email. `GET /widget/tickets/:reference` answers with `Authorization: Bearer <grant>`. Widget `/config` returns `guest_verification_required: true` and `status_lookup_enabled: true`. Guest answers are `no-store` and `no-referrer`, and the guest page no longer carries ticket or reply metadata. Guest attachment links are bound to the active grant.
+- Attachments are private, as in escalated-laravel. Pages and the API no longer carry a Drive URL; an attachment serializes with `url`, a link to the new `GET {prefix}/attachments/:attachment/download` route (`escalated.attachments.download`) that expires after `storage.downloadTtlMinutes` (default 10, 1 to 60). The route checks current access on every request: agents and admins who can see the ticket get everything, the requester gets the ticket's and its public replies' attachments (never internal notes), guests only links issued by the guest page and bound to the ticket's current guest token, and API clients their bearer token (a bad bearer is 401, with no fallback to the session). Downloads are `attachment` with a sanitised name, `nosniff`, `private, no-store`, `no-referrer`, and `application/octet-stream` unless the type is PDF, GIF, JPEG, PNG, WebP or plain text. See `docs/private-attachments.md`.
+- New uploads and inbound email attachments are written with private visibility to `storage.disk`, or the application's default Drive disk when unset (it was hard-coded to `public`).
+
+### Changed
+- Webhooks and workflow triggers use the shared event vocabulary (escalated-developer-context ADR 2026-10-21). The names live in `src/support/event_names.ts`. Webhooks already sent the canonical ticket, reply, note, tag and SLA names, so nothing changes for those deliveries.
+
+### Fixed
+- Uploads were moved with the Drive 1 `moveToDisk` signature, which Drive 4 reads differently: files landed on the wrong disk and path. They are now written where the attachment row says.
+- Ticket-level attachments (stored on create) are loaded as `ticket.attachments` on the agent, admin, customer and guest pages.
 
 ## [0.7.3] - 2026-10-20
 
