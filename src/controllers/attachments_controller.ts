@@ -63,7 +63,7 @@ export default class AttachmentsController {
     // A guest link opens without a session while the guest's credential for
     // this ticket is unchanged, and never for an internal note.
     if (typeof guest === 'string') {
-      const current = guestCredentialDigest(parent.ticket)
+      const current = await guestCredentialDigest(parent.ticket)
       if (parent.isPublic && current && sameDigest(current, guest)) return true
     }
 

@@ -9,6 +9,7 @@ import type { TicketAction, TicketActionConfig } from './contracts/ticket_action
 import type { TicketSubject } from './contracts/ticket_subject.js'
 import type { ConfiguredMiddleware } from './support/route_middleware.js'
 import type { GuestRateLimitConfig } from './support/guest_rate_limit.js'
+import type { GuestAccessConfig } from './support/guest_access.js'
 
 /**
  * Ticket statuses
@@ -318,6 +319,14 @@ export interface EscalatedConfig {
    * counted in memory per process.
    */
   guestRateLimit?: GuestRateLimitConfig
+
+  /**
+   * Verified guest access (docs/guest-access.md): emailed codes for guest
+   * tickets, chats and lookups, and expiring grants instead of permanent
+   * guest tokens. Defaults: 24 h grants, 3 codes per mailbox per client IP
+   * and 10 per mailbox per hour, legacy tokens refused.
+   */
+  guestAccess?: GuestAccessConfig
 
   /**
    * Embedding the widget on other sites. Nothing changes until an origin is

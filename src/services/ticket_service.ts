@@ -111,8 +111,14 @@ export default class TicketService {
     departmentId?: number | null
     metadata?: Record<string, any> | null
     attachments?: any[]
+    /**
+     * The guest proved the mailbox (docs/guest-access.md). The ticket is
+     * marked verified and gets no permanent token; the caller issues a grant.
+     */
+    verified?: boolean
   }): Promise<Ticket> {
     const { randomBytes } = await import('node:crypto')
+    const { emailDigest } = await import('../support/guest_access.js')
     const { getConfig } = await import('../helpers/config.js')
     const { resolveGuestPolicy } = await import('../helpers/guest_policy.js')
     const { default: Contact } = await import('../models/contact.js')
@@ -147,8 +153,12 @@ export default class TicketService {
       requesterId: policy.requesterId,
       guestName: data.name || null,
       guestEmail: data.email,
-      // 64 hex characters: the shape the guest and widget token routes accept.
-      guestToken: randomBytes(32).toString('hex'),
+      // Verified tickets are opened by expiring grants. Unverified ones (host
+      // code calling this directly) keep the legacy 64-hex token, which only
+      // opens anything with `guestAccess.legacyTokens`.
+      guestToken: data.verified ? null : randomBytes(32).toString('hex'),
+      guestVerifiedEmail: data.verified ? await emailDigest(data.email) : null,
+      guestEmailVerifiedAt: data.verified ? DateTime.now() : null,
       contactId: contact.id,
       subject: data.subject,
       description: data.description,

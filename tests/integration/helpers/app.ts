@@ -13,6 +13,7 @@ import { defineConfig as defineSessionConfig } from '@adonisjs/session'
 import { defineConfig as defineDriveConfig, services as driveServices } from '@adonisjs/drive'
 import User, { type TestUser } from '../fixtures/user.js'
 import { hostImporter } from '../fixtures/importer.js'
+import { captureCode } from '../fixtures/guest_codes.js'
 import { isWidgetCsrfExempt } from '../../../src/support/widget_origins.js'
 
 /*
@@ -187,6 +188,8 @@ async function boot() {
           },
           api: { enabled: true, rateLimit: 1000, tokenExpiryDays: null, prefix: 'support/api/v1' },
           plugins: { enabled: false },
+          // Codes land in fixtures/guest_codes instead of a mailbox.
+          guestAccess: { sendCode: captureCode },
           ui: { enabled: true },
         },
       },

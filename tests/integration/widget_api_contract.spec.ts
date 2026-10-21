@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import { withGuestProof } from './fixtures/guest_codes.js'
 import { sqlTimestamp, testApp, type TestApp } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
 import { MemoryGuestRateLimitStore } from '../../src/support/guest_rate_limit.js'
@@ -61,6 +62,8 @@ test.group('Widget API contract', (group) => {
       'Content-Type': 'application/json',
     }
     if (options.origin) headers['Origin'] = options.origin
+    // Tickets and chats carry the emailed code, as the widget sends it.
+    body = await withGuestProof(method, WIDGET + path, body)
     const response = await fetch(running.baseUrl + WIDGET + path, {
       method,
       headers,
@@ -119,9 +122,9 @@ test.group('Widget API contract', (group) => {
     assert.deepInclude(config.departments, { id: active.id, name: active.name })
     assert.notOk(config.departments.find((d: any) => d.id === inactive.id))
     for (const entry of config.departments) assert.sameMembers(Object.keys(entry), ['id', 'name'])
-    // No mailbox verification here, so no status lookup and no verification step.
-    assert.equal(config.status_lookup_enabled, false)
-    assert.notProperty(config, 'guest_verification_required')
+    // Tickets, chats and status lookups take an emailed code (docs/guest-access.md).
+    assert.equal(config.status_lookup_enabled, true)
+    assert.equal(config.guest_verification_required, true)
     // Existing clients keep their keys.
     assert.equal(config.accent_color, '#123456')
     assert.equal(config.knowledge_base_enabled, true)
@@ -199,7 +202,10 @@ test.group('Widget API contract', (group) => {
     assert.isString(response.data.message)
     // Existing keys stay.
     assert.equal(response.data.ticket_reference, response.data.reference)
-    assert.match(response.data.guest_token, /^[0-9a-f]{64}$/)
+    // The permanent token gave way to an expiring grant.
+    assert.isString(response.data.guest_access_token)
+    assert.isString(response.data.expires_at)
+    assert.notProperty(response.data, 'guest_token')
     const { default: Ticket } = await import('../../src/models/ticket.js')
     const ticket = await Ticket.query().where('reference', response.data.reference).firstOrFail()
     assert.equal(ticket.subject, subject)

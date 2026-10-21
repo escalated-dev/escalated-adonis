@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { test } from '@japa/runner'
+import { withGuestProof } from './fixtures/guest_codes.js'
 import { InertiaClient, sqlTimestamp, testApp, type TestApp } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
 import { MemoryGuestRateLimitStore } from '../../src/support/guest_rate_limit.js'
@@ -68,10 +69,11 @@ test.group('Widget embedding', (group) => {
     const headers: Record<string, string> = { Accept: 'application/json', ...options.headers }
     if (options.origin) headers['Origin'] = options.origin
     if (options.data !== undefined) headers['Content-Type'] = 'application/json'
+    const data = await withGuestProof(method, path, options.data)
     const response = await fetch(running.baseUrl + path, {
       method,
       headers,
-      body: options.data === undefined ? undefined : JSON.stringify(options.data),
+      body: data === undefined ? undefined : JSON.stringify(data),
     })
     const text = await response.text()
     let body: any = text
@@ -243,6 +245,9 @@ test.group('Widget embedding', (group) => {
       slaResolutionBreached: false,
     } as any)
     ;(getConfig() as any).visibility = 'department'
+    // A permanent guest token, as earlier releases issued (docs/guest-access.md).
+    const guestAccess = (getConfig() as any).guestAccess
+    ;(getConfig() as any).guestAccess = { ...guestAccess, legacyTokens: true }
     const agent = { 'x-test-user-id': String(TEST_USERS.agent.id) }
 
     const sameSite = await call('GET', `/support/widget/tickets/${token}`, { headers: agent })
@@ -251,6 +256,7 @@ test.group('Widget embedding', (group) => {
       headers: agent,
     })
 
+    ;(getConfig() as any).guestAccess = guestAccess
     assert.equal(sameSite.status, 404)
     assert.equal(embedded.status, 200, embedded.text)
     assert.equal(embedded.headers.get('access-control-allow-origin'), SHOP)

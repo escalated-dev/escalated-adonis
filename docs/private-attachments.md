@@ -55,8 +55,9 @@ With a valid token, the route allows:
 - **The requester** (the host session's user): the ticket's attachments and
   those on its public replies, never internal-note attachments.
 - **Guests**: links issued by the guest ticket page, bound to the ticket's
-  current guest credential. They open without a session, only for that
-  ticket's public attachments, and stop working when the credential changes.
+  active grant (see [guest access](guest-access.md)). They open without a
+  session, only for that ticket's public attachments, never outlive the grant,
+  and stop working when it is renewed, revoked or expires.
 - **API clients** sending their Escalated bearer token (`Authorization: Bearer`).
   An invalid or expired token answers 401 and never falls back to the session.
 

@@ -271,18 +271,19 @@ test.group('Private attachments', (group) => {
     assert.equal(file.text, 'old file')
   })
 
-  test('the guest page links work without a session and die when the guest token rotates', async ({
+  test('the guest page links work without a session and die when the guest grant rotates', async ({
     assert,
   }) => {
-    const { randomBytes } = await import('node:crypto')
-    const token = randomBytes(32).toString('hex')
+    const { issue, markVerified } = await import('../../src/support/guest_access.js')
     const ticket = await openTicket({
       requesterType: null,
       requesterId: null,
       guestName: 'Guest',
       guestEmail: 'guest@example.com',
-      guestToken: token,
+      guestToken: null,
     })
+    await markVerified(ticket, ticket.guestEmail)
+    const token = await issue(ticket)
     await replyWithFile(ticket.id)
     await replyWithFile(ticket.id, { internal: true })
 
@@ -310,8 +311,8 @@ test.group('Private attachments', (group) => {
     const fresh = await Ticket.findOrFail(ticket.id)
     assert.equal(await statusOf(await signedUrl(note, fresh)), 403)
 
-    fresh.guestToken = randomBytes(32).toString('hex')
-    await fresh.save()
+    // Renewal (a lookup) issues a new grant, which revokes the old one's links.
+    await issue(fresh)
     assert.equal(await statusOf(url), 403)
   })
 
