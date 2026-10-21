@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+- Ticket merge, as escalated-laravel's TicketMergeService: `POST {prefix}/admin/tickets/:ticket/merge` (`{target_reference}`) moves the source's replies to the target, leaves a system note on both, closes the source with `merged_into_id` pointing at the target (new column, migration 0066), all in one transaction, then emits the source's `TICKET_STATUS_CHANGED` and `TICKET_CLOSED`. `GET {prefix}/admin/tickets/merge-search?q=` finds unmerged tickets by reference or subject. A merged ticket cannot be merged again or chosen as a target.
+- Routes for the existing ticket-link and side-conversation services, under the names the shared frontend calls: `escalated.admin.tickets.links.index|store|destroy` and `escalated.admin.tickets.side-conversations.index|store|reply|close`. A link or conversation is reached only through its own ticket.
+- Routes for the mentions controller: `GET {prefix}/agent/mentions`, `POST {prefix}/agent/mentions/read` and `GET {prefix}/admin/agents/search` (the mention picker's default endpoint).
+
 ### Security
 - Verified guest access, as in escalated-laravel (see `docs/guest-access.md`). `POST {prefix}/guest/verification` and `{prefix}/widget/verification` email an eight-digit code (purposes `ticket`, `chat`, `lookup`; 10 minutes; 5 guesses; single use; 3 codes per mailbox per client IP and 10 per mailbox per hour, 429 with `Retry-After`). The guest form, `POST /widget/tickets` and `POST /widget/chat/start` require one. Guest tickets are opened by expiring grants (default 24 h, `guestAccess.ttlMinutes`) whose nonce is stored only as a hash; renewal rotates them and changing the guest email revokes them. `POST {prefix}/guest/lookup` and `{prefix}/widget/lookup` renew access by reference and proven email. `GET /widget/tickets/:reference` answers with `Authorization: Bearer <grant>`. Widget `/config` returns `guest_verification_required: true` and `status_lookup_enabled: true`. Guest answers are `no-store` and `no-referrer`, and the guest page no longer carries ticket or reply metadata. Guest attachment links are bound to the active grant.
 

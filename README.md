@@ -226,6 +226,7 @@ commands: [
 - **Canned Responses:** Pre-written reply templates (shared or per-agent)
 - **Activity Log:** Full audit trail of all ticket changes
 - **Verified guest access:** Emailed codes for guest tickets, widget chats and lookups; guests open tickets with expiring grants (see [docs/guest-access.md](docs/guest-access.md))
+- **Merge, links and side conversations:** Merge duplicate tickets, link related tickets and hold side conversations from the admin ticket page
 - **Attachments:** Private file uploads, served only through an access-checked, expiring download link (see [docs/private-attachments.md](docs/private-attachments.md))
 - **Notifications:** Webhook-based notifications with HMAC signing
 - **Outbound Webhooks:** Signed deliveries with a delivery log and retries. Webhook URLs that resolve to loopback, private-network, link-local or other non-public addresses are refused when saved and before every delivery, as are the workflow `send_webhook` action's; set `webhooks.allowPrivateUrls` to allow them

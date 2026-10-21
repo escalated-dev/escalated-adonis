@@ -60,6 +60,9 @@ const TicketSubjectsController = () => import('../src/controllers/ticket_subject
 const InboundEmailController = () => import('../src/controllers/inbound_email_controller.js')
 const WidgetController = () => import('../src/controllers/widget_controller.js')
 const ChatController = () => import('../src/controllers/chat_controller.js')
+const AdminTicketRelationsController = () =>
+  import('../src/controllers/admin_ticket_relations_controller.js')
+const AgentMentionsController = () => import('../src/controllers/agent_mentions_controller.js')
 const AttachmentsController = () => import('../src/controllers/attachments_controller.js')
 const WidgetChatController = () => import('../src/controllers/widget_chat_controller.js')
 const GuestVerificationController = () =>
@@ -273,6 +276,11 @@ async function registerUiRoutes(config: any) {
   router
     .group(() => {
       router.get('/', [AgentDashboardController, 'handle']).as('escalated.agent.dashboard')
+      // The signed-in agent's unread @-mentions.
+      router.get('/mentions', [AgentMentionsController, 'index']).as('escalated.agent.mentions')
+      router
+        .post('/mentions/read', [AgentMentionsController, 'markRead'])
+        .as('escalated.agent.mentions.read')
       router.get('/tickets', [AgentTicketsController, 'index']).as('escalated.agent.tickets.index')
       router
         .post('/tickets/bulk', [BulkActionsController, 'handle'])
@@ -435,6 +443,14 @@ async function registerUiRoutes(config: any) {
       router
         .post('/tickets/bulk', [BulkActionsController, 'handle'])
         .as('escalated.admin.tickets.bulk')
+      // Before /tickets/:ticket, so the search is not read as a reference.
+      router
+        .get('/tickets/merge-search', [AdminTicketRelationsController, 'mergeSearch'])
+        .as('escalated.admin.tickets.merge-search')
+      // The @-mention picker (useMentions' default endpoint).
+      router
+        .get('/agents/search', [AgentMentionsController, 'searchAgents'])
+        .as('escalated.admin.agents.search')
 
       router
         .group(() => {
@@ -480,6 +496,47 @@ async function registerUiRoutes(config: any) {
           router
             .post('/tickets/:ticket/replies/:reply/pin', [AdminTicketsController, 'pin'])
             .as('escalated.admin.tickets.pin')
+
+          // Merge, links and side conversations (shared frontend components).
+          router
+            .post('/tickets/:ticket/merge', [AdminTicketRelationsController, 'merge'])
+            .as('escalated.admin.tickets.merge')
+          router
+            .get('/tickets/:ticket/links', [AdminTicketRelationsController, 'links'])
+            .as('escalated.admin.tickets.links.index')
+          router
+            .post('/tickets/:ticket/links', [AdminTicketRelationsController, 'storeLink'])
+            .as('escalated.admin.tickets.links.store')
+          router
+            .delete('/tickets/:ticket/links/:link', [AdminTicketRelationsController, 'destroyLink'])
+            .as('escalated.admin.tickets.links.destroy')
+            .where('link', /^\d+$/)
+          router
+            .get('/tickets/:ticket/side-conversations', [
+              AdminTicketRelationsController,
+              'sideConversations',
+            ])
+            .as('escalated.admin.tickets.side-conversations.index')
+          router
+            .post('/tickets/:ticket/side-conversations', [
+              AdminTicketRelationsController,
+              'storeSideConversation',
+            ])
+            .as('escalated.admin.tickets.side-conversations.store')
+          router
+            .post('/tickets/:ticket/side-conversations/:conversation/reply', [
+              AdminTicketRelationsController,
+              'replySideConversation',
+            ])
+            .as('escalated.admin.tickets.side-conversations.reply')
+            .where('conversation', /^\d+$/)
+          router
+            .post('/tickets/:ticket/side-conversations/:conversation/close', [
+              AdminTicketRelationsController,
+              'closeSideConversation',
+            ])
+            .as('escalated.admin.tickets.side-conversations.close')
+            .where('conversation', /^\d+$/)
         })
         .use([middleware.resolveTicket()])
 

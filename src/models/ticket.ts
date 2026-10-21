@@ -126,6 +126,10 @@ export default class Ticket extends EscalatedBaseModel {
   @column()
   declare guestToken: string | null
 
+  /** Set when this ticket was merged into another (TicketMergeService). */
+  @column()
+  declare mergedIntoId: number | null
+
   // Verified guest access (docs/guest-access.md). Only the hash of the
   // grant's nonce and a keyed digest of the verified address are stored.
   @column({ serializeAs: null })
