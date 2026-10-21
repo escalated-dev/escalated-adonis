@@ -168,6 +168,15 @@ export default class Ticket extends EscalatedBaseModel {
   @hasMany(() => Reply, { foreignKey: 'ticketId' })
   declare replies: HasMany<typeof Reply>
 
+  /** Files attached to the ticket itself (replies hold their own). */
+  @hasMany(() => Attachment, {
+    foreignKey: 'attachableId',
+    onQuery: (query) => {
+      query.where('attachable_type', 'Ticket')
+    },
+  })
+  declare attachments: HasMany<typeof Attachment>
+
   @hasMany(() => TicketActivity, { foreignKey: 'ticketId' })
   declare activities: HasMany<typeof TicketActivity>
 

@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { attachmentDownloadUrl } from '../../support/attachment_access.js'
 import type Ticket from '../../models/ticket.js'
 import type Tag from '../../models/tag.js'
 import Macro from '../../models/macro.js'
@@ -476,7 +477,8 @@ export default class ApiTicketController {
               filename: a.filename,
               mime_type: a.mimeType,
               size: a.size,
-              url: a.downloadUrl ?? (await a.url()),
+              original_filename: a.originalFilename,
+              url: await attachmentDownloadUrl(a),
             }))
           ),
           created_at: r.createdAt.toISO(),

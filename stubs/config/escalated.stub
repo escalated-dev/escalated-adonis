@@ -211,10 +211,18 @@ const escalatedConfig: EscalatedConfig = {
   |--------------------------------------------------------------------------
   | Storage (Attachments)
   |--------------------------------------------------------------------------
+  |
+  | Attachments are private: they are only read back through the
+  | access-checked download route, never by disk URL. `disk` names a Drive
+  | disk that is NOT publicly served (no `serveFiles`, no public bucket);
+  | leave it unset to use the default disk. Download links expire after
+  | `downloadTtlMinutes` (1 to 60). See docs/private-attachments.md.
+  |
   */
   storage: {
-    disk: 'public',
+    // disk: 'escalated',
     path: 'escalated/attachments',
+    downloadTtlMinutes: 10,
   },
 
   /*

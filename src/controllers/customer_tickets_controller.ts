@@ -1,4 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
+import { signAttachments } from '../support/attachment_access.js'
 import { Exception } from '@adonisjs/core/exceptions'
 import Department from '../models/department.js'
 import TicketService from '../services/ticket_service.js'
@@ -80,12 +81,9 @@ export default class CustomerTicketsController {
       })
     })
 
-    // Resolve attachment URLs (url() is async on the Attachment model)
-    for (const reply of ticket.replies ?? []) {
-      for (const attachment of reply.attachments ?? []) {
-        ;(attachment as any).$extras.url = await attachment.url()
-      }
-    }
+    // Short-lived links to the access-checked download route.
+    await ticket.load('attachments')
+    await signAttachments([ticket, ...(ticket.replies ?? [])])
 
     return getRenderer().render(ctx, 'Escalated/Customer/Show', {
       ticket,

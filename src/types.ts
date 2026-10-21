@@ -276,8 +276,11 @@ export interface EscalatedConfig {
   }
 
   storage: {
-    disk: string
+    /** A private Drive disk. Unset: the application's default disk. */
+    disk?: string
     path: string
+    /** Lifetime of attachment download links, in minutes (1 to 60, default 10). */
+    downloadTtlMinutes?: number
   }
 
   authorization: {
