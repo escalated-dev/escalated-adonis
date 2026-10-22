@@ -53,11 +53,6 @@ const KNOWN_BLANK = []
  */
 const NOT_YET_RENDERED = [
   // Features this package does not have.
-  'Escalated/Admin/CustomFields/Form',
-  'Escalated/Admin/CustomFields/Index',
-  'Escalated/Admin/CustomObjects/Form',
-  'Escalated/Admin/CustomObjects/Index',
-  'Escalated/Admin/CustomObjects/Records',
   'Escalated/Admin/Settings/DataRetention',
   'Escalated/Admin/Settings/DatabaseConnection',
   'Escalated/Admin/Settings/EmailSettings',

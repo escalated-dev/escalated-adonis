@@ -5,6 +5,7 @@ import type Tag from '../../models/tag.js'
 import Macro from '../../models/macro.js'
 import ChatSession from '../../models/chat_session.js'
 import TicketService from '../../services/ticket_service.js'
+import CustomFieldService, { asApiErrors } from '../../services/custom_field_service.js'
 import { builtInCategory } from '../../support/custom_statuses.js'
 import AssignmentService from '../../services/assignment_service.js'
 import MacroService from '../../services/macro_service.js'
@@ -20,6 +21,7 @@ export default class ApiTicketController {
   protected ticketService = new TicketService()
   protected assignmentService = new AssignmentService()
   protected ticketSubjectService = new TicketSubjectService()
+  protected customFields = new CustomFieldService()
 
   /**
    * GET /tickets — List tickets with pagination and filtering
@@ -159,12 +161,19 @@ export default class ApiTicketController {
     const user = (ctx as any).auth.user
     const data = ctx.request.only(['subject', 'description', 'priority', 'department_id', 'tags'])
 
-    if (!data.subject || !data.description) {
+    // Custom field values are checked before the ticket is written.
+    const custom = await this.customFields.validateTicketInput(
+      ctx.request.input('custom_fields'),
+      'create'
+    )
+
+    if (!data.subject || !data.description || Object.keys(custom.errors).length > 0) {
       return ctx.response.unprocessableEntity({
         message: 'Validation failed.',
         errors: {
           ...(!data.subject ? { subject: ['The subject field is required.'] } : {}),
           ...(!data.description ? { description: ['The description field is required.'] } : {}),
+          ...asApiErrors(custom.errors),
         },
       })
     }
@@ -176,6 +185,7 @@ export default class ApiTicketController {
       departmentId: data.department_id ? Number(data.department_id) : null,
       tags: data.tags ? data.tags.map(Number) : undefined,
     })
+    await this.customFields.saveTicketValues(ticket.id, custom.values)
 
     await ticket.load('department')
     await ticket.load('tags')
@@ -471,6 +481,7 @@ export default class ApiTicketController {
           color: tag.color,
         })) ?? [],
       subjects: await this.ticketSubjectService.serializeForTicket(ticket),
+      custom_fields: await this.customFields.ticketValues(ticket.id),
       replies: await Promise.all(
         (ticket.replies ?? []).map(async (r: any) => ({
           id: r.id,

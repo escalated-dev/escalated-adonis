@@ -8,6 +8,7 @@ import CannedResponse from '../models/canned_response.js'
 import Macro from '../models/macro.js'
 import ChatSession from '../models/chat_session.js'
 import TicketService from '../services/ticket_service.js'
+import CustomFieldService from '../services/custom_field_service.js'
 import AssignmentService from '../services/assignment_service.js'
 import MacroService from '../services/macro_service.js'
 import TicketActionRegistry from '../services/ticket_action_registry.js'
@@ -22,6 +23,7 @@ import { ESCALATED_EVENTS } from '../events/index.js'
 
 export default class AgentTicketsController {
   protected ticketService = new TicketService()
+  protected customFields = new CustomFieldService()
   protected assignmentService = new AssignmentService()
 
   /**
@@ -151,6 +153,7 @@ export default class AgentTicketsController {
       chat_metadata: chatSession?.metadata ?? ticket.chatMetadata ?? null,
       requester_ticket_count: requesterTicketCount,
       related_tickets: relatedTickets,
+      custom_fields: await this.customFields.ticketValues(ticket.id),
       customActions: this.customActionsForTicket(ticket, ctx.auth.user),
     })
   }
@@ -206,7 +209,19 @@ export default class AgentTicketsController {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const data = ctx.request.only(['subject', 'description', 'metadata'])
 
+    // An omitted `custom_fields` changes nothing; sent keys are checked before
+    // anything is written.
+    const custom = await this.customFields.validateTicketInput(
+      ctx.request.input('custom_fields'),
+      'update'
+    )
+    if (Object.keys(custom.errors).length > 0) {
+      ctx.session.flash('errors', custom.errors)
+      return ctx.response.redirect().back()
+    }
+
     await this.ticketService.update(ticket, data)
+    await this.customFields.saveTicketValues(ticket.id, custom.values)
 
     ctx.session.flash('success', t('ticket.updated'))
     return ctx.response.redirect().back()

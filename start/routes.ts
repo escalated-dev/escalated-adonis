@@ -51,6 +51,10 @@ const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
 const AdminWorkflowsController = () => import('../src/controllers/admin_workflows_controller.js')
 const AdminWebhooksController = () => import('../src/controllers/admin_webhooks_controller.js')
+const AdminCustomFieldsController = () =>
+  import('../src/controllers/admin_custom_fields_controller.js')
+const AdminCustomObjectsController = () =>
+  import('../src/controllers/admin_custom_objects_controller.js')
 const CustomerKnowledgeBaseController = () =>
   import('../src/controllers/customer_knowledge_base_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
@@ -963,6 +967,80 @@ async function registerUiRoutes(config: any) {
       router
         .get('/audit-logs', [AdminAuditLogsController, 'index'])
         .as('escalated.admin.audit-logs.index')
+
+      // Custom fields (escalated-laravel's Admin\CustomFieldController)
+      router
+        .get('/custom-fields', [AdminCustomFieldsController, 'index'])
+        .as('escalated.admin.custom-fields.index')
+      router
+        .get('/custom-fields/create', [AdminCustomFieldsController, 'create'])
+        .as('escalated.admin.custom-fields.create')
+      router
+        .post('/custom-fields/reorder', [AdminCustomFieldsController, 'reorder'])
+        .as('escalated.admin.custom-fields.reorder')
+      router
+        .post('/custom-fields', [AdminCustomFieldsController, 'store'])
+        .as('escalated.admin.custom-fields.store')
+      router
+        .get('/custom-fields/:id/edit', [AdminCustomFieldsController, 'edit'])
+        .as('escalated.admin.custom-fields.edit')
+        .where('id', /^\d+$/)
+      router
+        .route('/custom-fields/:id', ['PUT', 'PATCH'], [AdminCustomFieldsController, 'update'])
+        .as('escalated.admin.custom-fields.update')
+        .where('id', /^\d+$/)
+      router
+        .delete('/custom-fields/:id', [AdminCustomFieldsController, 'destroy'])
+        .as('escalated.admin.custom-fields.destroy')
+        .where('id', /^\d+$/)
+
+      // Custom objects and their records (Admin\CustomObjectController)
+      router
+        .get('/custom-objects', [AdminCustomObjectsController, 'index'])
+        .as('escalated.admin.custom-objects.index')
+      router
+        .get('/custom-objects/create', [AdminCustomObjectsController, 'create'])
+        .as('escalated.admin.custom-objects.create')
+      router
+        .post('/custom-objects', [AdminCustomObjectsController, 'store'])
+        .as('escalated.admin.custom-objects.store')
+      router
+        .get('/custom-objects/:id/edit', [AdminCustomObjectsController, 'edit'])
+        .as('escalated.admin.custom-objects.edit')
+        .where('id', /^\d+$/)
+      router
+        .route('/custom-objects/:id', ['PUT', 'PATCH'], [AdminCustomObjectsController, 'update'])
+        .as('escalated.admin.custom-objects.update')
+        .where('id', /^\d+$/)
+      router
+        .delete('/custom-objects/:id', [AdminCustomObjectsController, 'destroy'])
+        .as('escalated.admin.custom-objects.destroy')
+        .where('id', /^\d+$/)
+      router
+        .get('/custom-objects/:id/records', [AdminCustomObjectsController, 'records'])
+        .as('escalated.admin.custom-objects.records')
+        .where('id', /^\d+$/)
+      router
+        .post('/custom-objects/:id/records', [AdminCustomObjectsController, 'storeRecord'])
+        .as('escalated.admin.custom-objects.records.store')
+        .where('id', /^\d+$/)
+      router
+        .route(
+          '/custom-objects/:id/records/:record',
+          ['PUT', 'PATCH'],
+          [AdminCustomObjectsController, 'updateRecord']
+        )
+        .as('escalated.admin.custom-objects.records.update')
+        .where('id', /^\d+$/)
+        .where('record', /^\d+$/)
+      router
+        .delete('/custom-objects/:id/records/:record', [
+          AdminCustomObjectsController,
+          'destroyRecord',
+        ])
+        .as('escalated.admin.custom-objects.records.destroy')
+        .where('id', /^\d+$/)
+        .where('record', /^\d+$/)
 
       // Plugins
       router.get('/plugins', [AdminPluginsController, 'index']).as('escalated.admin.plugins.index')
