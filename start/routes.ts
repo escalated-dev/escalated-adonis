@@ -35,6 +35,8 @@ const AdminReportsController = () => import('../src/controllers/admin_reports_co
 const AdminAdvancedReportsController = () =>
   import('../src/controllers/admin_advanced_reports_controller.js')
 const AdminSettingsController = () => import('../src/controllers/admin_settings_controller.js')
+const AdminCsatSettingsController = () =>
+  import('../src/controllers/admin_csat_settings_controller.js')
 const AdminPluginsController = () => import('../src/controllers/admin_plugins_controller.js')
 const BulkActionsController = () => import('../src/controllers/bulk_actions_controller.js')
 const SavedViewsController = () => import('../src/controllers/saved_views_controller.js')
@@ -404,6 +406,35 @@ async function registerUiRoutes(config: any) {
       // Reports
       router.get('/reports', [AdminReportsController, 'handle']).as('escalated.admin.reports')
 
+      // Report screens, under escalated-laravel's paths and names
+      router
+        .get('/reports/dashboard', [AdminReportsController, 'dashboard'])
+        .as('escalated.admin.reports.dashboard')
+      router
+        .get('/reports/agents', [AdminReportsController, 'agents'])
+        .as('escalated.admin.reports.agents')
+      router.get('/reports/sla', [AdminReportsController, 'sla']).as('escalated.admin.reports.sla')
+      router
+        .get('/reports/csat', [AdminReportsController, 'csat'])
+        .as('escalated.admin.reports.csat')
+      router
+        .get('/reports/agent/:id/detail', [AdminReportsController, 'agentDetail'])
+        .as('escalated.admin.reports.agent-detail')
+      // The advanced screens under the names the shared pages link to. The
+      // camelCase names under /reports/advanced stay for existing links.
+      router
+        .get('/reports/sla-trends', [AdminAdvancedReportsController, 'slaBreachTrends'])
+        .as('escalated.admin.reports.sla-trends')
+      router
+        .get('/reports/response-times', [AdminAdvancedReportsController, 'responseTimes'])
+        .as('escalated.admin.reports.response-times')
+      router
+        .get('/reports/resolution-times', [AdminAdvancedReportsController, 'resolutionTimes'])
+        .as('escalated.admin.reports.resolution-times')
+      router
+        .get('/reports/agent-ranking', [AdminAdvancedReportsController, 'agentRanking'])
+        .as('escalated.admin.reports.agent-ranking')
+
       // Advanced Reports
       router
         .get('/reports/advanced/sla-trends', [AdminAdvancedReportsController, 'slaBreachTrends'])
@@ -564,6 +595,14 @@ async function registerUiRoutes(config: any) {
       router
         .post('/settings', [AdminSettingsController, 'update'])
         .as('escalated.admin.settings.update')
+
+      // CSAT survey settings
+      router
+        .get('/settings/csat', [AdminCsatSettingsController, 'index'])
+        .as('escalated.admin.settings.csat')
+      router
+        .post('/settings/csat', [AdminCsatSettingsController, 'update'])
+        .as('escalated.admin.settings.csat.update')
 
       // Public-ticket (guest policy) settings
       router

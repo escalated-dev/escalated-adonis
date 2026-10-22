@@ -4,6 +4,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
 import SatisfactionRating from '../models/satisfaction_rating.js'
 import { getRenderer } from '../rendering/renderer.js'
+import ReportingService from '../services/reporting_service.js'
 
 export default class AdminReportsController {
   async handle(ctx: HttpContext) {
@@ -71,6 +72,98 @@ export default class AdminReportsController {
       by_priority: byPriorityMap,
       csat,
     })
+  }
+
+  /**
+   * GET {prefix}/admin/reports/dashboard — the tabbed dashboard, as
+   * escalated-laravel's ReportController::dashboard.
+   */
+  async dashboard(ctx: HttpContext) {
+    const days = this.periodDays(ctx)
+    const { start, end } = ReportingService.window(days)
+    const reporting = new ReportingService()
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Reports/Dashboard', {
+      period_days: days,
+      volume: await reporting.ticketVolumeByDate(start, end),
+      by_status: await reporting.ticketsByStatus(),
+      by_priority: await reporting.ticketsByPriority(),
+      avg_response_hours: await reporting.averageResponseHours(start, end),
+      avg_resolution_hours: await reporting.averageResolutionHours(start, end),
+      sla_compliance: await reporting.slaComplianceRate(start, end),
+      csat_average: await reporting.csatAverage(start, end),
+      agent_performance: await reporting.agentPerformance(start, end),
+    })
+  }
+
+  /** GET {prefix}/admin/reports/agents — agent performance. */
+  async agents(ctx: HttpContext) {
+    const days = this.periodDays(ctx)
+    const { start, end } = ReportingService.window(days)
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Reports/AgentMetrics', {
+      period_days: days,
+      agents: await new ReportingService().agentPerformance(start, end),
+    })
+  }
+
+  /** GET {prefix}/admin/reports/sla — SLA compliance. */
+  async sla(ctx: HttpContext) {
+    const days = this.periodDays(ctx)
+    const { start, end } = ReportingService.window(days)
+    const reporting = new ReportingService()
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Reports/SlaReport', {
+      period_days: days,
+      compliance_rate: await reporting.slaComplianceRate(start, end),
+      compliance_by_policy: await reporting.slaComplianceByPolicy(start, end),
+      breaches: await reporting.slaBreachDetails(start, end),
+    })
+  }
+
+  /** GET {prefix}/admin/reports/csat — satisfaction ratings. */
+  async csat(ctx: HttpContext) {
+    const days = this.periodDays(ctx)
+    const { start, end } = ReportingService.window(days)
+    const reporting = new ReportingService()
+
+    const totalTickets = (await reporting.ticketsCreated(start, end)).length
+    const totalRatings = (await reporting.ratingsCreated(start, end)).length
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Reports/CsatReport', {
+      period_days: days,
+      csat_average: await reporting.csatAverage(start, end),
+      response_rate:
+        totalTickets > 0 ? Math.round((totalRatings / totalTickets) * 1000) / 10 : 0,
+      total_ratings: totalRatings,
+      by_agent: await reporting.csatByAgent(start, end),
+      over_time: await reporting.csatOverTime(start, end),
+    })
+  }
+
+  /**
+   * GET {prefix}/admin/reports/agent/:id/detail — one agent.
+   *
+   * Laravel sends this screen `metrics` and `percentiles`, which it does not
+   * read; these are the props it does read (agent, the four headline figures
+   * and the previous period's, percentiles, productivity, workload, CSAT).
+   */
+  async agentDetail(ctx: HttpContext) {
+    const days = this.periodDays(ctx)
+    const id = ctx.params.id
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Reports/AgentDetail', {
+      period_days: days,
+      agent_id: Number.isNaN(Number(id)) ? id : Number(id),
+      ...(await new ReportingService().agentDetail(id, days)),
+    })
+  }
+
+  /** `days` from the query, 1 to 365, default 30. */
+  protected periodDays(ctx: HttpContext): number {
+    const days = Number.parseInt(String(ctx.request.input('days', 30)), 10)
+    if (!Number.isFinite(days) || days < 1) return 30
+    return Math.min(days, 365)
   }
 
   protected async avgFirstResponseHours(since: string, _db?: unknown): Promise<number> {
