@@ -4,7 +4,8 @@ import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { redirectToRoute } from '../support/routing.js'
 import { t } from '../support/i18n.js'
-import { scheduleReference } from '../support/business_schedule_reference.js'
+import { formRecord } from '../support/form_record.js'
+import { scheduleOptions, scheduleReference } from '../support/business_schedule_reference.js'
 
 export default class AdminSlaPoliciesController {
   async index(ctx: HttpContext) {
@@ -16,6 +17,7 @@ export default class AdminSlaPoliciesController {
     const config = getConfig()
     return getRenderer().render(ctx, 'Escalated/Admin/SlaPolicies/Form', {
       priorities: config.priorities,
+      schedules: await scheduleOptions(),
     })
   }
 
@@ -30,6 +32,11 @@ export default class AdminSlaPoliciesController {
       'is_active',
     ])
 
+    const schedule = await scheduleReference(request.all())
+    if ('errors' in schedule) {
+      session.flash('errors', schedule.errors)
+      return response.redirect().back()
+    }
     await SlaPolicy.create({
       name: data.name,
       description: data.description || null,
@@ -38,7 +45,7 @@ export default class AdminSlaPoliciesController {
       resolutionHours: data.resolution_hours,
       businessHoursOnly: data.business_hours_only || false,
       isActive: data.is_active !== false,
-      ...(await scheduleReference(request.all())),
+      ...schedule,
     })
 
     session.flash('success', t('admin.sla_policy_created'))
@@ -49,8 +56,9 @@ export default class AdminSlaPoliciesController {
     const config = getConfig()
     const policy = await SlaPolicy.findOrFail(ctx.params.id)
     return getRenderer().render(ctx, 'Escalated/Admin/SlaPolicies/Form', {
-      policy,
+      policy: formRecord(policy),
       priorities: config.priorities,
+      schedules: await scheduleOptions(),
     })
   }
 
@@ -66,6 +74,11 @@ export default class AdminSlaPoliciesController {
       'is_active',
     ])
 
+    const schedule = await scheduleReference(request.all())
+    if ('errors' in schedule) {
+      session.flash('errors', schedule.errors)
+      return response.redirect().back()
+    }
     policy.merge({
       name: data.name,
       description: data.description || null,
@@ -74,7 +87,7 @@ export default class AdminSlaPoliciesController {
       resolutionHours: data.resolution_hours,
       businessHoursOnly: data.business_hours_only || false,
       isActive: data.is_active !== false,
-      ...(await scheduleReference(request.all())),
+      ...schedule,
     })
     await policy.save()
 

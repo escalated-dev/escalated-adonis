@@ -3,7 +3,8 @@ import Department from '../models/department.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { redirectToRoute } from '../support/routing.js'
 import { t } from '../support/i18n.js'
-import { scheduleReference } from '../support/business_schedule_reference.js'
+import { formRecord } from '../support/form_record.js'
+import { scheduleOptions, scheduleReference } from '../support/business_schedule_reference.js'
 
 export default class AdminDepartmentsController {
   async index(ctx: HttpContext) {
@@ -24,17 +25,24 @@ export default class AdminDepartmentsController {
   }
 
   async create(ctx: HttpContext) {
-    return getRenderer().render(ctx, 'Escalated/Admin/Departments/Form')
+    return getRenderer().render(ctx, 'Escalated/Admin/Departments/Form', {
+      schedules: await scheduleOptions(),
+    })
   }
 
   async store({ request, response, session }: HttpContext) {
     const data = request.only(['name', 'slug', 'description', 'is_active'])
+    const schedule = await scheduleReference(request.all())
+    if ('errors' in schedule) {
+      session.flash('errors', schedule.errors)
+      return response.redirect().back()
+    }
     await Department.create({
       name: data.name,
       slug: data.slug || undefined,
       description: data.description || null,
       isActive: data.is_active !== false,
-      ...(await scheduleReference(request.all())),
+      ...schedule,
     })
     session.flash('success', t('admin.department_created'))
     return redirectToRoute(response, 'escalated.admin.departments.index')
@@ -42,18 +50,26 @@ export default class AdminDepartmentsController {
 
   async edit(ctx: HttpContext) {
     const department = await Department.findOrFail(ctx.params.id)
-    return getRenderer().render(ctx, 'Escalated/Admin/Departments/Form', { department })
+    return getRenderer().render(ctx, 'Escalated/Admin/Departments/Form', {
+      department: formRecord(department),
+      schedules: await scheduleOptions(),
+    })
   }
 
   async update({ params, request, response, session }: HttpContext) {
     const department = await Department.findOrFail(params.id)
     const data = request.only(['name', 'slug', 'description', 'is_active'])
+    const schedule = await scheduleReference(request.all())
+    if ('errors' in schedule) {
+      session.flash('errors', schedule.errors)
+      return response.redirect().back()
+    }
     department.merge({
       name: data.name,
       ...(data.slug && { slug: data.slug }),
       description: data.description || null,
       isActive: data.is_active !== false,
-      ...(await scheduleReference(request.all())),
+      ...schedule,
     })
     await department.save()
     session.flash('success', t('admin.department_updated'))
