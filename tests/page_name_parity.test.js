@@ -43,6 +43,49 @@ const SHIPPED = require('@escalated-dev/escalated/pages.json').pages
  */
 const KNOWN_BLANK = []
 
+/**
+ * Pages the frontend ships that this package does not render yet, so a page
+ * cannot go missing without the list saying so. Rendering one means removing
+ * it here; the last test fails if an entry is rendered or no longer shipped.
+ *
+ * Grouped by why. Features this package does not have are listed so the gap
+ * is visible, not because a render is coming soon.
+ */
+const NOT_YET_RENDERED = [
+  // Features this package does not have.
+  'Escalated/Admin/BusinessHours/Form',
+  'Escalated/Admin/BusinessHours/Index',
+  'Escalated/Admin/CustomFields/Form',
+  'Escalated/Admin/CustomFields/Index',
+  'Escalated/Admin/CustomObjects/Form',
+  'Escalated/Admin/CustomObjects/Index',
+  'Escalated/Admin/CustomObjects/Records',
+  'Escalated/Admin/Statuses/Form',
+  'Escalated/Admin/Statuses/Index',
+  'Escalated/Admin/Settings/DataRetention',
+  'Escalated/Admin/Settings/DatabaseConnection',
+  'Escalated/Admin/Settings/EmailSettings',
+  'Escalated/Admin/Settings/Sandbox',
+  // Features this package has, with the screen still owed.
+  'Escalated/Admin/Capacity/Index',
+  'Escalated/Admin/Import/Connect',
+  'Escalated/Admin/Import/Review',
+  'Escalated/Admin/Reports/AgentDetail',
+  'Escalated/Admin/Reports/AgentMetrics',
+  'Escalated/Admin/Reports/CsatReport',
+  'Escalated/Admin/Reports/Dashboard',
+  'Escalated/Admin/Reports/SlaReport',
+  'Escalated/Admin/Roles/Form',
+  'Escalated/Admin/Roles/Index',
+  'Escalated/Admin/Settings/CsatSettings',
+  'Escalated/Admin/Settings/SsoSettings',
+  'Escalated/Admin/Workflows/Builder',
+  'Escalated/Customer/KnowledgeBase/Article',
+  'Escalated/Customer/KnowledgeBase/Index',
+  'Escalated/Error',
+  'Escalated/Plugin/Page',
+]
+
 const PAGE_NAME = /'(Escalated\/[A-Za-z0-9/_]+)'/g
 
 /**
@@ -112,6 +155,26 @@ describe('page name parity', () => {
     assert.ok(Array.isArray(SHIPPED))
     assert.ok(SHIPPED.length > 50, `manifest has only ${SHIPPED.length} pages`)
     assert.ok(SHIPPED.every((name) => name.startsWith('Escalated/')))
+  })
+
+  it('accounts for every shipped page: rendered here, or listed as not yet rendered', () => {
+    const rendered = renderedPages()
+
+    const unaccounted = SHIPPED.filter(
+      (name) => !rendered.has(name) && !NOT_YET_RENDERED.includes(name)
+    ).sort()
+    const stale = NOT_YET_RENDERED.filter((name) => rendered.has(name) || !SHIPPED.includes(name))
+
+    assert.deepEqual(
+      unaccounted,
+      [],
+      `these shipped pages are neither rendered nor listed in NOT_YET_RENDERED:\n  ${unaccounted.join('\n  ')}`
+    )
+    assert.deepEqual(
+      stale,
+      [],
+      `these names are in NOT_YET_RENDERED but are rendered now, or no longer shipped -- remove them:\n  ${stale.join('\n  ')}`
+    )
   })
 
   it('does not keep excusing names that have been fixed', () => {

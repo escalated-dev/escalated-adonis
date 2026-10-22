@@ -808,8 +808,14 @@ async function registerUiRoutes(config: any) {
         .get('/webhooks', [AdminWebhooksController, 'index'])
         .as('escalated.admin.webhooks.index')
       router
+        .get('/webhooks/create', [AdminWebhooksController, 'create'])
+        .as('escalated.admin.webhooks.create')
+      router
         .post('/webhooks', [AdminWebhooksController, 'store'])
         .as('escalated.admin.webhooks.store')
+      router
+        .get('/webhooks/:webhook/edit', [AdminWebhooksController, 'edit'])
+        .as('escalated.admin.webhooks.edit')
       router
         .post('/webhooks/deliveries/:delivery/retry', [AdminWebhooksController, 'retry'])
         .as('escalated.admin.webhooks.retry')

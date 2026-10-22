@@ -27,30 +27,66 @@ export default class AdminWebhooksController {
 
     const rows = webhooks.map((webhook) => {
       const latest = webhook.deliveries[0]
+      const latestRow = latest
+        ? {
+            id: latest.id,
+            event: latest.event,
+            response_code: latest.responseCode,
+            delivered_at: latest.deliveredAt?.toISO() ?? null,
+            created_at: latest.createdAt?.toISO() ?? null,
+          }
+        : null
       return {
         id: webhook.id,
         url: webhook.url,
         // A subscription saved under a legacy name is shown under its canonical
         // name, so the form ticks it and saving keeps it.
         events: webhook.subscribedEvents(),
-        active: webhook.active,
+        active: Boolean(webhook.active),
         has_secret: Boolean(webhook.secret),
         deliveries_count: Number(webhook.$extras.deliveries_count ?? 0),
-        latest_delivery: latest
-          ? {
-              id: latest.id,
-              event: latest.event,
-              response_code: latest.responseCode,
-              delivered_at: latest.deliveredAt?.toISO() ?? null,
-              created_at: latest.createdAt?.toISO() ?? null,
-            }
-          : null,
+        // The shared page reads the latest delivery as `deliveries[0]`, as
+        // Laravel's eager load of the newest delivery serializes it.
+        deliveries: latestRow ? [latestRow] : [],
+        latest_delivery: latestRow,
         created_at: webhook.createdAt?.toISO() ?? null,
       }
     })
 
     return getRenderer().render(ctx, 'Escalated/Admin/Webhooks/Index', {
       webhooks: rows,
+      availableEvents: WEBHOOK_EVENTS,
+    })
+  }
+
+  /**
+   * GET /support/admin/webhooks/create — the empty webhook form.
+   */
+  async create(ctx: HttpContext) {
+    return getRenderer().render(ctx, 'Escalated/Admin/Webhooks/Form', {
+      availableEvents: WEBHOOK_EVENTS,
+    })
+  }
+
+  /**
+   * GET /support/admin/webhooks/:webhook/edit — the form for one webhook.
+   *
+   * The secret is included, as Laravel does: the form posts it back on save,
+   * and an edit that did not show it would clear it.
+   */
+  async edit(ctx: HttpContext) {
+    const webhook = await Webhook.findOrFail(ctx.params.webhook || ctx.params.id)
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Webhooks/Form', {
+      webhook: {
+        id: webhook.id,
+        url: webhook.url,
+        events: webhook.subscribedEvents(),
+        secret: webhook.secret,
+        active: Boolean(webhook.active),
+        created_at: webhook.createdAt?.toISO() ?? null,
+        updated_at: webhook.updatedAt?.toISO() ?? null,
+      },
       availableEvents: WEBHOOK_EVENTS,
     })
   }
@@ -81,7 +117,7 @@ export default class AdminWebhooksController {
     })
 
     session.flash('success', t('admin.webhook_created'))
-    return response.redirect().back()
+    return response.redirect(this.indexPath(request.url()))
   }
 
   /**
@@ -115,7 +151,7 @@ export default class AdminWebhooksController {
     })
 
     session.flash('success', t('admin.webhook_updated'))
-    return response.redirect().back()
+    return response.redirect(this.indexPath(request.url()))
   }
 
   /**
@@ -175,6 +211,11 @@ export default class AdminWebhooksController {
   }
 
   // ---- Private helpers ----
+
+  /** The webhooks index, under whatever prefix the host mounted the routes at. */
+  protected indexPath(url: string): string {
+    return url.replace(/\/webhooks(\/.*)?$/, '/webhooks')
+  }
 
   /**
    * Coerce the incoming events value into a clean array of known event names.
