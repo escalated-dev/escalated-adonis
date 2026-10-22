@@ -31,6 +31,7 @@ const AdminEscalationRulesController = () =>
 const AdminCannedResponsesController = () =>
   import('../src/controllers/admin_canned_responses_controller.js')
 const AdminMacrosController = () => import('../src/controllers/admin_macros_controller.js')
+const AdminStatusesController = () => import('../src/controllers/admin_statuses_controller.js')
 const AdminReportsController = () => import('../src/controllers/admin_reports_controller.js')
 const AdminAdvancedReportsController = () =>
   import('../src/controllers/admin_advanced_reports_controller.js')
@@ -651,6 +652,26 @@ async function registerUiRoutes(config: any) {
       router
         .delete('/sla-policies/:id', [AdminSlaPoliciesController, 'destroy'])
         .as('escalated.admin.sla-policies.destroy')
+
+      // Custom ticket statuses CRUD
+      router
+        .get('/statuses', [AdminStatusesController, 'index'])
+        .as('escalated.admin.statuses.index')
+      router
+        .get('/statuses/create', [AdminStatusesController, 'create'])
+        .as('escalated.admin.statuses.create')
+      router
+        .post('/statuses', [AdminStatusesController, 'store'])
+        .as('escalated.admin.statuses.store')
+      router
+        .get('/statuses/:id/edit', [AdminStatusesController, 'edit'])
+        .as('escalated.admin.statuses.edit')
+      router
+        .route('/statuses/:id', ['PUT', 'PATCH'], [AdminStatusesController, 'update'])
+        .as('escalated.admin.statuses.update')
+      router
+        .delete('/statuses/:id', [AdminStatusesController, 'destroy'])
+        .as('escalated.admin.statuses.destroy')
 
       // Escalation Rules CRUD
       router

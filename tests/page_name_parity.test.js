@@ -60,8 +60,6 @@ const NOT_YET_RENDERED = [
   'Escalated/Admin/CustomObjects/Form',
   'Escalated/Admin/CustomObjects/Index',
   'Escalated/Admin/CustomObjects/Records',
-  'Escalated/Admin/Statuses/Form',
-  'Escalated/Admin/Statuses/Index',
   'Escalated/Admin/Settings/DataRetention',
   'Escalated/Admin/Settings/DatabaseConnection',
   'Escalated/Admin/Settings/EmailSettings',

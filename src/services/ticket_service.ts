@@ -11,6 +11,8 @@ import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
 import Tag from '../models/tag.js'
 import TicketActivity from '../models/ticket_activity.js'
+import CustomStatus from '../models/custom_status.js'
+import { isBuiltInStatus } from '../support/custom_statuses.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import {
   canTransitionTo,
@@ -214,18 +216,37 @@ export default class TicketService {
 
   /**
    * Change ticket status with transition validation.
+   *
+   * `target` is a built-in status, a custom status slug, or a CustomStatus. A
+   * custom status moves the ticket to its category's built-in anchor
+   * (src/support/custom_statuses.ts), so the anchor's transition check, dates
+   * and events apply; a built-in status clears the custom one. A move between
+   * two custom statuses with the same anchor skips the transition check but
+   * is still saved and still emits `ticket.status_changed`.
    */
-  async changeStatus(ticket: Ticket, newStatus: TicketStatus, causer?: any): Promise<Ticket> {
+  async changeStatus(
+    ticket: Ticket,
+    target: TicketStatus | string | CustomStatus,
+    causer?: any
+  ): Promise<Ticket> {
     await assertTicketAccess(ticket)
+    const resolved = await CustomStatus.resolveTarget(target)
+    const newStatus = resolved.status
     const oldStatus = ticket.status
+    const oldCustom = ticket.ticketStatusId ? await CustomStatus.find(ticket.ticketStatusId) : null
+    const newCustom = resolved.custom
+    const sameStatus = oldStatus === newStatus
+    const customChanges = (oldCustom?.id ?? null) !== (newCustom?.id ?? null)
 
-    if (!canTransitionTo(oldStatus, newStatus)) {
+    if (!(sameStatus && (newCustom || customChanges)) && !canTransitionTo(oldStatus, newStatus)) {
       throw new Error(`Cannot transition from ${oldStatus} to ${newStatus}`)
     }
 
-    ticket.status = newStatus
+    ticket.applyStatusTarget(resolved)
 
-    if (newStatus === 'resolved') {
+    if (sameStatus) {
+      // A sub-status move: the built-in status, and its dates, are unchanged.
+    } else if (newStatus === 'resolved') {
       ticket.resolvedAt = DateTime.now()
     } else if (newStatus === 'closed') {
       ticket.closedAt = DateTime.now()
@@ -236,9 +257,19 @@ export default class TicketService {
 
     await ticket.save()
 
+    const custom = {
+      oldCustomStatus: oldCustom?.slug ?? null,
+      newCustomStatus: newCustom?.slug ?? null,
+      oldCategory: CustomStatus.categoryOf(oldStatus, oldCustom),
+      newCategory: CustomStatus.categoryOf(newStatus, newCustom),
+    }
+
     await this.logActivity(ticket, 'status_changed', causer, {
       old_status: oldStatus,
       new_status: newStatus,
+      ...(oldCustom || newCustom
+        ? { old_custom_status: custom.oldCustomStatus, new_custom_status: custom.newCustomStatus }
+        : {}),
     })
 
     if (!ImportContext.isImporting()) {
@@ -249,9 +280,12 @@ export default class TicketService {
         newStatus,
         causer,
         followerUserIds,
+        ...custom,
       })
 
-      if (newStatus === 'resolved') {
+      if (sameStatus) {
+        // Nothing the built-in status implies has changed.
+      } else if (newStatus === 'resolved') {
         await emitter.emit(ESCALATED_EVENTS.TICKET_RESOLVED, { ticket, causer })
       } else if (newStatus === 'closed') {
         await emitter.emit(ESCALATED_EVENTS.TICKET_CLOSED, { ticket, causer })
@@ -469,7 +503,22 @@ export default class TicketService {
     }
 
     if (filters.status) {
-      query.where('status', filters.status)
+      // A custom status slug filters by the sub-status; anything else by the
+      // built-in column, as before. Not for a customer's own list: custom
+      // statuses are internal.
+      const customerList = forUser && !filters.following
+      const custom =
+        isBuiltInStatus(filters.status) || customerList
+          ? null
+          : await CustomStatus.query()
+              .where('slug', String(filters.status))
+              .where('is_system', false)
+              .first()
+      if (custom) {
+        query.where('ticket_status_id', custom.id)
+      } else {
+        query.where('status', filters.status)
+      }
     }
 
     if (filters.priority) {
@@ -551,6 +600,9 @@ export default class TicketService {
     ticket.snoozedUntil = until
     ticket.snoozedBy = causer.id
     ticket.status = 'waiting_on_customer' as TicketStatus
+    // A built-in status, even when the ticket was already waiting on the
+    // customer under a custom status. Unsnoozing does not bring it back.
+    ticket.ticketStatusId = null
     await ticket.save()
 
     await this.logActivity(ticket, 'status_changed', causer, {
@@ -568,6 +620,7 @@ export default class TicketService {
   async unsnoozeTicket(ticket: Ticket, causer?: any): Promise<Ticket> {
     const previousStatus = (ticket.statusBeforeSnooze || 'open') as TicketStatus
     ticket.status = previousStatus
+    ticket.ticketStatusId = null
     ticket.snoozedUntil = null
     ticket.snoozedBy = null
     ticket.statusBeforeSnooze = null
