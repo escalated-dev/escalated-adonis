@@ -2,6 +2,7 @@ import { accountCondition } from '../support/ticket_access.js'
 import { DateTime } from 'luxon'
 import Automation from '../models/automation.js'
 import Ticket from '../models/ticket.js'
+import CustomStatus from '../models/custom_status.js'
 import Tag from '../models/tag.js'
 import Reply from '../models/reply.js'
 import logger from '@adonisjs/core/services/logger'
@@ -109,7 +110,8 @@ export default class AutomationRunner {
       try {
         switch (type) {
           case 'change_status':
-            ticket.status = value
+            // A built-in value or a custom status slug.
+            ticket.applyStatusTarget(await CustomStatus.resolveTarget(value))
             await ticket.save()
             break
 

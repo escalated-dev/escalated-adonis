@@ -407,6 +407,10 @@ export default class EscalatedProvider {
           ticket: data.ticket?.toJSON?.() ?? data.ticket,
           old_status: data.oldStatus,
           new_status: data.newStatus,
+          old_custom_status: data.oldCustomStatus ?? null,
+          new_custom_status: data.newCustomStatus ?? null,
+          ...(data.oldCategory ? { old_category: data.oldCategory } : {}),
+          ...(data.newCategory ? { new_category: data.newCategory } : {}),
         })
       )
       emitter.on(ESCALATED_EVENTS.TICKET_RESOLVED, (data) =>

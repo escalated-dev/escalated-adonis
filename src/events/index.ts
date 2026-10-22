@@ -31,6 +31,15 @@ export interface TicketStatusChangedData {
   causer?: any
   /** Follower user ids to notify (excluding the actor). See issue #94. */
   followerUserIds?: UserId[]
+  /**
+   * Custom status slugs before and after (null for a built-in status), and
+   * the categories of the effective statuses. Set by TicketService.changeStatus;
+   * other emitters of this event leave them out.
+   */
+  oldCustomStatus?: string | null
+  newCustomStatus?: string | null
+  oldCategory?: string
+  newCategory?: string
 }
 
 export interface TicketResolvedData {
