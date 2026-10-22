@@ -3,6 +3,7 @@ import { signAttachments } from '../support/attachment_access.js'
 import { Exception } from '@adonisjs/core/exceptions'
 import Department from '../models/department.js'
 import TicketService from '../services/ticket_service.js'
+import CustomFieldService from '../services/custom_field_service.js'
 import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { redirectToRoute } from '../support/routing.js'
@@ -10,6 +11,7 @@ import { t } from '../support/i18n.js'
 
 export default class CustomerTicketsController {
   protected ticketService = new TicketService()
+  protected customFields = new CustomFieldService()
 
   /**
    * GET /support — List customer's tickets
@@ -38,6 +40,7 @@ export default class CustomerTicketsController {
     return getRenderer().render(ctx, 'Escalated/Customer/Create', {
       departments,
       priorities: config.priorities,
+      custom_fields: await this.customFields.ticketDefinitions(),
     })
   }
 
@@ -50,6 +53,16 @@ export default class CustomerTicketsController {
     const data = request.only(['subject', 'description', 'priority', 'department_id'])
     const attachments = request.files('attachments')
 
+    // Custom field values are checked before the ticket is written.
+    const custom = await this.customFields.validateTicketInput(
+      request.input('custom_fields'),
+      'create'
+    )
+    if (Object.keys(custom.errors).length > 0) {
+      session.flash('errors', custom.errors)
+      return response.redirect().back()
+    }
+
     const ticket = await this.ticketService.create(user as any, {
       subject: data.subject,
       description: data.description,
@@ -57,6 +70,7 @@ export default class CustomerTicketsController {
       departmentId: data.department_id,
       attachments,
     })
+    await this.customFields.saveTicketValues(ticket.id, custom.values)
 
     session.flash('success', t('ticket.created'))
     return redirectToRoute(response, 'escalated.customer.tickets.show', {
@@ -87,6 +101,7 @@ export default class CustomerTicketsController {
 
     return getRenderer().render(ctx, 'Escalated/Customer/Show', {
       ticket,
+      custom_fields: await this.customFields.ticketValues(ticket.id),
     })
   }
 

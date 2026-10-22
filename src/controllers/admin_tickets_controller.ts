@@ -9,6 +9,7 @@ import CannedResponse from '../models/canned_response.js'
 import Macro from '../models/macro.js'
 import ChatSession from '../models/chat_session.js'
 import TicketService from '../services/ticket_service.js'
+import CustomFieldService from '../services/custom_field_service.js'
 import AssignmentService from '../services/assignment_service.js'
 import MacroService from '../services/macro_service.js'
 import { getRenderer } from '../rendering/renderer.js'
@@ -156,6 +157,7 @@ export default class AdminTicketsController {
       chat_metadata: chatSession?.metadata ?? ticket.chatMetadata ?? null,
       requester_ticket_count: requesterTicketCount,
       related_tickets: relatedTickets,
+      custom_fields: await new CustomFieldService().ticketValues(ticket.id),
     })
   }
 

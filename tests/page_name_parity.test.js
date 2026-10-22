@@ -55,11 +55,6 @@ const NOT_YET_RENDERED = [
   // Features this package does not have.
   'Escalated/Admin/BusinessHours/Form',
   'Escalated/Admin/BusinessHours/Index',
-  'Escalated/Admin/CustomFields/Form',
-  'Escalated/Admin/CustomFields/Index',
-  'Escalated/Admin/CustomObjects/Form',
-  'Escalated/Admin/CustomObjects/Index',
-  'Escalated/Admin/CustomObjects/Records',
   'Escalated/Admin/Statuses/Form',
   'Escalated/Admin/Statuses/Index',
   'Escalated/Admin/Settings/DataRetention',
