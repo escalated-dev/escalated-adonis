@@ -25,7 +25,7 @@ function getEncryptionKey(): Buffer {
   return createHash('sha256').update(appKey).digest()
 }
 
-function encryptJson(value: any): string | null {
+export function encryptJson(value: any): string | null {
   if (value === null || value === undefined) return null
   const key = getEncryptionKey()
   const iv = randomBytes(12)
@@ -37,7 +37,7 @@ function encryptJson(value: any): string | null {
   return payload.toString('base64')
 }
 
-function decryptJson(value: string | null): any {
+export function decryptJson(value: string | null): any {
   if (!value) return null
   try {
     const key = getEncryptionKey()
@@ -83,6 +83,14 @@ export interface ErrorLogEntry {
 export default class ImportJob extends EscalatedBaseModel {
   static table = 'escalated_import_jobs'
 
+  /**
+   * The uuid is made here (see assignUuid). Without this, Lucid replaced it
+   * after the insert with what the driver reports as the inserted id -- on
+   * SQLite the rowid -- so a new job came back as `1`, `2`, ... and every
+   * redirect and lookup by that id missed.
+   */
+  static selfAssignPrimaryKey = true
+
   static readonly VALID_TRANSITIONS: Record<ImportJobStatus, ImportJobStatus[]> = {
     pending: ['authenticating'],
     authenticating: ['mapping', 'failed'],
@@ -95,6 +103,10 @@ export default class ImportJob extends EscalatedBaseModel {
 
   @column({ isPrimary: true })
   declare id: string
+
+  /** The admin who started the import, as escalated-laravel records it. */
+  @column()
+  declare userId: number | string | null
 
   @column()
   declare platform: string
@@ -200,7 +212,9 @@ export default class ImportJob extends EscalatedBaseModel {
     if (options.total !== undefined) current.total = options.total
     if (options.skipped !== undefined) current.skipped = options.skipped
     if (options.failed !== undefined) current.failed = options.failed
-    if (options.cursor !== undefined) current.cursor = options.cursor
+    // As Laravel's: an exhausted extract (null cursor) keeps the last page's
+    // cursor, so a resume re-reads one page instead of the whole entity type.
+    if (options.cursor !== undefined && options.cursor !== null) current.cursor = options.cursor
 
     progress[entityType] = current
     this.progress = progress

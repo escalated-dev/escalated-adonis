@@ -6,6 +6,7 @@ import { ESCALATED_EVENTS } from '../events/index.js'
 import type TicketService from './ticket_service.js'
 import type AssignmentService from './assignment_service.js'
 import type { TicketPriority, TicketStatus } from '../types.js'
+import ImportContext from '../support/import_context.js'
 
 export default class EscalationService {
   constructor(
@@ -17,6 +18,7 @@ export default class EscalationService {
    * Evaluate all active escalation rules against open tickets.
    */
   async evaluateRules(): Promise<number> {
+    if (ImportContext.isImporting()) return 0
     const rules = await this.loadActiveRules()
 
     let escalated = 0

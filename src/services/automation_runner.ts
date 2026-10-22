@@ -6,12 +6,14 @@ import CustomStatus from '../models/custom_status.js'
 import Tag from '../models/tag.js'
 import Reply from '../models/reply.js'
 import logger from '@adonisjs/core/services/logger'
+import ImportContext from '../support/import_context.js'
 
 export default class AutomationRunner {
   /**
    * Evaluate all active automations against open tickets.
    */
   async run(): Promise<number> {
+    if (ImportContext.isImporting()) return 0
     const automations = await Automation.query().withScopes((scopes) => scopes.activeScope())
 
     let affected = 0

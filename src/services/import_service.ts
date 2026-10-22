@@ -19,7 +19,7 @@ import type ImportJob from '../models/import_job.js'
 import ImportSourceMap from '../models/import_source_map.js'
 import ImportContext from '../support/import_context.js'
 import type { ImportAdapter, ExtractResult } from '../contracts/import_adapter.js'
-import type { TicketStatus, TicketPriority } from '../types.js'
+import { PRIORITY_LABELS, STATUS_LABELS, type TicketStatus, type TicketPriority } from '../types.js'
 import { escalated_applyFilters, escalated_doAction } from '../support/helpers.js'
 import { resolveUserModel, userModelTypeName } from '../support/user_model.js'
 
@@ -343,10 +343,16 @@ export default class ImportService {
     ticket.$attributes = {} // reset to avoid auto-assigns triggering hooks
 
     ticket.reference = reference
-    ticket.subject = record['title'] ?? record['subject'] ?? 'Imported ticket'
-    ticket.description = record['description'] ?? record['body'] ?? ''
-    ticket.status = (record['status'] as TicketStatus) ?? 'open'
-    ticket.priority = (record['priority'] as TicketPriority) ?? 'medium'
+    ticket.subject = record['title'] || record['subject'] || 'Imported ticket'
+    ticket.description = record['description'] || record['body'] || ticket.subject
+    // As Laravel's TicketStatus::tryFrom / TicketPriority::tryFrom: a value
+    // this package does not know falls back to the default.
+    ticket.status = Object.hasOwn(STATUS_LABELS, record['status'] ?? '')
+      ? (record['status'] as TicketStatus)
+      : 'open'
+    ticket.priority = Object.hasOwn(PRIORITY_LABELS, record['priority'] ?? '')
+      ? (record['priority'] as TicketPriority)
+      : 'medium'
     ticket.channel = record['channel'] ?? 'import'
     ticket.assignedTo = assigneeId ?? null
     ticket.departmentId = departmentId ? Number(departmentId) : null

@@ -8,12 +8,14 @@ import Department from '../models/department.js'
 import { addBusinessMinutes } from '../support/business_hours.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import type { TicketPriority } from '../types.js'
+import ImportContext from '../support/import_context.js'
 
 export default class SlaService {
   /**
    * Attach the default SLA policy to a ticket.
    */
   async attachDefaultPolicy(ticket: Ticket): Promise<void> {
+    if (ImportContext.isImporting()) return
     const policies = await SlaPolicy.query().where('is_active', true).orderBy('id')
     const rank = (policy: SlaPolicy): number => {
       const department = policy.departmentId !== null && policy.departmentId !== undefined
@@ -68,6 +70,7 @@ export default class SlaService {
    * Check for SLA breaches across all open tickets.
    */
   async checkBreaches(): Promise<number> {
+    if (ImportContext.isImporting()) return 0
     let breached = 0
     const now = DateTime.now()
 
@@ -113,6 +116,7 @@ export default class SlaService {
    * Check for SLA warnings (approaching breach).
    */
   async checkWarnings(warningMinutes: number = 30): Promise<number> {
+    if (ImportContext.isImporting()) return 0
     let warned = 0
     const now = DateTime.now()
     const threshold = now.plus({ minutes: warningMinutes })

@@ -61,11 +61,6 @@ const NOT_YET_RENDERED = [
   // uses it, and SAML responses are not signature-checked. A settings screen
   // would configure a sign-in that does not exist.
   'Escalated/Admin/Settings/SsoSettings',
-  // The import wizard here is job-based (create, map, start); Connect and
-  // Review belong to escalated-laravel's platform-based flow
-  // (connect, test-connection, mapping, review, start), not ported.
-  'Escalated/Admin/Import/Connect',
-  'Escalated/Admin/Import/Review',
   // Not rendered by escalated-laravel either: the builder is part of
   // Workflows/Form, and errors render through the host.
   'Escalated/Admin/Workflows/Builder',
