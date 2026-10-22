@@ -162,17 +162,16 @@ export default class AdminSettingsController {
    *
    * Controls the identity assigned to tickets submitted via the public widget
    * or inbound email. Read at request time by the widget controller, so
-   * admins can switch modes at runtime without a redeploy.
+   * admins can switch modes at runtime without a redeploy. Mirrors
+   * escalated-laravel's `Admin\PublicTicketsSettingsController`.
    */
   async publicTickets(ctx: HttpContext) {
     const userIdRaw = await EscalatedSetting.get('guest_policy_user_id', '')
-    const parsedUserId =
-      userIdRaw && /^\d+$/.test(userIdRaw) ? Number.parseInt(userIdRaw, 10) : null
 
     return getRenderer().render(ctx, 'Escalated/Admin/Settings/PublicTickets', {
       settings: {
         guest_policy_mode: await EscalatedSetting.get('guest_policy_mode', 'unassigned'),
-        guest_policy_user_id: parsedUserId,
+        guest_policy_user_id: userIdRaw ? userIdRaw : null,
         guest_policy_signup_url_template: await EscalatedSetting.get(
           'guest_policy_signup_url_template',
           ''
@@ -181,32 +180,57 @@ export default class AdminSettingsController {
     })
   }
 
+  /**
+   * POST (what the shared page sends) or PUT /admin/settings/public-tickets
+   */
   async updatePublicTickets({ auth, request, response, session }: HttpContext) {
-    const modeRaw = request.input('guest_policy_mode', 'unassigned')
-    const mode = modeRaw === 'guest_user' || modeRaw === 'prompt_signup' ? modeRaw : 'unassigned'
+    const mode = request.input('guest_policy_mode')
+    const userIdRaw = request.input('guest_policy_user_id')
+    const template = request.input('guest_policy_signup_url_template')
+    const errors: Record<string, string> = {}
+
+    if (!['unassigned', 'guest_user', 'prompt_signup'].includes(mode)) {
+      errors.guest_policy_mode =
+        'The guest policy mode must be one of: unassigned, guest_user, prompt_signup.'
+    }
+
+    const hasUserId = userIdRaw !== undefined && userIdRaw !== null && userIdRaw !== ''
+    if (hasUserId && !(/^\d+$/.test(String(userIdRaw)) && Number(userIdRaw) >= 1)) {
+      errors.guest_policy_user_id = 'The guest user id must be a whole number of at least 1.'
+    } else if (!hasUserId && mode === 'guest_user') {
+      errors.guest_policy_user_id = 'The guest user id is required when the mode is guest_user.'
+    }
+
+    if (
+      template !== undefined &&
+      template !== null &&
+      (typeof template !== 'string' || template.length > 500)
+    ) {
+      errors.guest_policy_signup_url_template =
+        'The signup URL template may not be greater than 500 characters.'
+    }
+
+    if (Object.keys(errors).length > 0) {
+      session.flash('errors', errors)
+      return response.redirect().back()
+    }
 
     await EscalatedSetting.set('guest_policy_mode', mode)
-
-    if (mode === 'guest_user') {
-      const userId = Number.parseInt(String(request.input('guest_policy_user_id', '')), 10)
-      await EscalatedSetting.set('guest_policy_user_id', userId > 0 ? String(userId) : '')
-    } else {
-      await EscalatedSetting.set('guest_policy_user_id', '')
-    }
-
-    if (mode === 'prompt_signup') {
-      const template = String(request.input('guest_policy_signup_url_template', '')).slice(0, 500)
-      await EscalatedSetting.set('guest_policy_signup_url_template', template)
-    } else {
-      await EscalatedSetting.set('guest_policy_signup_url_template', '')
-    }
+    await EscalatedSetting.set(
+      'guest_policy_user_id',
+      mode === 'guest_user' ? String(Number(userIdRaw)) : ''
+    )
+    await EscalatedSetting.set(
+      'guest_policy_signup_url_template',
+      mode === 'prompt_signup' ? String(template ?? '') : ''
+    )
 
     await AuditService.fromContext({ auth, request }, AUDIT_ACTIONS.PUBLIC_TICKETS_UPDATED, {
       auditableType: 'settings',
       newValues: { guest_policy_mode: mode },
     })
 
-    session.flash('success', t('admin.settings_updated'))
+    session.flash('success', 'Guest policy updated.')
     return response.redirect().back()
   }
 

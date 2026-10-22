@@ -30,21 +30,33 @@ export default class AdminCsatSettingsController {
     const question = request.input('csat_question_text')
     const scale = request.input('csat_scale')
     const trigger = request.input('csat_delivery_trigger')
-    const delay = Number(request.input('csat_delay_hours'))
+    const delayRaw = request.input('csat_delay_hours')
+    const delay = Number(delayRaw)
+    const errors: Record<string, string> = {}
 
-    const error =
-      typeof question !== 'string' || question.trim() === '' || question.length > 500
-        ? 'The question is required and may not be longer than 500 characters.'
-        : !SCALES.includes(scale)
-          ? 'The scale must be 1-3 or 1-5.'
-          : !TRIGGERS.includes(trigger)
-            ? 'The delivery trigger must be on_resolve, delayed or manual.'
-            : !Number.isInteger(delay) || delay < 0 || delay > 168
-              ? 'The delay must be a whole number of hours from 0 to 168.'
-              : null
+    if (typeof question !== 'string' || question.trim() === '' || question.length > 500) {
+      errors.csat_question_text =
+        'The question is required and may not be longer than 500 characters.'
+    }
+    if (!SCALES.includes(scale)) {
+      errors.csat_scale = 'The scale must be 1-3 or 1-5.'
+    }
+    if (!TRIGGERS.includes(trigger)) {
+      errors.csat_delivery_trigger = 'The delivery trigger must be on_resolve, delayed or manual.'
+    }
+    if (
+      delayRaw === undefined ||
+      delayRaw === null ||
+      delayRaw === '' ||
+      !Number.isInteger(delay) ||
+      delay < 0 ||
+      delay > 168
+    ) {
+      errors.csat_delay_hours = 'The delay must be a whole number of hours from 0 to 168.'
+    }
 
-    if (error) {
-      session.flash('error', error)
+    if (Object.keys(errors).length > 0) {
+      session.flash('errors', errors)
       return response.redirect().back()
     }
 

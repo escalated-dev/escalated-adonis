@@ -162,6 +162,41 @@
       "filePath": "dispatch_newsletters_command.js"
     },
     {
+      "commandName": "escalated:purge-expired",
+      "description": "Purge expired data based on the configured retention policies",
+      "help": [
+        "Purge what the retention settings say has expired:",
+        "  node ace escalated:purge-expired",
+        "",
+        "Show what would be purged without deleting anything:",
+        "  node ace escalated:purge-expired --dry-run",
+        "",
+        "Delete expired closed tickets permanently instead of soft-deleting them:",
+        "  node ace escalated:purge-expired --force"
+      ],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [
+        {
+          "name": "dryRun",
+          "flagName": "dry-run",
+          "required": false,
+          "type": "boolean",
+          "description": "Show what would be purged without deleting anything"
+        },
+        {
+          "name": "force",
+          "flagName": "force",
+          "required": false,
+          "type": "boolean",
+          "description": "Delete expired closed tickets permanently, not soft-delete"
+        }
+      ],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "purge_expired_command.js"
+    },
+    {
       "commandName": "escalated:run-automations",
       "description": "Evaluate all active automations against open tickets",
       "help": ["Run all active automations:", "  node ace escalated:run-automations"],

@@ -38,6 +38,12 @@ const AdminAdvancedReportsController = () =>
 const AdminSettingsController = () => import('../src/controllers/admin_settings_controller.js')
 const AdminCsatSettingsController = () =>
   import('../src/controllers/admin_csat_settings_controller.js')
+const AdminDataRetentionController = () =>
+  import('../src/controllers/admin_data_retention_controller.js')
+const AdminEmailSettingsController = () =>
+  import('../src/controllers/admin_email_settings_controller.js')
+const AdminDatabaseConnectionController = () =>
+  import('../src/controllers/admin_database_connection_controller.js')
 const AdminPluginsController = () => import('../src/controllers/admin_plugins_controller.js')
 const BulkActionsController = () => import('../src/controllers/bulk_actions_controller.js')
 const SavedViewsController = () => import('../src/controllers/saved_views_controller.js')
@@ -615,9 +621,41 @@ async function registerUiRoutes(config: any) {
       router
         .get('/settings/public-tickets', [AdminSettingsController, 'publicTickets'])
         .as('escalated.admin.settings.public-tickets')
+      // The shared page posts; Laravel registers PUT. Both are accepted.
       router
-        .put('/settings/public-tickets', [AdminSettingsController, 'updatePublicTickets'])
+        .route(
+          '/settings/public-tickets',
+          ['POST', 'PUT'],
+          [AdminSettingsController, 'updatePublicTickets']
+        )
         .as('escalated.admin.settings.public-tickets.update')
+
+      // Data retention (enforced by `node ace escalated:purge-expired`)
+      router
+        .get('/settings/data-retention', [AdminDataRetentionController, 'index'])
+        .as('escalated.admin.settings.data-retention')
+      router
+        .post('/settings/data-retention', [AdminDataRetentionController, 'update'])
+        .as('escalated.admin.settings.data-retention.update')
+
+      // Email channel addresses
+      router
+        .get('/settings/email', [AdminEmailSettingsController, 'index'])
+        .as('escalated.admin.settings.email')
+      router
+        .post('/settings/email', [AdminEmailSettingsController, 'update'])
+        .as('escalated.admin.settings.email.update')
+
+      // Database connection (read-only: the connection is set in config)
+      router
+        .get('/settings/database', [AdminDatabaseConnectionController, 'index'])
+        .as('escalated.admin.settings.database')
+      router
+        .post('/settings/database/test', [AdminDatabaseConnectionController, 'test'])
+        .as('escalated.admin.settings.database.test')
+      router
+        .post('/settings/database', [AdminDatabaseConnectionController, 'update'])
+        .as('escalated.admin.settings.database.update')
 
       // Departments CRUD
       router
