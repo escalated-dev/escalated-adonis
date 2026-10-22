@@ -3,6 +3,9 @@ import { DateTime } from 'luxon'
 import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
 import SlaPolicy from '../models/sla_policy.js'
+import BusinessSchedule from '../models/business_schedule.js'
+import Department from '../models/department.js'
+import { addBusinessMinutes } from '../support/business_hours.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import type { TicketPriority } from '../types.js'
 
@@ -38,20 +41,23 @@ export default class SlaService {
 
     const firstResponseHours = policy.getFirstResponseHoursFor(ticket.priority as TicketPriority)
     const resolutionHours = policy.getResolutionHoursFor(ticket.priority as TicketPriority)
+    const schedule = policy.businessHoursOnly ? await this.scheduleFor(policy, ticket) : null
 
     if (firstResponseHours) {
-      ticket.firstResponseDueAt = this.calculateDueDate(
+      ticket.firstResponseDueAt = this.dueDate(
         ticket.createdAt,
         firstResponseHours,
-        policy.businessHoursOnly
+        policy.businessHoursOnly,
+        schedule
       )
     }
 
     if (resolutionHours) {
-      ticket.resolutionDueAt = this.calculateDueDate(
+      ticket.resolutionDueAt = this.dueDate(
         ticket.createdAt,
         resolutionHours,
-        policy.businessHoursOnly
+        policy.businessHoursOnly,
+        schedule
       )
     }
 
@@ -149,6 +155,48 @@ export default class SlaService {
     }
 
     return warned
+  }
+
+  /**
+   * The business schedule a business-hours policy counts against, chosen as
+   * escalated-laravel does: the policy's own schedule, then the ticket's
+   * department's, then the default schedule. Null when none is configured,
+   * which keeps the configured `sla.businessHours` an install had before.
+   */
+  async scheduleFor(policy: SlaPolicy, ticket: Ticket): Promise<BusinessSchedule | null> {
+    const ids: number[] = []
+    if (policy.businessScheduleId) ids.push(policy.businessScheduleId)
+    if (ticket.departmentId) {
+      const department = await Department.find(ticket.departmentId)
+      if (department?.businessScheduleId) ids.push(department.businessScheduleId)
+    }
+
+    for (const id of ids) {
+      const schedule = await BusinessSchedule.query().where('id', id).preload('holidays').first()
+      if (schedule) return schedule
+    }
+
+    return BusinessSchedule.query()
+      .where('is_default', true)
+      .orderBy('id')
+      .preload('holidays')
+      .first()
+  }
+
+  protected dueDate(
+    from: DateTime,
+    hours: number,
+    businessHoursOnly: boolean,
+    schedule: BusinessSchedule | null
+  ): DateTime {
+    if (!businessHoursOnly || !schedule) {
+      // Same instant as before, in the ticket's zone: a DateTime left in the
+      // configured business-hours zone was stored as that zone's wall time
+      // where the column has no offset (SQLite, MySQL DATETIME).
+      return this.calculateDueDate(from, hours, businessHoursOnly).setZone(from.zone)
+    }
+    const due = addBusinessMinutes(from.toJSDate(), hours * 60, schedule.toCalculatorSchedule())
+    return DateTime.fromJSDate(due).setZone(from.zone)
   }
 
   /**

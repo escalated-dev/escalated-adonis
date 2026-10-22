@@ -282,7 +282,7 @@ commands: [
 |---------|-------------|
 | `TicketService` | Create, update, transition status, reply, add notes, manage tags/departments |
 | `AssignmentService` | Assign/unassign agents, auto-assign (least-workload strategy) |
-| `SlaService` | Attach policies, check breaches, calculate due dates with business hours |
+| `SlaService` | Attach policies, check breaches, calculate due dates with business hours (schedules, time zones, holidays) |
 | `EscalationService` | Evaluate rules, find matching tickets, execute automated actions |
 | `NotificationService` | Send webhook notifications with HMAC-SHA256 signing |
 | `AttachmentService` | Store/delete file attachments via AdonisJS Drive |

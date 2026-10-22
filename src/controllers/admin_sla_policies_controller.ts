@@ -4,6 +4,7 @@ import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { redirectToRoute } from '../support/routing.js'
 import { t } from '../support/i18n.js'
+import { scheduleReference } from '../support/business_schedule_reference.js'
 
 export default class AdminSlaPoliciesController {
   async index(ctx: HttpContext) {
@@ -37,6 +38,7 @@ export default class AdminSlaPoliciesController {
       resolutionHours: data.resolution_hours,
       businessHoursOnly: data.business_hours_only || false,
       isActive: data.is_active !== false,
+      ...(await scheduleReference(request.all())),
     })
 
     session.flash('success', t('admin.sla_policy_created'))
@@ -72,6 +74,7 @@ export default class AdminSlaPoliciesController {
       resolutionHours: data.resolution_hours,
       businessHoursOnly: data.business_hours_only || false,
       isActive: data.is_active !== false,
+      ...(await scheduleReference(request.all())),
     })
     await policy.save()
 

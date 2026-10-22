@@ -25,6 +25,10 @@ export default class Department extends EscalatedBaseModel {
   @column()
   declare isActive: boolean
 
+  /** The schedule this department's business-hours deadlines count against. */
+  @column()
+  declare businessScheduleId: number | null
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 

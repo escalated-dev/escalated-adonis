@@ -53,8 +53,6 @@ const KNOWN_BLANK = []
  */
 const NOT_YET_RENDERED = [
   // Features this package does not have.
-  'Escalated/Admin/BusinessHours/Form',
-  'Escalated/Admin/BusinessHours/Index',
   'Escalated/Admin/Settings/DataRetention',
   'Escalated/Admin/Settings/DatabaseConnection',
   'Escalated/Admin/Settings/EmailSettings',

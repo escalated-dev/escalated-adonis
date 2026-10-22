@@ -1,13 +1,13 @@
 import { test } from '@japa/runner'
 import { testApp } from './helpers/app.js'
-import Migration from '../../database/migrations/0068_create_escalated_custom_fields.js'
+import Migration from '../../database/migrations/0069_create_escalated_custom_fields.js'
 
 /*
 |--------------------------------------------------------------------------
 | Custom fields migration on every advertised database
 |--------------------------------------------------------------------------
 |
-| Runs 0068 up and down on its own connection: SQLite in memory by default,
+| Runs 0069 up and down on its own connection: SQLite in memory by default,
 | or the MySQL / PostgreSQL server in ESCALATED_TEST_DATABASE_URL (the CI
 | database matrix). Checks the unique keys and the cascades the feature
 | relies on.
