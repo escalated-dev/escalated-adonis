@@ -84,7 +84,11 @@ test.group('Plugin pages', (group) => {
   test('each manifest page is a named admin route', async ({ assert }) => {
     const router = await registered(new BridgeStandIn(), manifest())
 
-    const settings = router.match('/support/admin/plugins/acme--escalated-plugin-crm/settings', 'GET', true)
+    const settings = router.match(
+      '/support/admin/plugins/acme--escalated-plugin-crm/settings',
+      'GET',
+      true
+    )
     assert.exists(settings, 'the settings page has no route')
     assert.equal(settings!.route.name, 'escalated.plugin.acme--escalated-plugin-crm.page.settings')
 
@@ -110,7 +114,11 @@ test.group('Plugin pages', (group) => {
     const bridge = new BridgeStandIn()
     const router = await registered(bridge, manifest())
 
-    const settings = router.match('/support/admin/plugins/acme--escalated-plugin-crm/settings', 'GET', true)
+    const settings = router.match(
+      '/support/admin/plugins/acme--escalated-plugin-crm/settings',
+      'GET',
+      true
+    )
     const rendered = await run(settings!.route)
 
     assert.equal(rendered.component, 'Escalated/Plugin/Page')
