@@ -127,14 +127,15 @@ export default class AdminReportsController {
     const { start, end } = ReportingService.window(days)
     const reporting = new ReportingService()
 
-    const totalTickets = (await reporting.ticketsCreated(start, end)).length
-    const totalRatings = (await reporting.ratingsCreated(start, end)).length
+    const tickets = await reporting.ticketsCreated(start, end)
+    const ratings = await reporting.ratingsCreated(start, end)
+    const totalTickets = tickets.length
+    const totalRatings = ratings.length
 
     return getRenderer().render(ctx, 'Escalated/Admin/Reports/CsatReport', {
       period_days: days,
       csat_average: await reporting.csatAverage(start, end),
-      response_rate:
-        totalTickets > 0 ? Math.round((totalRatings / totalTickets) * 1000) / 10 : 0,
+      response_rate: totalTickets > 0 ? Math.round((totalRatings / totalTickets) * 1000) / 10 : 0,
       total_ratings: totalRatings,
       by_agent: await reporting.csatByAgent(start, end),
       over_time: await reporting.csatOverTime(start, end),

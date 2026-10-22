@@ -126,7 +126,9 @@ export default class ReportingService {
 
   /** Share of tickets with an SLA policy that breached neither target; 100 when none had one. */
   async slaComplianceRate(start: DateTime, end: DateTime): Promise<number> {
-    const tickets = (await this.ticketsCreated(start, end)).filter((t) => t.slaPolicyId !== null)
+    const allTickets = await this.ticketsCreated(start, end)
+
+    const tickets = allTickets.filter((t) => t.slaPolicyId !== null)
     if (tickets.length === 0) return 100
     const met = tickets.filter((ticket) => !isBreached(ticket)).length
     return round1((met / tickets.length) * 100)
@@ -143,7 +145,9 @@ export default class ReportingService {
    * longer finds is left out.
    */
   async agentPerformance(start: DateTime, end: DateTime) {
-    const tickets = (await this.ticketsCreated(start, end)).filter((t) => t.assignedTo !== null)
+    const allTickets = await this.ticketsCreated(start, end)
+
+    const tickets = allTickets.filter((t) => t.assignedTo !== null)
     const byAgent = this.groupBy(tickets, (ticket) => ticket.assignedTo)
 
     const rows = []
@@ -184,7 +188,9 @@ export default class ReportingService {
 
   /** The latest 100 breached tickets, with their policy. */
   async slaBreachDetails(start: DateTime, end: DateTime) {
-    const tickets = (await this.ticketsCreated(start, end)).filter(isBreached)
+    const allTickets = await this.ticketsCreated(start, end)
+
+    const tickets = allTickets.filter(isBreached)
     tickets.sort((a, b) => (ms(b.createdAt) ?? 0) - (ms(a.createdAt) ?? 0) || b.id - a.id)
 
     return tickets.slice(0, 100).map((ticket) => ({
@@ -198,14 +204,18 @@ export default class ReportingService {
       first_response_at: this.iso(ticket.firstResponseAt),
       resolved_at: this.iso(ticket.resolvedAt),
       created_at: this.iso(ticket.createdAt),
-      sla_policy: ticket.slaPolicy ? { id: ticket.slaPolicy.id, name: ticket.slaPolicy.name } : null,
+      sla_policy: ticket.slaPolicy
+        ? { id: ticket.slaPolicy.id, name: ticket.slaPolicy.name }
+        : null,
     }))
   }
 
   // ---- CSAT ----
 
   async csatByAgent(start: DateTime, end: DateTime) {
-    const ratings = (await this.ratingsCreated(start, end)).filter(
+    const allRatings = await this.ratingsCreated(start, end)
+
+    const ratings = allRatings.filter(
       (rating) => rating.ticket && rating.ticket.assignedTo !== null
     )
     const byAgent = this.groupBy(ratings, (rating) => rating.ticket.assignedTo)
@@ -268,10 +278,12 @@ export default class ReportingService {
   // ---- Helpers ----
 
   protected async agentFigures(agentId: string | number, start: DateTime, end: DateTime) {
-    const tickets = (await this.ticketsCreated(start, end)).filter(
-      (ticket) => String(ticket.assignedTo) === String(agentId)
-    )
-    const ratings = (await this.ratingsCreated(start, end)).filter(
+    const allTickets = await this.ticketsCreated(start, end)
+
+    const tickets = allTickets.filter((ticket) => String(ticket.assignedTo) === String(agentId))
+    const allRatings = await this.ratingsCreated(start, end)
+
+    const ratings = allRatings.filter(
       (rating) => rating.ticket && String(rating.ticket.assignedTo) === String(agentId)
     )
     const response = this.hours(tickets, 'firstResponseAt').sort((a, b) => a - b)
@@ -288,7 +300,8 @@ export default class ReportingService {
       return perDay.get(label)!
     }
     for (const reply of agentReplies) day(isoDate(reply.createdAt)).replies += 1
-    for (const ticket of tickets) if (ticket.resolvedAt) day(isoDate(ticket.resolvedAt)).resolutions += 1
+    for (const ticket of tickets)
+      if (ticket.resolvedAt) day(isoDate(ticket.resolvedAt)).resolutions += 1
 
     const sortedTickets = [...tickets].sort(
       (a, b) => (ms(a.createdAt) ?? 0) - (ms(b.createdAt) ?? 0)

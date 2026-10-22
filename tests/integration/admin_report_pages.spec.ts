@@ -94,8 +94,13 @@ test.group('Report pages', (group) => {
       sla_first_response_breached: fields.breachedFirst ?? false,
       sla_resolution_breached: fields.breachedResolution ?? false,
       first_response_at:
-        fields.firstResponseAfter == null ? null : hoursAgo(created - fields.firstResponseAfter),
-      resolved_at: fields.resolvedAfter == null ? null : hoursAgo(created - fields.resolvedAfter),
+        fields.firstResponseAfter === null || fields.firstResponseAfter === undefined
+          ? null
+          : hoursAgo(created - fields.firstResponseAfter),
+      resolved_at:
+        fields.resolvedAfter === null || fields.resolvedAfter === undefined
+          ? null
+          : hoursAgo(created - fields.resolvedAfter),
       created_at: hoursAgo(created),
       updated_at: hoursAgo(created),
     })
@@ -139,9 +144,7 @@ test.group('Report pages', (group) => {
 
   // ---- Dashboard ----------------------------------------------------------------
 
-  test('dashboard renders Reports/Dashboard with every prop the page reads', async ({
-    assert,
-  }) => {
+  test('dashboard renders Reports/Dashboard with every prop the page reads', async ({ assert }) => {
     await seed()
 
     const visit = await client.visit('GET', `${REPORTS}/dashboard`)
