@@ -77,8 +77,6 @@ const NOT_YET_RENDERED = [
   'Escalated/Admin/Settings/CsatSettings',
   'Escalated/Admin/Settings/SsoSettings',
   'Escalated/Admin/Workflows/Builder',
-  'Escalated/Customer/KnowledgeBase/Article',
-  'Escalated/Customer/KnowledgeBase/Index',
   'Escalated/Error',
   'Escalated/Plugin/Page',
 ]

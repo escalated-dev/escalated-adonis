@@ -48,6 +48,8 @@ const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
 const AdminWorkflowsController = () => import('../src/controllers/admin_workflows_controller.js')
 const AdminWebhooksController = () => import('../src/controllers/admin_webhooks_controller.js')
+const CustomerKnowledgeBaseController = () =>
+  import('../src/controllers/customer_knowledge_base_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
 const AdminRolesController = () => import('../src/controllers/admin_roles_controller.js')
 const AdminCapacityController = () => import('../src/controllers/admin_capacity_controller.js')
@@ -249,6 +251,21 @@ async function registerUiRoutes(config: any) {
         .get('/create', [CustomerTicketsController, 'create'])
         .as('escalated.customer.tickets.create')
       router.post('/', [CustomerTicketsController, 'store']).as('escalated.customer.tickets.store')
+
+      // Knowledge base reader (404 while the knowledge base is off)
+      router
+        .group(() => {
+          router
+            .get('/kb', [CustomerKnowledgeBaseController, 'index'])
+            .as('escalated.customer.kb.index')
+          router
+            .get('/kb/:slug', [CustomerKnowledgeBaseController, 'show'])
+            .as('escalated.customer.kb.show')
+          router
+            .post('/kb/:slug/feedback', [CustomerKnowledgeBaseController, 'feedback'])
+            .as('escalated.customer.kb.feedback')
+        })
+        .use([middleware.knowledgeBaseGuard()])
 
       // Ticket-specific routes (with ticket resolution)
       router
