@@ -20,6 +20,7 @@ import { TEST_USERS } from './fixtures/user.js'
 
 const PAGES = '/support/admin/business-hours'
 const POLICIES = '/support/admin/sla-policies'
+const DEPARTMENTS = '/support/admin/departments'
 
 const nineToFive = { start: '09:00', end: '17:00' }
 const weekdays = {
@@ -374,6 +375,151 @@ test.group('Business hours', (group) => {
     const cleared = await running.db.from('escalated_sla_policies').where('id', policy.id).first()
     assert.isNull(cleared.business_schedule_id)
     await running.db.from('escalated_sla_policies').where('id', policy.id).delete()
+  })
+
+  test('the SLA policy and department forms list the schedules by name', async ({ assert }) => {
+    const zulu = await schedule('Zulu shift')
+    const alpha = await schedule('Alpha weekend')
+    const expected = [
+      { id: alpha, name: 'Alpha weekend' },
+      { id: zulu, name: 'Zulu shift' },
+    ]
+    const [policyId] = await running.db.table('escalated_sla_policies').insert({
+      name: `Picker ${Date.now()}`,
+      first_response_hours: JSON.stringify({ high: 1 }),
+      resolution_hours: JSON.stringify({ high: 4 }),
+      business_hours_only: true,
+      business_schedule_id: alpha,
+      is_default: false,
+      is_active: true,
+      created_at: sqlTimestamp(),
+      updated_at: sqlTimestamp(),
+    })
+    const [departmentId] = await running.db.table('escalated_departments').insert({
+      name: `Picker dept ${Date.now()}`,
+      slug: `picker-${Date.now()}`,
+      is_active: true,
+      business_schedule_id: zulu,
+      created_at: sqlTimestamp(),
+      updated_at: sqlTimestamp(),
+    })
+
+    for (const [path, component] of [
+      [`${POLICIES}/create`, 'Escalated/Admin/SlaPolicies/Form'],
+      [`${POLICIES}/${policyId}/edit`, 'Escalated/Admin/SlaPolicies/Form'],
+      [`${DEPARTMENTS}/create`, 'Escalated/Admin/Departments/Form'],
+      [`${DEPARTMENTS}/${departmentId}/edit`, 'Escalated/Admin/Departments/Form'],
+    ]) {
+      const visit = await client.visit('GET', path)
+      assert.equal(visit.status, 200, JSON.stringify(visit.body))
+      assert.equal(visit.body.component, component)
+      assert.deepEqual(
+        visit.body.props.schedules.map((row: any) => ({ id: Number(row.id), name: row.name })),
+        expected,
+        path
+      )
+      assert.sameMembers(Object.keys(visit.body.props.schedules[0]), ['id', 'name'])
+    }
+
+    // The records carry the snake_case keys the shared forms read.
+    const departmentEdit = await client.visit('GET', `${DEPARTMENTS}/${departmentId}/edit`)
+    const department = departmentEdit.body.props.department
+    assert.equal(Number(department.business_schedule_id), zulu)
+    assert.properties(department, ['id', 'name', 'slug', 'description', 'is_active'])
+    const policyEdit = await client.visit('GET', `${POLICIES}/${policyId}/edit`)
+    const policy = policyEdit.body.props.policy
+    assert.equal(Number(policy.business_schedule_id), alpha)
+    assert.properties(policy, [
+      'id',
+      'name',
+      'first_response_hours',
+      'resolution_hours',
+      'business_hours_only',
+      'is_default',
+      'is_active',
+    ])
+
+    await running.db.from('escalated_sla_policies').where('id', policyId).delete()
+    await running.db.from('escalated_departments').where('id', departmentId).delete()
+  })
+
+  test('a department save sets business_schedule_id only when it is sent', async ({ assert }) => {
+    const id = await schedule('Department hours')
+    const name = `Returns ${Date.now()}`
+
+    await client.visit('POST', DEPARTMENTS, {
+      data: { name, is_active: true, business_schedule_id: id },
+    })
+    const dept = await running.db.from('escalated_departments').where('name', name).first()
+    assert.equal(Number(dept.business_schedule_id), id)
+
+    await client.visit('PUT', `${DEPARTMENTS}/${dept.id}`, { data: { name, is_active: true } })
+    const kept = await running.db.from('escalated_departments').where('id', dept.id).first()
+    assert.equal(Number(kept.business_schedule_id), id)
+
+    await client.visit('PUT', `${DEPARTMENTS}/${dept.id}`, {
+      data: { name, is_active: true, business_schedule_id: null },
+    })
+    const cleared = await running.db.from('escalated_departments').where('id', dept.id).first()
+    assert.isNull(cleared.business_schedule_id)
+    await running.db.from('escalated_departments').where('id', dept.id).delete()
+  })
+
+  test('a schedule that does not exist is a field error and saves nothing', async ({ assert }) => {
+    const id = await schedule('Kept hours')
+    const name = `Ghost ${Date.now()}`
+
+    const created = await client.visit('POST', DEPARTMENTS, {
+      data: { name, business_schedule_id: 999999 },
+      referer: `${DEPARTMENTS}/create`,
+    })
+    assert.equal(created.status, 302)
+    assert.equal(created.location, `${DEPARTMENTS}/create`)
+    assert.notExists(await running.db.from('escalated_departments').where('name', name).first())
+    const form = await client.visit('GET', `${DEPARTMENTS}/create`)
+    assert.property(form.body.flash.errors, 'business_schedule_id')
+
+    const [policyId] = await running.db.table('escalated_sla_policies').insert({
+      name: `Kept ${Date.now()}`,
+      first_response_hours: JSON.stringify({ high: 1 }),
+      resolution_hours: JSON.stringify({ high: 4 }),
+      business_hours_only: true,
+      business_schedule_id: id,
+      is_default: false,
+      is_active: true,
+      created_at: sqlTimestamp(),
+      updated_at: sqlTimestamp(),
+    })
+    const updated = await client.visit('PUT', `${POLICIES}/${policyId}`, {
+      data: {
+        name: 'Renamed',
+        first_response_hours: { high: 1 },
+        resolution_hours: { high: 4 },
+        business_schedule_id: 999999,
+      },
+      referer: `${POLICIES}/${policyId}/edit`,
+    })
+    assert.equal(updated.status, 302)
+    assert.equal(updated.location, `${POLICIES}/${policyId}/edit`)
+    const policy = await running.db.from('escalated_sla_policies').where('id', policyId).first()
+    assert.equal(Number(policy.business_schedule_id), id)
+    assert.notEqual(policy.name, 'Renamed')
+
+    const ghost = await client.visit('POST', POLICIES, {
+      data: {
+        name: `Ghost policy ${Date.now()}`,
+        first_response_hours: { high: 1 },
+        resolution_hours: { high: 4 },
+        business_schedule_id: 999999,
+      },
+      referer: `${POLICIES}/create`,
+    })
+    assert.equal(ghost.location, `${POLICIES}/create`)
+    const ghosts = await running.db
+      .from('escalated_sla_policies')
+      .where('name', 'like', 'Ghost policy%')
+    assert.lengthOf(ghosts, 0)
+    await running.db.from('escalated_sla_policies').where('id', policyId).delete()
   })
 
   // ---- SLA deadlines ------------------------------------------------------------
