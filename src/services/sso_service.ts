@@ -1,5 +1,6 @@
-import { createHmac } from 'node:crypto'
-import { DOMParser, type Document, type Element } from '@xmldom/xmldom'
+import { createHmac, createPublicKey, timingSafeEqual, type KeyObject } from 'node:crypto'
+import { DOMParser, type Element } from '@xmldom/xmldom'
+import { SignedXml } from 'xml-crypto'
 import EscalatedSetting from '../models/escalated_setting.js'
 
 export class SsoValidationError extends Error {
@@ -40,6 +41,10 @@ const CONFIG_KEYS: (keyof SsoConfig)[] = [
   'sso_jwt_secret',
   'sso_jwt_algorithm',
 ]
+
+const SAML_ASSERTION_NS = 'urn:oasis:names:tc:SAML:2.0:assertion'
+const SAML_PROTOCOL_NS = 'urn:oasis:names:tc:SAML:2.0:protocol'
+const XMLDSIG_NS = 'http://www.w3.org/2000/09/xmldsig#'
 
 const DEFAULTS: SsoConfig = {
   sso_provider: 'none',
@@ -82,33 +87,41 @@ export default class SsoService {
   // SAML Assertion Validation
   // -----------------------------------------------------------------
 
+  /**
+   * Validates a base64 SAML 2.0 Response and returns the signed-in user.
+   *
+   * The assertion (or the Response that carries it) must carry an XML
+   * signature that verifies against the IdP certificate configured as
+   * `sso_certificate`; without one configured, nobody is signed in. A key
+   * carried in the message's KeyInfo is never trusted. The user is read from
+   * the XML the signature covers, not from the document as received, and a
+   * response with more than one assertion is refused, so an unsigned
+   * assertion cannot ride along with a signed one.
+   */
   async validateSamlAssertion(samlResponse: string): Promise<SsoUserResult> {
     const config = await this.getConfig()
+    const idpKey = this.samlIdpKey(config.sso_certificate)
 
-    let xml: string
-    try {
-      xml = Buffer.from(samlResponse, 'base64').toString('utf-8')
-    } catch {
-      throw new SsoValidationError('Invalid SAML response: base64 decode failed.')
+    const xml = Buffer.from(samlResponse || '', 'base64').toString('utf-8')
+    const doc = this.parseXml(xml)
+
+    if (doc.getElementsByTagNameNS(SAML_ASSERTION_NS, 'EncryptedAssertion').length > 0) {
+      throw new SsoValidationError('Encrypted SAML assertions are not supported.')
+    }
+    if (doc.getElementsByTagNameNS(SAML_ASSERTION_NS, 'Assertion').length !== 1) {
+      throw new SsoValidationError('SAML response must contain exactly one assertion.')
     }
 
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(xml, 'text/xml')
-    if (!doc || !doc.documentElement) {
-      throw new SsoValidationError('Invalid SAML response: malformed XML.')
-    }
+    const assertion = this.verifiedSamlAssertion(xml, doc.documentElement as Element, idpKey)
 
     // Check issuer
     const entityId = (config.sso_entity_id || '').trim()
     if (entityId) {
-      const issuerEls = doc.getElementsByTagNameNS(
-        'urn:oasis:names:tc:SAML:2.0:assertion',
-        'Issuer'
-      )
-      if (issuerEls.length === 0) {
+      const issuerEl = this.childElements(assertion, SAML_ASSERTION_NS, 'Issuer')[0]
+      if (!issuerEl) {
         throw new SsoValidationError('SAML assertion missing Issuer element.')
       }
-      const issuer = (issuerEls[0].textContent || '').trim()
+      const issuer = (issuerEl.textContent || '').trim()
       if (issuer !== entityId) {
         throw new SsoValidationError(
           `SAML Issuer mismatch: expected '${entityId}', got '${issuer}'.`
@@ -117,23 +130,17 @@ export default class SsoService {
     }
 
     // Validate conditions
-    const conditionsEls = doc.getElementsByTagNameNS(
-      'urn:oasis:names:tc:SAML:2.0:assertion',
-      'Conditions'
-    )
+    const conditionsEls = assertion.getElementsByTagNameNS(SAML_ASSERTION_NS, 'Conditions')
     if (conditionsEls.length > 0) {
       this.validateSamlConditions(conditionsEls[0])
     }
 
     // Extract attributes
-    const attributes = this.extractSamlAttributes(doc)
+    const attributes = this.extractSamlAttributes(assertion)
 
     let email = attributes[config.sso_attr_email || 'email']
     if (!email) {
-      const nameIdEls = doc.getElementsByTagNameNS(
-        'urn:oasis:names:tc:SAML:2.0:assertion',
-        'NameID'
-      )
+      const nameIdEls = assertion.getElementsByTagNameNS(SAML_ASSERTION_NS, 'NameID')
       if (nameIdEls.length > 0) {
         email = (nameIdEls[0].textContent || '').trim()
       }
@@ -149,6 +156,106 @@ export default class SsoService {
       role: attributes[config.sso_attr_role || 'role'] || '',
       attributes,
     }
+  }
+
+  /**
+   * The configured IdP certificate as a public key. Accepts a PEM certificate
+   * or public key, or the bare base64 certificate body most IdPs show.
+   * Refuses when none is configured: SAML never signs anyone in without
+   * verifying the signature.
+   */
+  private samlIdpKey(certificate: string): KeyObject {
+    const raw = (certificate || '').trim()
+    if (!raw) {
+      throw new SsoValidationError(
+        'SAML sign-in is disabled: no IdP certificate (sso_certificate) is configured to verify assertions.'
+      )
+    }
+    if (raw.includes('PRIVATE KEY')) {
+      throw new SsoValidationError('The SAML IdP certificate must not be a private key.')
+    }
+    const pem = raw.includes('-----BEGIN')
+      ? raw
+      : [
+          '-----BEGIN CERTIFICATE-----',
+          ...(raw.replace(/\s+/g, '').match(/.{1,64}/g) ?? []),
+          '-----END CERTIFICATE-----',
+          '',
+        ].join('\n')
+    try {
+      return createPublicKey(pem)
+    } catch {
+      throw new SsoValidationError('The configured SAML IdP certificate could not be read.')
+    }
+  }
+
+  private parseXml(xml: string) {
+    let doc
+    try {
+      doc = new DOMParser({ onError: () => {} }).parseFromString(xml, 'text/xml')
+    } catch {
+      doc = null
+    }
+    if (!doc || !doc.documentElement) {
+      throw new SsoValidationError('Invalid SAML response: malformed XML.')
+    }
+    return doc
+  }
+
+  /**
+   * Verifies the signature on the assertion, else on the Response, against
+   * the IdP key and returns the assertion parsed from the signed XML itself.
+   */
+  private verifiedSamlAssertion(xml: string, root: Element, idpKey: KeyObject): Element {
+    const assertion =
+      root.getElementsByTagNameNS(SAML_ASSERTION_NS, 'Assertion')[0] ??
+      (this.isElement(root, SAML_ASSERTION_NS, 'Assertion') ? root : undefined)
+    if (!assertion) {
+      throw new SsoValidationError('SAML response must contain exactly one assertion.')
+    }
+
+    const signatures: Element[] = [
+      ...this.childElements(assertion, XMLDSIG_NS, 'Signature'),
+      ...(this.isElement(root, SAML_PROTOCOL_NS, 'Response')
+        ? this.childElements(root, XMLDSIG_NS, 'Signature')
+        : []),
+    ]
+    if (signatures.length === 0) {
+      throw new SsoValidationError('SAML response is not signed.')
+    }
+
+    for (const signature of signatures) {
+      const verifier = new SignedXml({ publicCert: idpKey, getCertFromKeyInfo: () => null })
+      let signed: string[] = []
+      try {
+        verifier.loadSignature(signature as unknown as Parameters<SignedXml['loadSignature']>[0])
+        if (verifier.checkSignature(xml)) signed = verifier.getSignedReferences()
+      } catch {
+        signed = []
+      }
+      if (signed.length !== 1) continue
+
+      const signedRoot = this.parseXml(signed[0]).documentElement as Element
+      if (this.isElement(signedRoot, SAML_ASSERTION_NS, 'Assertion')) {
+        return signedRoot
+      }
+      if (this.isElement(signedRoot, SAML_PROTOCOL_NS, 'Response')) {
+        const assertions = this.childElements(signedRoot, SAML_ASSERTION_NS, 'Assertion')
+        if (assertions.length === 1) return assertions[0]
+      }
+    }
+
+    throw new SsoValidationError('SAML signature verification failed.')
+  }
+
+  private isElement(node: Element | null | undefined, ns: string, localName: string): boolean {
+    return !!node && node.namespaceURI === ns && node.localName === localName
+  }
+
+  private childElements(parent: Element, ns: string, localName: string): Element[] {
+    return (Array.from(parent.childNodes) as unknown as Element[]).filter((node) =>
+      this.isElement(node, ns, localName)
+    )
   }
 
   private validateSamlConditions(conditionsEl: Element): void {
@@ -172,9 +279,12 @@ export default class SsoService {
     }
   }
 
-  private extractSamlAttributes(doc: Document): Record<string, string> {
+  private extractSamlAttributes(assertion: Element): Record<string, string> {
     const attributes: Record<string, string> = {}
-    const attrEls = doc.getElementsByTagNameNS('urn:oasis:names:tc:SAML:2.0:assertion', 'Attribute')
+    const attrEls = assertion.getElementsByTagNameNS(
+      'urn:oasis:names:tc:SAML:2.0:assertion',
+      'Attribute'
+    )
     for (const attrEl of Array.from(attrEls) as Element[]) {
       const name = attrEl.getAttribute('Name')
       if (!name) continue
@@ -273,10 +383,7 @@ export default class SsoService {
 
     if (algorithm in hmacAlgos) {
       const expected = createHmac(hmacAlgos[algorithm], secret).update(signingInput).digest()
-      return (
-        expected.length === signature.length &&
-        require('node:crypto').timingSafeEqual(expected, signature)
-      )
+      return expected.length === signature.length && timingSafeEqual(expected, signature)
     }
 
     throw new SsoValidationError(`Unsupported JWT algorithm: ${algorithm}`)
