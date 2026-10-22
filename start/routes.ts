@@ -843,9 +843,7 @@ async function registerUiRoutes(config: any) {
         .get('/roles/create', [AdminRolesController, 'create'])
         .as('escalated.admin.roles.create')
       router.post('/roles', [AdminRolesController, 'store']).as('escalated.admin.roles.store')
-      router
-        .get('/roles/:id/edit', [AdminRolesController, 'edit'])
-        .as('escalated.admin.roles.edit')
+      router.get('/roles/:id/edit', [AdminRolesController, 'edit']).as('escalated.admin.roles.edit')
       router.put('/roles/:id', [AdminRolesController, 'update']).as('escalated.admin.roles.update')
       router
         .delete('/roles/:id', [AdminRolesController, 'destroy'])

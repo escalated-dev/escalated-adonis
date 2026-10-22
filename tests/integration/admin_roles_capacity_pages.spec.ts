@@ -37,11 +37,11 @@ test.group('Roles and capacity pages', (group) => {
 
   group.each.timeout(30_000)
 
-  async function permission(slug: string, group: string) {
+  async function permission(slug: string, groupName: string) {
     const [id] = await running.db.table('escalated_permissions').insert({
       name: slug,
       slug,
-      group,
+      group: groupName,
       created_at: sqlTimestamp(),
       updated_at: sqlTimestamp(),
     })
@@ -102,7 +102,9 @@ test.group('Roles and capacity pages', (group) => {
   test('edit renders Roles/Form with the role and its permissions', async ({ assert }) => {
     const view = await permission('ticket.view', 'Tickets')
     const id = await role('Agent', 'agent')
-    await running.db.table('escalated_role_permissions').insert({ role_id: id, permission_id: view })
+    await running.db
+      .table('escalated_role_permissions')
+      .insert({ role_id: id, permission_id: view })
 
     const visit = await client.visit('GET', `${ROLES}/${id}/edit`)
 
@@ -157,7 +159,8 @@ test.group('Roles and capacity pages', (group) => {
 
     await client.visit('POST', ROLES, { data: { name: 'Agent' }, referer: `${ROLES}/create` })
 
-    const slugs = (await running.db.from('escalated_roles').orderBy('id')).map((r: any) => r.slug)
+    const rows = await running.db.from('escalated_roles').orderBy('id')
+    const slugs = rows.map((r: any) => r.slug)
     assert.deepEqual(slugs, ['agent', 'agent-2'])
   })
 
@@ -165,7 +168,9 @@ test.group('Roles and capacity pages', (group) => {
     const view = await permission('ticket.view', 'Tickets')
     const reply = await permission('reply.create', 'Replies')
     const id = await role('Agent', 'agent')
-    await running.db.table('escalated_role_permissions').insert({ role_id: id, permission_id: view })
+    await running.db
+      .table('escalated_role_permissions')
+      .insert({ role_id: id, permission_id: view })
 
     const visit = await client.visit('PUT', `${ROLES}/${id}`, {
       data: { name: 'Senior Agent', description: '', permissions: [reply] },
@@ -208,7 +213,8 @@ test.group('Roles and capacity pages', (group) => {
     const after = await client.visit('GET', ROLES)
     assert.equal(after.body.flash.error, 'System roles cannot be deleted.')
 
-    const remaining = (await running.db.from('escalated_roles')).map((r: any) => r.slug)
+    const left = await running.db.from('escalated_roles')
+    const remaining = left.map((r: any) => r.slug)
     assert.deepEqual(remaining, ['admin'])
   })
 
