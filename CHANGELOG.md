@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+- The shared `Admin/Webhooks/Form` page: `GET {prefix}/admin/webhooks/create` (`escalated.admin.webhooks.create`) and `GET {prefix}/admin/webhooks/:webhook/edit` (`escalated.admin.webhooks.edit`), with `webhook` (including `secret`, which the form posts back) and `availableEvents`, as escalated-laravel. The Webhooks index linked to both routes, which did not exist, so the page failed to render its links.
+
+### Changed
+- Creating or updating a webhook redirects to the webhooks index, as escalated-laravel, instead of back. Webhook index rows also carry the latest delivery as `deliveries[0]`, which the shared page reads; `latest_delivery` stays.
+
 ## [0.7.4] - 2026-10-21
 
 ### Upgrading
