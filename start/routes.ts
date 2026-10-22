@@ -56,6 +56,8 @@ const CustomerKnowledgeBaseController = () =>
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
 const AdminRolesController = () => import('../src/controllers/admin_roles_controller.js')
 const AdminCapacityController = () => import('../src/controllers/admin_capacity_controller.js')
+const AdminBusinessHoursController = () =>
+  import('../src/controllers/admin_business_hours_controller.js')
 const AdminAuditLogsController = () => import('../src/controllers/admin_audit_logs_controller.js')
 const AdminSkillController = () => import('../src/controllers/admin_skill_controller.js')
 const AdminArticlesController = () => import('../src/controllers/admin_articles_controller.js')
@@ -925,6 +927,29 @@ async function registerUiRoutes(config: any) {
       router
         .delete('/roles/:id', [AdminRolesController, 'destroy'])
         .as('escalated.admin.roles.destroy')
+
+      // Business hours and holidays
+      router
+        .get('/business-hours', [AdminBusinessHoursController, 'index'])
+        .as('escalated.admin.business-hours.index')
+      router
+        .get('/business-hours/create', [AdminBusinessHoursController, 'create'])
+        .as('escalated.admin.business-hours.create')
+      router
+        .post('/business-hours', [AdminBusinessHoursController, 'store'])
+        .as('escalated.admin.business-hours.store')
+      router
+        .get('/business-hours/:id/edit', [AdminBusinessHoursController, 'edit'])
+        .as('escalated.admin.business-hours.edit')
+      router
+        .put('/business-hours/:id', [AdminBusinessHoursController, 'update'])
+        .as('escalated.admin.business-hours.update')
+      router
+        .patch('/business-hours/:id', [AdminBusinessHoursController, 'update'])
+        .as('escalated.admin.business-hours.patch')
+      router
+        .delete('/business-hours/:id', [AdminBusinessHoursController, 'destroy'])
+        .as('escalated.admin.business-hours.destroy')
 
       // Agent capacity
       router

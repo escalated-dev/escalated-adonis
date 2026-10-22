@@ -86,3 +86,6 @@ jobs:
       - run: node --import=tsx bin/test.ts --files=tests/integration/ticket_access_migration.spec.ts --files=tests/integration/ticket_statuses_migration.spec.ts
         env:
           ESCALATED_TEST_DATABASE_URL: ${{ matrix.database == 'mysql' && 'mysql://root:mysql@localhost:3306/escalated_access' || 'postgres://postgres:postgres@localhost:5432/escalated_access' }}
+      - run: node --import=tsx bin/test.ts --files=tests/integration/business_hours_migration.spec.ts
+        env:
+          ESCALATED_TEST_DATABASE_URL: ${{ matrix.database == 'mysql' && 'mysql://root:mysql@localhost:3306/escalated_access' || 'postgres://postgres:postgres@localhost:5432/escalated_access' }}

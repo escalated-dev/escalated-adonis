@@ -53,8 +53,6 @@ const KNOWN_BLANK = []
  */
 const NOT_YET_RENDERED = [
   // Features this package does not have.
-  'Escalated/Admin/BusinessHours/Form',
-  'Escalated/Admin/BusinessHours/Index',
   'Escalated/Admin/CustomFields/Form',
   'Escalated/Admin/CustomFields/Index',
   'Escalated/Admin/CustomObjects/Form',
