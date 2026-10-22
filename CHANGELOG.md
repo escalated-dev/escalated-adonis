@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-10-22
+
 ### Upgrading
 - Saving a webhook with the secret field left blank (or missing) now keeps the stored secret, because the edit form no longer receives it. Send `clear_secret: true` to remove it; a non-blank secret replaces it as before. Creating a webhook is unchanged.
 - The general settings page now shows a stored Mailgun signing key, Postmark inbound token or IMAP password as `********` (it showed the first three characters). Posting the mask back, or the older `abc*****` form, keeps the stored value; any other value replaces it, as before.
