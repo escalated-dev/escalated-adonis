@@ -58,7 +58,7 @@ test.group('Webhook admin pages', (group) => {
     assert.notExists(visit.body.props.webhook)
   })
 
-  test('edit renders Webhooks/Form with the webhook, its secret and canonical events', async ({
+  test('edit renders Webhooks/Form with the webhook, has_secret and canonical events', async ({
     assert,
   }) => {
     const webhook = await storedWebhook()
@@ -70,8 +70,9 @@ test.group('Webhook admin pages', (group) => {
     const props = visit.body.props
     assert.equal(props.webhook.id, webhook.id)
     assert.equal(props.webhook.url, 'http://127.0.0.1:9/hook')
-    // The form posts `secret` back; an edit that did not show it would wipe it.
-    assert.equal(props.webhook.secret, 's3cret')
+    // The stored secret is never sent; the form only learns that one is set.
+    assert.notProperty(props.webhook, 'secret')
+    assert.isTrue(props.webhook.has_secret)
     assert.isTrue(props.webhook.active)
     assert.deepEqual(props.webhook.events, ['ticket.created', 'reply.created'])
     assert.isArray(props.availableEvents)

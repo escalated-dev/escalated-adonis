@@ -43,7 +43,7 @@ export default class AdminWebhooksController {
         // name, so the form ticks it and saving keeps it.
         events: webhook.subscribedEvents(),
         active: Boolean(webhook.active),
-        has_secret: Boolean(webhook.secret),
+        has_secret: webhook.hasSecret,
         deliveries_count: Number(webhook.$extras.deliveries_count ?? 0),
         // The shared page reads the latest delivery as `deliveries[0]`, as
         // Laravel's eager load of the newest delivery serializes it.
@@ -71,8 +71,9 @@ export default class AdminWebhooksController {
   /**
    * GET /support/admin/webhooks/:webhook/edit — the form for one webhook.
    *
-   * The secret is included, as Laravel does: the form posts it back on save,
-   * and an edit that did not show it would clear it.
+   * The stored secret is never sent, only `has_secret`. The form posts a
+   * blank secret to keep it, a new one to replace it, or `clear_secret: true`
+   * to remove it.
    */
   async edit(ctx: HttpContext) {
     const webhook = await Webhook.findOrFail(ctx.params.webhook || ctx.params.id)
@@ -82,7 +83,7 @@ export default class AdminWebhooksController {
         id: webhook.id,
         url: webhook.url,
         events: webhook.subscribedEvents(),
-        secret: webhook.secret,
+        has_secret: webhook.hasSecret,
         active: Boolean(webhook.active),
         created_at: webhook.createdAt?.toISO() ?? null,
         updated_at: webhook.updatedAt?.toISO() ?? null,
@@ -125,7 +126,7 @@ export default class AdminWebhooksController {
    */
   async update({ auth, params, request, response, session }: HttpContext) {
     const webhook = await Webhook.findOrFail(params.webhook || params.id)
-    const data = request.only(['url', 'events', 'secret', 'active'])
+    const data = request.only(['url', 'events', 'secret', 'clear_secret', 'active'])
 
     const error = await this.validate(data)
     if (error) {
@@ -138,9 +139,15 @@ export default class AdminWebhooksController {
     webhook.merge({
       url: data.url,
       events: this.normalizeEvents(data.events),
-      secret: data.secret || null,
       active: data.active !== false,
     })
+    // The form never receives the stored secret, so a blank one means "leave
+    // it as it is". `clear_secret` removes it.
+    if (this.isTrue(data.clear_secret)) {
+      webhook.secret = null
+    } else if (typeof data.secret === 'string' && data.secret.trim() !== '') {
+      webhook.secret = data.secret
+    }
     await webhook.save()
 
     await AuditService.fromContext({ auth, request }, AUDIT_ACTIONS.WEBHOOK_UPDATED, {
@@ -194,6 +201,7 @@ export default class AdminWebhooksController {
         url: webhook.url,
         events: webhook.events,
         active: webhook.active,
+        has_secret: webhook.hasSecret,
       },
       deliveries: deliveries.serialize(),
     })
@@ -211,6 +219,11 @@ export default class AdminWebhooksController {
   }
 
   // ---- Private helpers ----
+
+  /** A boolean flag as a form or JSON body sends it. */
+  protected isTrue(value: unknown): boolean {
+    return value === true || value === 1 || value === '1' || value === 'true' || value === 'on'
+  }
 
   /** The webhooks index, under whatever prefix the host mounted the routes at. */
   protected indexPath(url: string): string {
