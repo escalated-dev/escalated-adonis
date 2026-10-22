@@ -112,17 +112,17 @@ test.group('SAML assertion signatures', (group) => {
   }
 
   async function rejects(promise: Promise<unknown>, message: RegExp) {
+    // Settle the promise before any other await, so its rejection is never unhandled.
+    const outcome = await promise.then(
+      () => ({ rejected: false as const }),
+      (error: unknown) => ({ rejected: true as const, error })
+    )
     const { SsoValidationError } = await import('../../src/services/sso_service.js')
-    try {
-      await promise
-    } catch (error) {
-      if (!(error instanceof SsoValidationError)) throw error
-      if (!message.test(error.message)) {
-        throw new Error(`Unexpected rejection: ${error.message}`)
-      }
-      return
+    if (!outcome.rejected) throw new Error('Expected the SAML response to be rejected')
+    if (!(outcome.error instanceof SsoValidationError)) throw outcome.error
+    if (!message.test(outcome.error.message)) {
+      throw new Error(`Unexpected rejection: ${outcome.error.message}`)
     }
-    throw new Error('Expected the SAML response to be rejected')
   }
 
   test('accepts an assertion signed by the configured IdP certificate', async ({ assert }) => {
