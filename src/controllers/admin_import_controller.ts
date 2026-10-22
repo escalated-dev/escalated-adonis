@@ -3,25 +3,34 @@
 | AdminImportController
 |--------------------------------------------------------------------------
 |
-| Handles the admin import wizard UI. All responses use Inertia.
+| The admin import wizard, after escalated-laravel's Admin\ImportController,
+| on its routes (escalated.admin.import.*) and with its props:
 |
-| Routes (registered in start/routes.ts under the admin prefix):
+|   GET  /import                            Index     adapters, recent jobs
+|   GET  /import/:platform/connect          Connect   credential form
+|   POST /import/:platform/test-connection  JSON { success[, error] }
+|   GET  /import/:platform/mapping          Mapping   defaults + source fields
+|   POST /import/:platform/review           Review    echo of the choices; writes nothing
+|   POST /import/:platform/start            creates the job and queues the run
+|   GET  /import/progress/:jobId            Progress  the job
+|   GET  /import/status/:jobId              JSON poll
+|   POST /import/{pause,resume,cancel}/:jobId
 |
-|   GET  /import              — List all import jobs
-|   GET  /import/create       — Step 1: choose platform
-|   POST /import              — Step 1: save credentials, create job, test connection
-|   GET  /import/:id/mapping  — Step 2: configure field mappings
-|   POST /import/:id/mapping  — Step 2: save mappings, advance to importing
-|   POST /import/:id/start    — Begin / resume the import
-|   POST /import/:id/pause    — Pause a running import
-|   GET  /import/:id          — Show job detail / progress
-|   DELETE /import/:id        — Delete a job (only if not running)
+| Sources come from the `import.adapters` filter; core ships none. Tested
+| credentials wait in the session, encrypted, until the import starts, and
+| are never sent to the browser.
+|
+| The earlier job-first routes (`/import/create`, `POST /import`,
+| `/import/:id/...` with a uuid) still answer for existing callers.
 |
 */
 
 import type { HttpContext } from '@adonisjs/core/http'
-import ImportJob from '../models/import_job.js'
+import { DateTime } from 'luxon'
+import ImportJob, { decryptJson, encryptJson } from '../models/import_job.js'
 import ImportService from '../services/import_service.js'
+import { dispatchImport } from '../services/import_runner.js'
+import type { ImportAdapter } from '../contracts/import_adapter.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { redirectToRoute } from '../support/routing.js'
 
@@ -29,42 +38,180 @@ export default class AdminImportController {
   protected importService = new ImportService()
 
   // --------------------------------------------------------------------------
-  // Index
+  // Wizard
   // --------------------------------------------------------------------------
 
-  /**
-   * GET /admin/import — list all import jobs
-   */
+  /** GET /admin/import — the registered sources and the 20 most recent jobs. */
   async index(ctx: HttpContext) {
-    const jobs = await ImportJob.query().orderBy('created_at', 'desc')
+    const adapters = await this.importService.availableAdapters()
+    const jobs = await ImportJob.query().orderBy('created_at', 'desc').limit(20)
 
     return getRenderer().render(ctx, 'Escalated/Admin/Import/Index', {
+      adapters: adapters.map((a) => this.serializeAdapter(a)),
       jobs: jobs.map((j) => this.serializeJob(j)),
     })
   }
 
-  // --------------------------------------------------------------------------
-  // Create — Step 1: choose platform + enter credentials
-  // --------------------------------------------------------------------------
+  /** GET /admin/import/:platform/connect — the credential form. */
+  async connect(ctx: HttpContext) {
+    const adapter = await this.adapterOr404(ctx)
+    if (!adapter) return
 
-  /**
-   * GET /admin/import/create — render the "choose platform" page
-   */
-  async create(ctx: HttpContext) {
-    const adapters = await this.importService.availableAdapters()
-
-    return getRenderer().render(ctx, 'Escalated/Admin/Import/Index', {
-      adapters: adapters.map((a) => ({
-        name: a.name(),
-        displayName: a.displayName(),
-        credentialFields: a.credentialFields(),
-      })),
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Connect', {
+      platform: adapter.name(),
+      display_name: adapter.displayName(),
+      credential_fields: adapter.credentialFields(),
     })
   }
 
-  /**
-   * POST /admin/import — create a new import job and test the connection
-   */
+  /** POST /admin/import/:platform/test-connection — try the credentials; keep them when they work. */
+  async testConnection(ctx: HttpContext) {
+    const adapter = await this.adapterOr404(ctx)
+    if (!adapter) return
+
+    const posted = ctx.request.input('credentials')
+    const credentials: Record<string, string> = {}
+    if (posted && typeof posted === 'object' && !Array.isArray(posted)) {
+      for (const [key, value] of Object.entries(posted)) {
+        credentials[key] = value === null || value === undefined ? '' : String(value)
+      }
+    }
+
+    let success: boolean
+    try {
+      success = Boolean(await adapter.testConnection(credentials))
+    } catch (error: any) {
+      return ctx.response
+        .status(422)
+        .json({ success: false, error: error?.message ?? String(error) })
+    }
+
+    if (success) {
+      ctx.session.put(this.sessionKey(adapter), encryptJson(credentials) as string)
+    }
+
+    return ctx.response.json({ success })
+  }
+
+  /** GET /admin/import/:platform/mapping — defaults and source fields per entity type. */
+  async mapping(ctx: HttpContext) {
+    const adapter = await this.adapterOr404(ctx)
+    if (!adapter) return
+
+    const credentials = this.storedCredentials(ctx, adapter)
+    if (!credentials) return this.toConnect(ctx, adapter)
+
+    return this.renderMapping(ctx, adapter, credentials)
+  }
+
+  /** POST /admin/import/:platform/review — the dry run: shows the choices, writes nothing. */
+  async review(ctx: HttpContext) {
+    const entityTypes = ctx.request.input('entity_types')
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Review', {
+      platform: ctx.params.platform,
+      field_mappings: this.objectInput(ctx, 'field_mappings'),
+      entity_types: Array.isArray(entityTypes) ? entityTypes.map(String) : [],
+    })
+  }
+
+  /** POST /admin/import/:platform/start — create the job from the tested credentials and queue it. */
+  async begin(ctx: HttpContext) {
+    const adapter = await this.adapterOr404(ctx)
+    if (!adapter) return
+
+    const credentials = this.storedCredentials(ctx, adapter)
+    if (!credentials) return this.toConnect(ctx, adapter)
+
+    const job = await ImportJob.create({
+      userId: (ctx as any).auth?.user?.id ?? null,
+      platform: adapter.name(),
+      status: 'mapping',
+      credentials,
+      fieldMappings: this.objectInput(ctx, 'field_mappings'),
+    })
+
+    // The job holds them now, encrypted.
+    ctx.session.forget(this.sessionKey(adapter))
+
+    await dispatchImport(job)
+
+    return redirectToRoute(ctx.response, 'escalated.admin.import.progress', { jobId: job.id })
+  }
+
+  /** GET /admin/import/progress/:jobId — the job the Progress screen polls. */
+  async progress(ctx: HttpContext) {
+    const job = await this.jobOr404(ctx)
+    if (!job) return
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Progress', {
+      job: this.serializeJob(job),
+    })
+  }
+
+  /** GET /admin/import/status/:jobId — the Progress screen's poll. */
+  async status(ctx: HttpContext) {
+    const job = await this.jobOr404(ctx)
+    if (!job) return
+
+    return ctx.response.json({
+      status: job.status,
+      progress: job.progress ?? {},
+      error_log: (job.errorLog ?? []).slice(-50),
+      started_at: job.startedAt?.toISO() ?? null,
+      completed_at: job.completedAt?.toISO() ?? null,
+    })
+  }
+
+  /** POST /admin/import/pause/:jobId — the run stops between batches. */
+  async pauseJob(ctx: HttpContext) {
+    const job = await this.jobOr404(ctx)
+    if (!job) return
+
+    if (job.status === 'importing') {
+      job.status = 'paused'
+      await job.save()
+    }
+
+    return this.toProgress(ctx, job)
+  }
+
+  /** POST /admin/import/resume/:jobId — queue a paused or failed job again. */
+  async resume(ctx: HttpContext) {
+    const job = await this.jobOr404(ctx)
+    if (!job) return
+
+    if (job.isResumable()) {
+      if (job.status === 'failed') await job.transitionTo('mapping')
+      await dispatchImport(job)
+    }
+
+    return this.toProgress(ctx, job)
+  }
+
+  /** POST /admin/import/cancel/:jobId — stop for good and drop the credentials. */
+  async cancel(ctx: HttpContext) {
+    const job = await this.jobOr404(ctx)
+    if (!job) return
+
+    job.status = 'failed'
+    job.completedAt = DateTime.now()
+    await job.save()
+    await job.purgeCredentials()
+
+    return this.toProgress(ctx, job)
+  }
+
+  // --------------------------------------------------------------------------
+  // The earlier job-first flow, kept for existing callers
+  // --------------------------------------------------------------------------
+
+  /** GET /admin/import/create — the Index screen lists the sources. */
+  async create(ctx: HttpContext) {
+    return this.index(ctx)
+  }
+
+  /** POST /admin/import — create a job from posted credentials and test them. */
   async store(ctx: HttpContext) {
     const { platform, credentials, fieldMappings } = ctx.request.only([
       'platform',
@@ -80,14 +227,13 @@ export default class AdminImportController {
     }
 
     const job = await ImportJob.create({
-      id: crypto.randomUUID(),
+      userId: (ctx as any).auth?.user?.id ?? null,
       platform,
       status: 'pending',
       credentials: credentials ?? null,
       fieldMappings: fieldMappings ?? null,
     })
 
-    // Test connection
     await job.transitionTo('authenticating')
 
     try {
@@ -106,18 +252,12 @@ export default class AdminImportController {
 
     await job.transitionTo('mapping')
 
-    return redirectToRoute(ctx.response, 'escalated.admin.import.mapping', { id: job.id })
+    return redirectToRoute(ctx.response, 'escalated.admin.import.job_mapping', { id: job.id })
   }
 
-  // --------------------------------------------------------------------------
-  // Mapping — Step 2: configure field mappings
-  // --------------------------------------------------------------------------
-
-  /**
-   * GET /admin/import/:id/mapping — render the field-mapping page
-   */
-  async mapping(ctx: HttpContext) {
-    const job = await this.findJobOrFail(ctx)
+  /** GET /admin/import/:id/mapping — the Mapping screen for a job made by store(). */
+  async jobMapping(ctx: HttpContext) {
+    const job = await this.legacyJob(ctx)
     if (!job) return
 
     const adapter = await this.importService.resolveAdapter(job.platform)
@@ -127,37 +267,12 @@ export default class AdminImportController {
       return redirectToRoute(ctx.response, 'escalated.admin.import.index')
     }
 
-    // Fetch available source fields for each entity type
-    const entityTypes = adapter.entityTypes()
-    const sourceFields: Record<string, string[]> = {}
-    const defaultMappings: Record<string, Record<string, string>> = {}
-
-    for (const entityType of entityTypes) {
-      try {
-        sourceFields[entityType] = await adapter.availableSourceFields(
-          entityType,
-          job.credentials ?? {}
-        )
-      } catch {
-        sourceFields[entityType] = []
-      }
-      defaultMappings[entityType] = adapter.defaultFieldMappings(entityType)
-    }
-
-    return getRenderer().render(ctx, 'Escalated/Admin/Import/Mapping', {
-      job: this.serializeJob(job),
-      entityTypes,
-      sourceFields,
-      defaultMappings,
-      currentMappings: job.fieldMappings ?? {},
-    })
+    return this.renderMapping(ctx, adapter, job.credentials ?? {})
   }
 
-  /**
-   * POST /admin/import/:id/mapping — save field mappings and advance status
-   */
+  /** POST /admin/import/:id/mapping — save field mappings. */
   async saveMapping(ctx: HttpContext) {
-    const job = await this.findJobOrFail(ctx)
+    const job = await this.legacyJob(ctx)
     if (!job) return
 
     const { fieldMappings } = ctx.request.only(['fieldMappings'])
@@ -166,18 +281,12 @@ export default class AdminImportController {
     await job.save()
 
     ctx.session.flash('success', 'Field mappings saved. You can now start the import.')
-    return redirectToRoute(ctx.response, 'escalated.admin.import.show', { id: job.id })
+    return this.toProgress(ctx, job)
   }
 
-  // --------------------------------------------------------------------------
-  // Show — job detail / progress
-  // --------------------------------------------------------------------------
-
-  /**
-   * GET /admin/import/:id — show job detail
-   */
+  /** GET /admin/import/:id — the Progress screen. */
   async show(ctx: HttpContext) {
-    const job = await this.findJobOrFail(ctx)
+    const job = await this.legacyJob(ctx)
     if (!job) return
 
     return getRenderer().render(ctx, 'Escalated/Admin/Import/Progress', {
@@ -185,15 +294,9 @@ export default class AdminImportController {
     })
   }
 
-  // --------------------------------------------------------------------------
-  // Start / resume
-  // --------------------------------------------------------------------------
-
-  /**
-   * POST /admin/import/:id/start — kick off or resume the import
-   */
+  /** POST /admin/import/:id/start — start or resume a job made by store(). */
   async start(ctx: HttpContext) {
-    const job = await this.findJobOrFail(ctx)
+    const job = await this.legacyJob(ctx)
     if (!job) return
 
     if (!['mapping', 'paused', 'failed'].includes(job.status)) {
@@ -201,25 +304,16 @@ export default class AdminImportController {
       return ctx.response.redirect().back()
     }
 
-    // Fire and forget — the actual run happens asynchronously so the HTTP
-    // response returns immediately. In production, dispatch a background job.
-    this.importService.run(job).catch((err) => {
-      console.error(`[Escalated] Import job ${job.id} failed:`, err)
-    })
+    if (job.status === 'failed') await job.transitionTo('mapping')
+    await dispatchImport(job)
 
     ctx.session.flash('success', 'Import started. Refresh this page to track progress.')
-    return redirectToRoute(ctx.response, 'escalated.admin.import.show', { id: job.id })
+    return this.toProgress(ctx, job)
   }
 
-  // --------------------------------------------------------------------------
-  // Pause
-  // --------------------------------------------------------------------------
-
-  /**
-   * POST /admin/import/:id/pause — pause a running import
-   */
+  /** POST /admin/import/:id/pause */
   async pause(ctx: HttpContext) {
-    const job = await this.findJobOrFail(ctx)
+    const job = await this.legacyJob(ctx)
     if (!job) return
 
     if (job.status !== 'importing') {
@@ -230,18 +324,12 @@ export default class AdminImportController {
     await job.transitionTo('paused')
 
     ctx.session.flash('success', 'Import will pause after the current batch completes.')
-    return redirectToRoute(ctx.response, 'escalated.admin.import.show', { id: job.id })
+    return this.toProgress(ctx, job)
   }
 
-  // --------------------------------------------------------------------------
-  // Destroy
-  // --------------------------------------------------------------------------
-
-  /**
-   * DELETE /admin/import/:id — delete a job (only if not actively running)
-   */
+  /** DELETE /admin/import/:id — delete a job (only if not actively running). */
   async destroy(ctx: HttpContext) {
-    const job = await this.findJobOrFail(ctx)
+    const job = await this.legacyJob(ctx)
     if (!job) return
 
     if (job.status === 'importing') {
@@ -259,7 +347,48 @@ export default class AdminImportController {
   // Helpers
   // --------------------------------------------------------------------------
 
-  private async findJobOrFail(ctx: HttpContext): Promise<ImportJob | null> {
+  private async renderMapping(
+    ctx: HttpContext,
+    adapter: ImportAdapter,
+    credentials: Record<string, any>
+  ) {
+    const entityTypes = adapter.entityTypes()
+    const mappings: Record<string, { defaults: Record<string, string>; source_fields: any[] }> = {}
+
+    for (const entityType of entityTypes) {
+      mappings[entityType] = {
+        defaults: adapter.defaultFieldMappings(entityType),
+        source_fields: await adapter.availableSourceFields(entityType, credentials),
+      }
+    }
+
+    return getRenderer().render(ctx, 'Escalated/Admin/Import/Mapping', {
+      platform: adapter.name(),
+      display_name: adapter.displayName(),
+      entity_types: entityTypes,
+      mappings,
+    })
+  }
+
+  private async adapterOr404(ctx: HttpContext): Promise<ImportAdapter | null> {
+    const adapter = await this.importService.resolveAdapter(String(ctx.params.platform ?? ''))
+    if (!adapter) {
+      ctx.response.notFound({ error: `Import adapter not found: ${ctx.params.platform}` })
+      return null
+    }
+    return adapter
+  }
+
+  private async jobOr404(ctx: HttpContext): Promise<ImportJob | null> {
+    const job = await ImportJob.find(ctx.params.jobId)
+    if (!job) {
+      ctx.response.notFound({ error: 'Import job not found.' })
+      return null
+    }
+    return job
+  }
+
+  private async legacyJob(ctx: HttpContext): Promise<ImportJob | null> {
     const job = await ImportJob.find(ctx.params.id)
 
     if (!job) {
@@ -271,19 +400,58 @@ export default class AdminImportController {
     return job
   }
 
+  private sessionKey(adapter: ImportAdapter): string {
+    return `escalated.import.${adapter.name()}.credentials`
+  }
+
+  private storedCredentials(ctx: HttpContext, adapter: ImportAdapter): Record<string, any> | null {
+    const credentials = decryptJson(ctx.session.get(this.sessionKey(adapter)) ?? null)
+    return credentials && typeof credentials === 'object' && !Array.isArray(credentials)
+      ? credentials
+      : null
+  }
+
+  private toConnect(ctx: HttpContext, adapter: ImportAdapter) {
+    ctx.session.flash('error', 'Credentials expired. Please reconnect.')
+    return redirectToRoute(ctx.response, 'escalated.admin.import.connect', {
+      platform: adapter.name(),
+    })
+  }
+
+  private toProgress(ctx: HttpContext, job: ImportJob) {
+    return redirectToRoute(ctx.response, 'escalated.admin.import.progress', { jobId: job.id })
+  }
+
+  private objectInput(ctx: HttpContext, key: string): Record<string, any> {
+    const value = ctx.request.input(key)
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  }
+
+  private serializeAdapter(adapter: ImportAdapter) {
+    return {
+      name: adapter.name(),
+      display_name: adapter.displayName(),
+      credential_fields: adapter.credentialFields(),
+    }
+  }
+
+  /**
+   * Laravel sends the job model as is. Its credentials are left out here:
+   * they are a secret, and no screen reads them.
+   */
   private serializeJob(job: ImportJob) {
     return {
       id: job.id,
+      user_id: job.userId ?? null,
       platform: job.platform,
       status: job.status,
-      fieldMappings: job.fieldMappings,
-      progress: job.progress,
-      errorLog: job.errorLog,
-      startedAt: job.startedAt?.toISO() ?? null,
-      completedAt: job.completedAt?.toISO() ?? null,
-      createdAt: job.createdAt.toISO(),
-      updatedAt: job.updatedAt.toISO(),
-      isResumable: job.isResumable(),
+      field_mappings: job.fieldMappings ?? {},
+      progress: job.progress ?? {},
+      error_log: job.errorLog ?? [],
+      started_at: job.startedAt?.toISO() ?? null,
+      completed_at: job.completedAt?.toISO() ?? null,
+      created_at: job.createdAt?.toISO() ?? null,
+      updated_at: job.updatedAt?.toISO() ?? null,
     }
   }
 }

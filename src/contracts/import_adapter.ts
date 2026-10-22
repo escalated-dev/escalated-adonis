@@ -63,6 +63,20 @@ export interface CredentialField {
 }
 
 // --------------------------------------------------------------------------
+// SourceField
+// --------------------------------------------------------------------------
+
+/**
+ * A field on the source platform, as the Mapping screen lists it (Laravel's
+ * shape): its name and label, and the Escalated fields it may map to.
+ */
+export interface SourceField {
+  name: string
+  label?: string
+  escalated_options?: string[]
+}
+
+// --------------------------------------------------------------------------
 // ImportAdapter interface
 // --------------------------------------------------------------------------
 
@@ -108,9 +122,14 @@ export interface ImportAdapter {
 
   /**
    * Fetch the list of fields available on the source platform for a given
-   * entity type. Used to populate the field-mapping UI.
+   * entity type. Used to populate the field-mapping UI, which reads each
+   * field's `name`, `label` and `escalated_options` (a bare string shows as
+   * a blank row).
    */
-  availableSourceFields(entityType: string, credentials: Record<string, string>): Promise<string[]>
+  availableSourceFields(
+    entityType: string,
+    credentials: Record<string, string>
+  ): Promise<Array<SourceField | string>>
 
   /**
    * Extract a batch of normalized records from the platform.

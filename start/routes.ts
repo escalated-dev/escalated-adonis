@@ -816,27 +816,71 @@ async function registerUiRoutes(config: any) {
         .as('escalated.admin.two-factor.recovery-codes')
 
       // Import
+      // Import wizard, on escalated-laravel's paths (escalated.admin.import.*).
       router.get('/import', [AdminImportController, 'index']).as('escalated.admin.import.index')
+      router
+        .get('/import/progress/:jobId', [AdminImportController, 'progress'])
+        .as('escalated.admin.import.progress')
+      router
+        .get('/import/status/:jobId', [AdminImportController, 'status'])
+        .as('escalated.admin.import.status')
+      router
+        .post('/import/pause/:jobId', [AdminImportController, 'pauseJob'])
+        .as('escalated.admin.import.pause')
+      router
+        .post('/import/resume/:jobId', [AdminImportController, 'resume'])
+        .as('escalated.admin.import.resume')
+      router
+        .post('/import/cancel/:jobId', [AdminImportController, 'cancel'])
+        .as('escalated.admin.import.cancel')
+
+      // The earlier job-first flow, kept for existing callers. Its ids are
+      // uuids, which is what keeps `/import/:id/mapping` apart from
+      // `/import/:platform/mapping` below.
       router
         .get('/import/create', [AdminImportController, 'create'])
         .as('escalated.admin.import.create')
       router.post('/import', [AdminImportController, 'store']).as('escalated.admin.import.store')
-      router.get('/import/:id', [AdminImportController, 'show']).as('escalated.admin.import.show')
       router
-        .get('/import/:id/mapping', [AdminImportController, 'mapping'])
-        .as('escalated.admin.import.mapping')
+        .get('/import/:id', [AdminImportController, 'show'])
+        .where('id', router.matchers.uuid())
+        .as('escalated.admin.import.show')
+      router
+        .get('/import/:id/mapping', [AdminImportController, 'jobMapping'])
+        .where('id', router.matchers.uuid())
+        .as('escalated.admin.import.job_mapping')
       router
         .post('/import/:id/mapping', [AdminImportController, 'saveMapping'])
+        .where('id', router.matchers.uuid())
         .as('escalated.admin.import.saveMapping')
       router
         .post('/import/:id/start', [AdminImportController, 'start'])
-        .as('escalated.admin.import.start')
+        .where('id', router.matchers.uuid())
+        .as('escalated.admin.import.job_start')
       router
         .post('/import/:id/pause', [AdminImportController, 'pause'])
-        .as('escalated.admin.import.pause')
+        .where('id', router.matchers.uuid())
+        .as('escalated.admin.import.job_pause')
       router
         .delete('/import/:id', [AdminImportController, 'destroy'])
+        .where('id', router.matchers.uuid())
         .as('escalated.admin.import.destroy')
+
+      router
+        .get('/import/:platform/connect', [AdminImportController, 'connect'])
+        .as('escalated.admin.import.connect')
+      router
+        .post('/import/:platform/test-connection', [AdminImportController, 'testConnection'])
+        .as('escalated.admin.import.test-connection')
+      router
+        .get('/import/:platform/mapping', [AdminImportController, 'mapping'])
+        .as('escalated.admin.import.mapping')
+      router
+        .post('/import/:platform/review', [AdminImportController, 'review'])
+        .as('escalated.admin.import.review')
+      router
+        .post('/import/:platform/start', [AdminImportController, 'begin'])
+        .as('escalated.admin.import.start')
 
       // Automations CRUD
       router
