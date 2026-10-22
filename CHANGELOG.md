@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Added
+- The shared `Admin/Roles/Index` and `Admin/Roles/Form` pages, as escalated-laravel's RoleController: `{prefix}/admin/roles` with `escalated.admin.roles.index|create|store|edit|update|destroy`. The index carries each role's `users_count` and `is_system`; the form gets `permissions` grouped by `group` and, on edit, `role.permissions`. A new role's `slug` comes from its name (`agent-2` when taken). System roles cannot be deleted. Unknown permission ids are ignored.
+- The shared `Admin/Capacity/Index` page, as escalated-laravel's CapacityController: `GET {prefix}/admin/capacity` (`escalated.admin.capacity.index`) lists each agent's channel, `max_concurrent`, `current_count` and `load_percentage`, and `PUT {prefix}/admin/capacity/:id` (`escalated.admin.capacity.update`) sets `max_concurrent` (1 to 999).
 - The shared `Admin/Webhooks/Form` page: `GET {prefix}/admin/webhooks/create` (`escalated.admin.webhooks.create`) and `GET {prefix}/admin/webhooks/:webhook/edit` (`escalated.admin.webhooks.edit`), with `webhook` (including `secret`, which the form posts back) and `availableEvents`, as escalated-laravel. The Webhooks index linked to both routes, which did not exist, so the page failed to render its links.
 
 ### Changed

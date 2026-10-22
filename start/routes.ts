@@ -49,6 +49,8 @@ const AdminAutomationsController = () =>
 const AdminWorkflowsController = () => import('../src/controllers/admin_workflows_controller.js')
 const AdminWebhooksController = () => import('../src/controllers/admin_webhooks_controller.js')
 const AdminUsersController = () => import('../src/controllers/admin_users_controller.js')
+const AdminRolesController = () => import('../src/controllers/admin_roles_controller.js')
+const AdminCapacityController = () => import('../src/controllers/admin_capacity_controller.js')
 const AdminAuditLogsController = () => import('../src/controllers/admin_audit_logs_controller.js')
 const AdminSkillController = () => import('../src/controllers/admin_skill_controller.js')
 const AdminArticlesController = () => import('../src/controllers/admin_articles_controller.js')
@@ -834,6 +836,28 @@ async function registerUiRoutes(config: any) {
       router
         .patch('/users/:user/role', [AdminUsersController, 'updateRole'])
         .as('escalated.admin.users.role')
+
+      // Roles and the permissions they grant
+      router.get('/roles', [AdminRolesController, 'index']).as('escalated.admin.roles.index')
+      router
+        .get('/roles/create', [AdminRolesController, 'create'])
+        .as('escalated.admin.roles.create')
+      router.post('/roles', [AdminRolesController, 'store']).as('escalated.admin.roles.store')
+      router
+        .get('/roles/:id/edit', [AdminRolesController, 'edit'])
+        .as('escalated.admin.roles.edit')
+      router.put('/roles/:id', [AdminRolesController, 'update']).as('escalated.admin.roles.update')
+      router
+        .delete('/roles/:id', [AdminRolesController, 'destroy'])
+        .as('escalated.admin.roles.destroy')
+
+      // Agent capacity
+      router
+        .get('/capacity', [AdminCapacityController, 'index'])
+        .as('escalated.admin.capacity.index')
+      router
+        .put('/capacity/:id', [AdminCapacityController, 'update'])
+        .as('escalated.admin.capacity.update')
 
       // Audit Log (system-wide audit trail; read-only, filtered + paginated)
       router
