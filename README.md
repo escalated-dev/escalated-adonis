@@ -198,6 +198,7 @@ Time-based features only happen when their Ace command runs, so run these from c
 | `node ace escalated:close-idle-chats` | every 5 minutes | Closes chat sessions idle beyond the threshold |
 | `node ace escalated:cleanup-abandoned-chats` | every 5 minutes | Cleans up chat sessions abandoned in the queue |
 | `node ace escalated:newsletters:dispatch` | every minute | Plans due newsletters and dispatches pending deliveries |
+| `node ace escalated:purge-expired` | daily | Applies the Data Retention settings (all `never` by default, which purges nothing); `--dry-run` reports only, `--force` deletes expired closed tickets instead of soft-deleting them |
 
 For example, with cron:
 

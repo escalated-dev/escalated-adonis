@@ -52,10 +52,7 @@ const KNOWN_BLANK = []
  * is visible, not because a render is coming soon.
  */
 const NOT_YET_RENDERED = [
-  // Features this package does not have.
-  'Escalated/Admin/Settings/DataRetention',
-  'Escalated/Admin/Settings/DatabaseConnection',
-  'Escalated/Admin/Settings/EmailSettings',
+  // Not rendered by escalated-laravel either: a static page with no route.
   'Escalated/Admin/Settings/Sandbox',
   // SSO: SsoService parses assertions, but there is no sign-in route that
   // uses it, and SAML responses are not signature-checked. A settings screen
