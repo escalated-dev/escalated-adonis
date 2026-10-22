@@ -86,9 +86,7 @@ test.group('Customer knowledge base pages', (group) => {
     return Number(id)
   }
 
-  test('index renders the published articles, root categories and filters', async ({
-    assert,
-  }) => {
+  test('index renders the published articles, root categories and filters', async ({ assert }) => {
     const billing = await category('Billing', 'billing')
     await category('Refunds', 'refunds', billing)
     await article('Pay an invoice', 'pay-an-invoice', billing)
@@ -141,9 +139,7 @@ test.group('Customer knowledge base pages', (group) => {
     assert.deepEqual(filtered.body.props.filters, { category: String(billing) })
   })
 
-  test('article renders the article, related articles and counts the view', async ({
-    assert,
-  }) => {
+  test('article renders the article, related articles and counts the view', async ({ assert }) => {
     const billing = await category('Billing', 'billing')
     const id = await article('Pay an invoice', 'pay-an-invoice', billing)
     await article('Update a card', 'update-a-card', billing)
@@ -172,8 +168,10 @@ test.group('Customer knowledge base pages', (group) => {
   test('a draft or unknown article is a 404', async ({ assert }) => {
     await article('Hidden draft', 'hidden-draft', null, 'draft')
 
-    assert.equal((await client.visit('GET', `${KB}/hidden-draft`)).status, 404)
-    assert.equal((await client.visit('GET', `${KB}/nope`)).status, 404)
+    const draft = await client.visit('GET', `${KB}/hidden-draft`)
+    const unknown = await client.visit('GET', `${KB}/nope`)
+    assert.equal(draft.status, 404)
+    assert.equal(unknown.status, 404)
   })
 
   test('feedback counts a helpful and a not helpful vote', async ({ assert }) => {
@@ -228,7 +226,9 @@ test.group('Customer knowledge base pages', (group) => {
     await setting('knowledge_base_enabled', '0')
     await article('Pay an invoice', 'pay-an-invoice', null)
 
-    assert.equal((await client.visit('GET', KB)).status, 404)
-    assert.equal((await client.visit('GET', `${KB}/pay-an-invoice`)).status, 404)
+    const index = await client.visit('GET', KB)
+    const shown = await client.visit('GET', `${KB}/pay-an-invoice`)
+    assert.equal(index.status, 404)
+    assert.equal(shown.status, 404)
   })
 })
