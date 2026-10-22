@@ -1,10 +1,11 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { attachmentDownloadUrl } from '../../support/attachment_access.js'
-import type Ticket from '../../models/ticket.js'
+import Ticket from '../../models/ticket.js'
 import type Tag from '../../models/tag.js'
 import Macro from '../../models/macro.js'
 import ChatSession from '../../models/chat_session.js'
 import TicketService from '../../services/ticket_service.js'
+import { builtInCategory } from '../../support/custom_statuses.js'
 import AssignmentService from '../../services/assignment_service.js'
 import MacroService from '../../services/macro_service.js'
 import TicketActionRegistry from '../../services/ticket_action_registry.js'
@@ -44,6 +45,7 @@ export default class ApiTicketController {
 
     const user = (ctx as any).auth?.user ?? null
     const tickets = await this.ticketService.list(filters, filters.following ? user : null)
+    await Ticket.withCustomStatuses(tickets.all())
 
     return ctx.response.json({
       data: tickets.all().map((ticket: Ticket) => this.formatTicketCollection(ticket)),
@@ -62,6 +64,7 @@ export default class ApiTicketController {
   async show(ctx: HttpContext) {
     const ticket = (ctx as any).escalatedTicket as Ticket
 
+    await Ticket.withCustomStatuses([ticket])
     await ticket.load('department')
     await ticket.load('tags')
     await ticket.load('satisfactionRating')
@@ -396,6 +399,8 @@ export default class ApiTicketController {
       subject: ticket.subject,
       status: ticket.status,
       status_label: STATUS_LABELS[ticket.status as TicketStatus] ?? ticket.status,
+      custom_status: ticket.customStatus ?? null,
+      status_category: ticket.statusCategory ?? builtInCategory(ticket.status),
       priority: ticket.priority,
       priority_label: PRIORITY_LABELS[ticket.priority as TicketPriority] ?? ticket.priority,
       requester: {
@@ -442,6 +447,8 @@ export default class ApiTicketController {
       description: ticket.description,
       status: ticket.status,
       status_label: STATUS_LABELS[ticket.status as TicketStatus] ?? ticket.status,
+      custom_status: ticket.customStatus ?? null,
+      status_category: ticket.statusCategory ?? builtInCategory(ticket.status),
       priority: ticket.priority,
       priority_label: PRIORITY_LABELS[ticket.priority as TicketPriority] ?? ticket.priority,
       channel: ticket.channel,
