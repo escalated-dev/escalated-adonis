@@ -105,6 +105,7 @@ export default class ChatSessionService {
     const ticket = await Ticket.findOrFail(session.ticketId)
     ticket.assignedTo = agentId
     ticket.status = 'in_progress'
+    ticket.ticketStatusId = null
     await ticket.save()
 
     await emitter.emit(ESCALATED_EVENTS.TICKET_ASSIGNED, {
@@ -128,6 +129,7 @@ export default class ChatSessionService {
     const ticket = await Ticket.findOrFail(session.ticketId)
     ticket.chatEndedAt = DateTime.now()
     ticket.status = 'resolved'
+    ticket.ticketStatusId = null
     ticket.resolvedAt = DateTime.now()
     await ticket.save()
 

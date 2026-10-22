@@ -1,6 +1,7 @@
 import { normalizeAccount } from '../support/ticket_access.js'
 import { DateTime } from 'luxon'
 import Ticket from '../models/ticket.js'
+import CustomStatus from '../models/custom_status.js'
 import Tag from '../models/tag.js'
 import Reply from '../models/reply.js'
 import { allowPrivateWebhookUrls, escalatedDb } from '../helpers/config.js'
@@ -300,7 +301,9 @@ export default class WorkflowEngine {
     try {
       switch (action.type) {
         case 'change_status':
-          ticket.status = action.value as any
+          // A built-in value or a custom status slug. Written directly, as
+          // before, so the change does not re-trigger workflows.
+          ticket.applyStatusTarget(await CustomStatus.resolveTarget(action.value))
           await ticket.save()
           break
         case 'assign_agent':

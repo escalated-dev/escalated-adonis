@@ -1,10 +1,10 @@
 import { test } from '@japa/runner'
 import { testApp } from './helpers/app.js'
 import { getConfig } from '../../src/helpers/config.js'
-import Migration from '../../database/migrations/0067_create_escalated_business_schedules.js'
+import Migration from '../../database/migrations/0068_create_escalated_business_schedules.js'
 
 /*
-| Runs 0067 on ESCALATED_TEST_DATABASE_URL (MySQL or Postgres in CI, SQLite
+| Runs 0068 on ESCALATED_TEST_DATABASE_URL (MySQL or Postgres in CI, SQLite
 | otherwise) and round-trips a schedule and its holidays through the models:
 | pg and mysql2 read a DATE column back as a Date at local midnight, which
 | the Holiday model has to turn back into the "YYYY-MM-DD" the pages show.

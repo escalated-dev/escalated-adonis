@@ -37,6 +37,14 @@ import EscalatedSetting from './escalated_setting.js'
 import TicketSubjectLink from './ticket_subject_link.js'
 import { assertTicketSubjectTypeAllowed } from '../services/ticket_subject_service.js'
 import type { TicketSubjectSyncItem } from '../contracts/ticket_subject.js'
+import {
+  builtInCategory,
+  type CustomStatusSummary,
+  type StatusCategory,
+} from '../support/custom_statuses.js'
+
+/** Tickets whose next save sets a custom status on purpose (`applyStatusTarget`). */
+const KEEP_CUSTOM_STATUS = new WeakSet<object>()
 
 export default class Ticket extends EscalatedBaseModel {
   static table = 'escalated_tickets'
@@ -125,6 +133,22 @@ export default class Ticket extends EscalatedBaseModel {
 
   @column()
   declare guestToken: string | null
+
+  /**
+   * The custom status the ticket is in, if any (src/support/custom_statuses.ts).
+   * `status` holds its category's built-in anchor. Not serialized: agent and
+   * admin views carry `custom_status` instead, customer views neither.
+   */
+  @column({ serializeAs: null })
+  declare ticketStatusId: number | null
+
+  /**
+   * The custom status summary for agent and admin views, set by
+   * `Ticket.withCustomStatuses()`. Left undefined everywhere else, so
+   * `custom_status` and `status_category` stay out of customer and guest
+   * payloads.
+   */
+  declare $customStatus?: CustomStatusSummary | null
 
   /** Set when this ticket was merged into another (TicketMergeService). */
   @column()
@@ -229,6 +253,18 @@ export default class Ticket extends EscalatedBaseModel {
         ? this.snoozedUntil
         : new Date(this.snoozedUntil.toISO!() ?? this.snoozedUntil.toString())
     return snoozedUntil > now
+  }
+
+  @computed({ serializeAs: 'custom_status' })
+  get customStatus(): CustomStatusSummary | null | undefined {
+    return this.$customStatus
+  }
+
+  /** The category of the effective status, alongside `custom_status`. */
+  @computed({ serializeAs: 'status_category' })
+  get statusCategory(): StatusCategory | undefined {
+    if (this.$customStatus === undefined) return undefined
+    return this.$customStatus?.category ?? builtInCategory(this.status)
   }
 
   @computed()
@@ -370,6 +406,52 @@ export default class Ticket extends EscalatedBaseModel {
       ticket.accountType = account?.type ?? null
       ticket.accountId = account ? String(account.id) : null
     }
+  }
+
+  /**
+   * Any write of the built-in status that does not also set the custom status
+   * clears it: a built-in status set by snooze, merge, chat, a workflow or any
+   * other path is not a sub-status of whatever came before.
+   */
+  @beforeUpdate()
+  static clearCustomStatusOnBuiltInChange(ticket: Ticket) {
+    if (KEEP_CUSTOM_STATUS.delete(ticket)) return
+    if ('status' in ticket.$dirty && !('ticketStatusId' in ticket.$dirty)) {
+      ticket.ticketStatusId = null
+    }
+  }
+
+  /**
+   * Set the built-in status and the custom status together, for the next
+   * save. The custom status survives that save even when only the built-in
+   * changed (a status whose category was edited since it was assigned).
+   */
+  applyStatusTarget(target: { status: TicketStatus; custom: { id: number } | null }) {
+    this.status = target.status
+    this.ticketStatusId = target.custom?.id ?? null
+    if (target.custom) KEEP_CUSTOM_STATUS.add(this)
+  }
+
+  /**
+   * Attach the custom status summary to tickets shown to agents and admins,
+   * so they serialize `custom_status` and `status_category`. One query.
+   */
+  static async withCustomStatuses<T extends Ticket>(tickets: T[]): Promise<T[]> {
+    const ids = [
+      ...new Set(
+        tickets.map((t) => t.ticketStatusId).filter((id) => id !== null && id !== undefined)
+      ),
+    ]
+    const { default: CustomStatus } = await import('./custom_status.js')
+    const rows = ids.length > 0 ? await CustomStatus.query().whereIn('id', ids as number[]) : []
+    const byId = new Map(rows.map((row) => [row.id, row.summary()]))
+    for (const ticket of tickets) {
+      ticket.$customStatus =
+        ticket.ticketStatusId !== null && ticket.ticketStatusId !== undefined
+          ? (byId.get(Number(ticket.ticketStatusId)) ?? null)
+          : null
+    }
+    return tickets
   }
 
   /**

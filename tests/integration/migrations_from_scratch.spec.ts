@@ -59,7 +59,7 @@ test.group('Migrations from scratch', (group) => {
     // The last migration's table.
     assert.isTrue(await client.schema.hasTable('escalated_audit_logs'))
 
-    // 0067's tables and references.
+    // 0068's tables and references.
     assert.isTrue(await client.schema.hasTable('escalated_business_schedules'))
     assert.isTrue(await client.schema.hasTable('escalated_holidays'))
     assert.isTrue(await client.schema.hasColumn('escalated_sla_policies', 'business_schedule_id'))

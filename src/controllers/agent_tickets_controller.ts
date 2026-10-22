@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { signAttachments } from '../support/attachment_access.js'
-import type Ticket from '../models/ticket.js'
+import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
 import Department from '../models/department.js'
 import Tag from '../models/tag.js'
@@ -50,6 +50,7 @@ export default class AgentTicketsController {
       filters,
       filters.following ? (ctx.auth.user as any) : null
     )
+    await Ticket.withCustomStatuses(tickets.all())
 
     const departments = await Department.query()
       .withScopes((scopes) => scopes.active())
@@ -72,6 +73,7 @@ export default class AgentTicketsController {
     const ticket = (ctx as any).escalatedTicket as Ticket
     const userId = requireAuthUser(ctx.auth).id
 
+    await Ticket.withCustomStatuses([ticket])
     await ticket.load('department')
     await ticket.load('tags')
     await ticket.load('satisfactionRating')
