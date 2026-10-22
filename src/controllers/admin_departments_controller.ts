@@ -3,6 +3,7 @@ import Department from '../models/department.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { redirectToRoute } from '../support/routing.js'
 import { t } from '../support/i18n.js'
+import { scheduleReference } from '../support/business_schedule_reference.js'
 
 export default class AdminDepartmentsController {
   async index(ctx: HttpContext) {
@@ -33,6 +34,7 @@ export default class AdminDepartmentsController {
       slug: data.slug || undefined,
       description: data.description || null,
       isActive: data.is_active !== false,
+      ...(await scheduleReference(request.all())),
     })
     session.flash('success', t('admin.department_created'))
     return redirectToRoute(response, 'escalated.admin.departments.index')
@@ -51,6 +53,7 @@ export default class AdminDepartmentsController {
       ...(data.slug && { slug: data.slug }),
       description: data.description || null,
       isActive: data.is_active !== false,
+      ...(await scheduleReference(request.all())),
     })
     await department.save()
     session.flash('success', t('admin.department_updated'))

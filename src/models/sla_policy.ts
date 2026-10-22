@@ -43,6 +43,10 @@ export default class SlaPolicy extends EscalatedBaseModel {
   @column()
   declare businessHoursOnly: boolean
 
+  /** The schedule business-hours deadlines count against; null picks one. */
+  @column()
+  declare businessScheduleId: number | null
+
   @column()
   declare isActive: boolean
 

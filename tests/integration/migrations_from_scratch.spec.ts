@@ -59,6 +59,12 @@ test.group('Migrations from scratch', (group) => {
     // The last migration's table.
     assert.isTrue(await client.schema.hasTable('escalated_audit_logs'))
 
+    // 0067's tables and references.
+    assert.isTrue(await client.schema.hasTable('escalated_business_schedules'))
+    assert.isTrue(await client.schema.hasTable('escalated_holidays'))
+    assert.isTrue(await client.schema.hasColumn('escalated_sla_policies', 'business_schedule_id'))
+    assert.isTrue(await client.schema.hasColumn('escalated_departments', 'business_schedule_id'))
+
     // 0048's own table, with proficiency still required and defaulting to 3.
     assert.isTrue(await client.schema.hasTable('escalated_agent_skills'))
     const columns = await client.columnsInfo('escalated_agent_skills')
