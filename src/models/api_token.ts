@@ -19,7 +19,8 @@ export default class ApiToken extends EscalatedBaseModel {
   @column()
   declare name: string
 
-  @column()
+  /** The SHA-256 hash, only for lookups; never serialized. */
+  @column({ serializeAs: null })
   declare token: string
 
   @column({

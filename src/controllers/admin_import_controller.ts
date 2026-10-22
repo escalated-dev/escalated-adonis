@@ -48,7 +48,7 @@ export default class AdminImportController {
 
     return getRenderer().render(ctx, 'Escalated/Admin/Import/Index', {
       adapters: adapters.map((a) => this.serializeAdapter(a)),
-      jobs: jobs.map((j) => this.serializeJob(j)),
+      jobs: jobs.map((j) => j.toPageProps()),
     })
   }
 
@@ -145,7 +145,7 @@ export default class AdminImportController {
     if (!job) return
 
     return getRenderer().render(ctx, 'Escalated/Admin/Import/Progress', {
-      job: this.serializeJob(job),
+      job: job.toPageProps(),
     })
   }
 
@@ -290,7 +290,7 @@ export default class AdminImportController {
     if (!job) return
 
     return getRenderer().render(ctx, 'Escalated/Admin/Import/Progress', {
-      job: this.serializeJob(job),
+      job: job.toPageProps(),
     })
   }
 
@@ -432,26 +432,6 @@ export default class AdminImportController {
       name: adapter.name(),
       display_name: adapter.displayName(),
       credential_fields: adapter.credentialFields(),
-    }
-  }
-
-  /**
-   * Laravel sends the job model as is. Its credentials are left out here:
-   * they are a secret, and no screen reads them.
-   */
-  private serializeJob(job: ImportJob) {
-    return {
-      id: job.id,
-      user_id: job.userId ?? null,
-      platform: job.platform,
-      status: job.status,
-      field_mappings: job.fieldMappings ?? {},
-      progress: job.progress ?? {},
-      error_log: job.errorLog ?? [],
-      started_at: job.startedAt?.toISO() ?? null,
-      completed_at: job.completedAt?.toISO() ?? null,
-      created_at: job.createdAt?.toISO() ?? null,
-      updated_at: job.updatedAt?.toISO() ?? null,
     }
   }
 }

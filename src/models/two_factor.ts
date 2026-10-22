@@ -29,6 +29,7 @@ export default class TwoFactor extends EscalatedBaseModel {
    * database and transparently decrypted on the way out.
    */
   @column({
+    serializeAs: null,
     prepare: (value: string | null) => (value ? service.encryptSecret(value) : value),
     consume: (value: string | null) => (value ? service.decryptSecret(value) : value),
   })
@@ -39,6 +40,7 @@ export default class TwoFactor extends EscalatedBaseModel {
    * hashes; the plaintext codes are shown to the user only once, at generation.
    */
   @column({
+    serializeAs: null,
     prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
     consume: (value: any) =>
       value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,

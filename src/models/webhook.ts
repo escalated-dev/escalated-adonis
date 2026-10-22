@@ -1,5 +1,5 @@
 import { type DateTime } from 'luxon'
-import { column, hasMany, scope } from '@adonisjs/lucid/orm'
+import { column, computed, hasMany, scope } from '@adonisjs/lucid/orm'
 import EscalatedBaseModel from './base_model.js'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import WebhookDelivery from './webhook_delivery.js'
@@ -25,7 +25,10 @@ export default class Webhook extends EscalatedBaseModel {
   })
   declare events: string[]
 
-  @column()
+  /**
+   * Signs deliveries; never serialized. Pages see `has_secret` instead.
+   */
+  @column({ serializeAs: null })
   declare secret: string | null
 
   @column()
@@ -36,6 +39,12 @@ export default class Webhook extends EscalatedBaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+
+  /** Whether a signing secret is stored, which is all a page may know of it. */
+  @computed({ serializeAs: 'has_secret' })
+  get hasSecret(): boolean {
+    return typeof this.secret === 'string' && this.secret !== ''
+  }
 
   // ---- Relationships ----
 

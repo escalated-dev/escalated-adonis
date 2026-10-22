@@ -114,7 +114,12 @@ export default class ImportJob extends EscalatedBaseModel {
   @column()
   declare status: ImportJobStatus
 
+  /**
+   * The source platform's credentials: read server-side by the import run,
+   * never serialized to a page or JSON response.
+   */
   @column({
+    serializeAs: null,
     prepare: (value: any) => encryptJson(value),
     consume: (value: any) => decryptJson(value),
   })
@@ -243,6 +248,24 @@ export default class ImportJob extends EscalatedBaseModel {
       })
       this.errorLog = log
       await this.save()
+    }
+  }
+
+  /**
+   * The fields the admin import pages read. Built from an explicit list so a
+   * column added later is not sent to the browser by default.
+   */
+  toPageProps(): Record<string, unknown> {
+    return {
+      id: this.id,
+      platform: this.platform,
+      status: this.status,
+      progress: this.progress ?? {},
+      field_mappings: this.fieldMappings ?? {},
+      error_log: (this.errorLog ?? []).slice(-50),
+      started_at: this.startedAt?.toISO() ?? null,
+      completed_at: this.completedAt?.toISO() ?? null,
+      created_at: this.createdAt?.toISO() ?? null,
     }
   }
 

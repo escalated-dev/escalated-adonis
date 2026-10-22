@@ -6,6 +6,7 @@ import { getConfig } from '../helpers/config.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 import { invalidOriginEntries, rememberWidgetOriginSetting } from '../support/widget_origins.js'
+import { isMaskedSecret, maskSecret } from '../support/secret_mask.js'
 
 export default class AdminSettingsController {
   async index(ctx: HttpContext) {
@@ -235,18 +236,18 @@ export default class AdminSettingsController {
   }
 
   protected isMaskedValue(value: string | null): boolean {
-    if (!value) return false
-    return /^.{0,3}\*{3,}$/.test(value)
+    return isMaskedSecret(value)
   }
 
   protected isValidTicketReferencePrefix(value: string): boolean {
     return !value.includes('-')
   }
 
+  /**
+   * Mask a secret for display: shows whether it is set, and nothing of the
+   * value itself.
+   */
   protected maskSecret(value: string | null): string {
-    if (!value) return ''
-    const len = value.length
-    if (len <= 6) return '*'.repeat(len)
-    return value.substring(0, 3) + '*'.repeat(Math.min(len - 3, 12))
+    return maskSecret(value)
   }
 }
