@@ -67,7 +67,6 @@ const NOT_YET_RENDERED = [
   'Escalated/Admin/Settings/EmailSettings',
   'Escalated/Admin/Settings/Sandbox',
   // Features this package has, with the screen still owed.
-  'Escalated/Admin/Capacity/Index',
   'Escalated/Admin/Import/Connect',
   'Escalated/Admin/Import/Review',
   'Escalated/Admin/Reports/AgentDetail',
@@ -75,8 +74,6 @@ const NOT_YET_RENDERED = [
   'Escalated/Admin/Reports/CsatReport',
   'Escalated/Admin/Reports/Dashboard',
   'Escalated/Admin/Reports/SlaReport',
-  'Escalated/Admin/Roles/Form',
-  'Escalated/Admin/Roles/Index',
   'Escalated/Admin/Settings/CsatSettings',
   'Escalated/Admin/Settings/SsoSettings',
   'Escalated/Admin/Workflows/Builder',
