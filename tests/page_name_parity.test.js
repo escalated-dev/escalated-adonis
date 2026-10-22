@@ -69,12 +69,6 @@ const NOT_YET_RENDERED = [
   // Features this package has, with the screen still owed.
   'Escalated/Admin/Import/Connect',
   'Escalated/Admin/Import/Review',
-  'Escalated/Admin/Reports/AgentDetail',
-  'Escalated/Admin/Reports/AgentMetrics',
-  'Escalated/Admin/Reports/CsatReport',
-  'Escalated/Admin/Reports/Dashboard',
-  'Escalated/Admin/Reports/SlaReport',
-  'Escalated/Admin/Settings/CsatSettings',
   'Escalated/Admin/Settings/SsoSettings',
   'Escalated/Admin/Workflows/Builder',
   'Escalated/Error',
