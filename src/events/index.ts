@@ -149,7 +149,8 @@ export interface ChatTransferredData {
   ticket: Ticket
   sessionId: number
   fromAgentId: UserId | null
-  toAgentId: UserId
+  toAgentId: UserId | null
+  toDepartmentId?: number | null
 }
 
 export interface TicketCustomActionTriggeredData {
