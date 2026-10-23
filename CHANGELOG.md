@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-10-22
+
 ### Upgrading
 - `SsoService.validateSamlAssertion` now refuses every SAML response unless `sso_certificate` holds the IdP's signing certificate (PEM, bare base64 body, or PEM public key) and the assertion or Response is signed by it. Hosts that call it from their own ACS route must configure the certificate first. Encrypted assertions and responses with more than one assertion are refused. Escalated still registers no SSO route. See `docs/sso.md`.
 - New dependency: `xml-crypto` (XML signature verification).
