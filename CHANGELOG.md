@@ -22,6 +22,14 @@
   before. An unknown department is a 422. `chat.transferred` carries
   `to_department_id`. `ChatSessionService.transfer(sessionId, agentId, causer,
   { departmentId })` takes the department as a new optional fourth argument.
+- **End Chat from the ticket view.** The shared agent ticket page ends a chat
+  by POSTing `{}` to `route('escalated.admin.chat.end', chat_session_id)`,
+  a name this package did not register, so the button did nothing. It is now
+  registered at `POST {prefix}/admin/chat/:session/end` (escalated-laravel's
+  name and path) behind the same agent middleware as the agent chat routes.
+  Like Laravel it answers `{"message": "Chat ended."}` (plus the `session`),
+  or 422 `{"message": "Chat is already ended."}` when the chat already ended.
+  `POST /agent/chats/:id/end` (`escalated.agent.chats.end`) is unchanged.
 
 ## [0.7.5] - 2026-10-22
 

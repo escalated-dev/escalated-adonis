@@ -413,6 +413,14 @@ async function registerUiRoutes(config: any) {
     .prefix(`${prefix}/agent/chats`)
     .use([...adminMiddleware, middleware.ensureIsAgent(), middleware.ticketAccess()])
 
+  // End Chat from the shared ticket view: Agent/TicketShow resolves
+  // route('escalated.admin.chat.end', chat_session_id), the name and path
+  // escalated-laravel uses. It is an agent action, so it keeps the agent gate.
+  router
+    .post(`${prefix}/admin/chat/:session/end`, [ChatController, 'endFromTicket'])
+    .as('escalated.admin.chat.end')
+    .use([...adminMiddleware, middleware.ensureIsAgent(), middleware.ticketAccess()])
+
   // ---- Admin Routes ----
   router
     .group(() => {

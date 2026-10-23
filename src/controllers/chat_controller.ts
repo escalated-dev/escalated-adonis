@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import ChatSessionService from '../services/chat_session_service.js'
-import type ChatSession from '../models/chat_session.js'
+import ChatSession from '../models/chat_session.js'
 import AgentProfile from '../models/agent_profile.js'
 import Department from '../models/department.js'
 import { DateTime } from 'luxon'
@@ -63,6 +63,27 @@ export default class ChatController {
 
     return ctx.response.json({
       session: this.serializeSession(session),
+    })
+  }
+
+  /**
+   * POST /admin/chat/:session/end (escalated.admin.chat.end) — End a chat from
+   * the shared ticket view, answered as escalated-laravel answers it: 422 when
+   * the chat already ended.
+   */
+  async endFromTicket(ctx: HttpContext) {
+    const user = requireAuthUser(ctx.auth)
+    const session = await ChatSession.findOrFail(ctx.params.session)
+
+    if (session.status === 'ended') {
+      return ctx.response.unprocessableEntity({ message: 'Chat is already ended.' })
+    }
+
+    const ended = await this.chatService.endChat(session.id, user)
+
+    return ctx.response.json({
+      message: 'Chat ended.',
+      session: this.serializeSession(ended),
     })
   }
 
