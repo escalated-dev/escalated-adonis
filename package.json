@@ -90,7 +90,7 @@
     "@adonisjs/lucid": "^22.4.2",
     "@adonisjs/mail": "^10.4.0",
     "@adonisjs/prettier-config": "^1.5.0",
-    "@adonisjs/session": "^8.1.0",
+    "@adonisjs/session": "^8.3.0",
     "@adonisjs/transmit": "^3.0.2",
     "@adonisjs/vite": "^6.0.3",
     "@escalated-dev/escalated": "0.12.0",
