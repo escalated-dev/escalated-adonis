@@ -1,7 +1,14 @@
-import { createHmac, createPublicKey, timingSafeEqual, type KeyObject } from 'node:crypto'
+import {
+  createHmac,
+  createPublicKey,
+  randomBytes,
+  timingSafeEqual,
+  type KeyObject,
+} from 'node:crypto'
 import { DOMParser, type Element } from '@xmldom/xmldom'
 import { SignedXml } from 'xml-crypto'
 import EscalatedSetting from '../models/escalated_setting.js'
+import { escalatedDb } from '../helpers/config.js'
 
 export class SsoValidationError extends Error {
   constructor(message: string) {
@@ -20,6 +27,19 @@ interface SsoConfig {
   sso_attr_role: string
   sso_jwt_secret: string
   sso_jwt_algorithm: string
+  sso_sp_entity_id: string
+  sso_acs_url: string
+  sso_allow_idp_initiated: string
+  sso_clock_skew: string
+}
+
+export interface SamlValidationOptions {
+  /**
+   * The AuthnRequest ID the host kept for this browser (for example in its
+   * session) when it sent the user to the IdP. When given, the response must
+   * answer exactly that request.
+   */
+  requestId?: string
 }
 
 interface SsoUserResult {
@@ -40,11 +60,26 @@ const CONFIG_KEYS: (keyof SsoConfig)[] = [
   'sso_attr_role',
   'sso_jwt_secret',
   'sso_jwt_algorithm',
+  'sso_sp_entity_id',
+  'sso_acs_url',
+  'sso_allow_idp_initiated',
+  'sso_clock_skew',
 ]
 
 const SAML_ASSERTION_NS = 'urn:oasis:names:tc:SAML:2.0:assertion'
 const SAML_PROTOCOL_NS = 'urn:oasis:names:tc:SAML:2.0:protocol'
 const XMLDSIG_NS = 'http://www.w3.org/2000/09/xmldsig#'
+const BEARER_METHOD = 'urn:oasis:names:tc:SAML:2.0:cm:bearer'
+
+const SAML_IDS_TABLE = 'escalated_saml_message_ids'
+/** Default clock skew, in seconds, for SAML validity windows. */
+const DEFAULT_CLOCK_SKEW = 120
+/** The largest clock skew `sso_clock_skew` may set, in seconds. */
+const MAX_CLOCK_SKEW = 300
+/** How long an issued AuthnRequest ID can be answered, in seconds. */
+const DEFAULT_REQUEST_TTL = 600
+/** Longest SAML ID the store holds (its column width). */
+const MAX_MESSAGE_ID_LENGTH = 191
 
 const DEFAULTS: SsoConfig = {
   sso_provider: 'none',
@@ -56,6 +91,10 @@ const DEFAULTS: SsoConfig = {
   sso_attr_role: 'role',
   sso_jwt_secret: '',
   sso_jwt_algorithm: 'HS256',
+  sso_sp_entity_id: '',
+  sso_acs_url: '',
+  sso_allow_idp_initiated: '0',
+  sso_clock_skew: String(DEFAULT_CLOCK_SKEW),
 }
 
 export default class SsoService {
@@ -97,10 +136,37 @@ export default class SsoService {
    * the XML the signature covers, not from the document as received, and a
    * response with more than one assertion is refused, so an unsigned
    * assertion cannot ride along with a signed one.
+   *
+   * The assertion must also be meant for this service provider, for this
+   * sign-in, now and once: our SP entity ID (`sso_sp_entity_id`) in every
+   * AudienceRestriction, our ACS URL (`sso_acs_url`) as the Response
+   * Destination and the bearer confirmation's Recipient, Conditions and
+   * confirmation times inside the window (`sso_clock_skew` seconds of skew),
+   * an InResponseTo naming a request from `createSamlRequestId()` that has
+   * not been answered yet (unsolicited responses only when
+   * `sso_allow_idp_initiated` is on), and an assertion ID not accepted
+   * before.
    */
-  async validateSamlAssertion(samlResponse: string): Promise<SsoUserResult> {
+  async validateSamlAssertion(
+    samlResponse: string,
+    options: SamlValidationOptions = {}
+  ): Promise<SsoUserResult> {
     const config = await this.getConfig()
     const idpKey = this.samlIdpKey(config.sso_certificate)
+    const spEntityId = (config.sso_sp_entity_id || '').trim()
+    if (!spEntityId) {
+      throw new SsoValidationError(
+        'SAML sign-in is disabled: no service provider entity ID (sso_sp_entity_id) is configured to check the assertion Audience.'
+      )
+    }
+    const acsUrl = (config.sso_acs_url || '').trim()
+    if (!acsUrl) {
+      throw new SsoValidationError(
+        'SAML sign-in is disabled: no ACS URL (sso_acs_url) is configured to check the Destination and Recipient.'
+      )
+    }
+    const skew = this.clockSkew(config.sso_clock_skew)
+    const now = Math.floor(Date.now() / 1000)
 
     const xml = Buffer.from(samlResponse || '', 'base64').toString('utf-8')
     const doc = this.parseXml(xml)
@@ -112,7 +178,8 @@ export default class SsoService {
       throw new SsoValidationError('SAML response must contain exactly one assertion.')
     }
 
-    const assertion = this.verifiedSamlAssertion(xml, doc.documentElement as Element, idpKey)
+    const root = doc.documentElement as Element
+    const assertion = this.verifiedSamlAssertion(xml, root, idpKey)
 
     // Check issuer
     const entityId = (config.sso_entity_id || '').trim()
@@ -129,10 +196,61 @@ export default class SsoService {
       }
     }
 
-    // Validate conditions
-    const conditionsEls = assertion.getElementsByTagNameNS(SAML_ASSERTION_NS, 'Conditions')
-    if (conditionsEls.length > 0) {
-      this.validateSamlConditions(conditionsEls[0])
+    // Validity window and audience
+    const conditions = this.childElements(assertion, SAML_ASSERTION_NS, 'Conditions')[0]
+    if (!conditions) {
+      throw new SsoValidationError('SAML assertion missing Conditions (and so its Audience).')
+    }
+    const conditionsUntil = this.validateSamlWindow(conditions, now, skew, 'assertion')
+    this.validateSamlAudience(conditions, spEntityId)
+
+    // Destination, on the Response as received. When only the assertion is
+    // signed this attribute is not covered by the signature, so the signed
+    // Recipient below is what binds the assertion to our ACS URL; a wrong
+    // Destination is refused all the same.
+    const isResponse = this.isElement(root, SAML_PROTOCOL_NS, 'Response')
+    const destination = isResponse ? root.getAttribute('Destination') : null
+    if (destination !== null && destination !== '' && destination !== acsUrl) {
+      throw new SsoValidationError(
+        `SAML Destination mismatch: expected '${acsUrl}', got '${destination}'.`
+      )
+    }
+
+    // Bearer subject confirmation: Recipient, window and InResponseTo
+    const confirmation = this.bearerConfirmation(assertion, acsUrl, now, skew)
+    const inResponseTo = confirmation.inResponseTo
+    const responseInResponseTo = isResponse ? root.getAttribute('InResponseTo') : null
+    if (responseInResponseTo && responseInResponseTo !== inResponseTo) {
+      throw new SsoValidationError(
+        'SAML InResponseTo mismatch between the Response and its assertion.'
+      )
+    }
+    if (inResponseTo) {
+      if (options.requestId !== undefined && inResponseTo !== options.requestId) {
+        throw new SsoValidationError(
+          'SAML InResponseTo does not match the request this sign-in started.'
+        )
+      }
+    } else if (options.requestId !== undefined) {
+      throw new SsoValidationError(
+        'SAML response has no InResponseTo, but this sign-in started with a request.'
+      )
+    } else if (!this.truthy(config.sso_allow_idp_initiated)) {
+      throw new SsoValidationError(
+        'SAML response answers no request we issued, and IdP-initiated sign-in (sso_allow_idp_initiated) is off.'
+      )
+    }
+
+    // Replay, then the request it answers. The assertion ID is kept until the
+    // assertion could no longer be accepted anyway.
+    const assertionId = assertion.getAttribute('ID') || ''
+    if (!assertionId) {
+      throw new SsoValidationError('SAML assertion missing ID.')
+    }
+    const usableUntil = Math.max(conditionsUntil ?? 0, confirmation.notOnOrAfter) + skew
+    await this.recordAssertionId(assertionId, usableUntil, now)
+    if (inResponseTo) {
+      await this.consumeRequestId(inResponseTo, now)
     }
 
     // Extract attributes
@@ -258,24 +376,190 @@ export default class SsoService {
     )
   }
 
-  private validateSamlConditions(conditionsEl: Element): void {
-    const now = Math.floor(Date.now() / 1000)
-    const skew = 120
+  private truthy(value: string | null | undefined): boolean {
+    return ['1', 'true', 'yes', 'on'].includes(
+      String(value ?? '')
+        .trim()
+        .toLowerCase()
+    )
+  }
 
-    const notBefore = conditionsEl.getAttribute('NotBefore')
-    if (notBefore) {
-      const dt = Math.floor(new Date(notBefore).getTime() / 1000)
-      if (dt > now + skew) {
-        throw new SsoValidationError('SAML assertion is not yet valid.')
-      }
+  /** `sso_clock_skew` in seconds: two minutes by default, at most five. */
+  private clockSkew(value: string | null | undefined): number {
+    const parsed = Number.parseInt(String(value ?? '').trim(), 10)
+    if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_CLOCK_SKEW
+    return Math.min(parsed, MAX_CLOCK_SKEW)
+  }
+
+  /** A SAML dateTime as Unix seconds; refuses one that does not parse. */
+  private samlTime(value: string, attribute: string): number {
+    const ms = Date.parse(value)
+    if (Number.isNaN(ms)) {
+      throw new SsoValidationError(`SAML ${attribute} is not a valid time.`)
+    }
+    return Math.floor(ms / 1000)
+  }
+
+  /**
+   * Checks NotBefore / NotOnOrAfter on `el` with `skew` seconds of leeway and
+   * returns NotOnOrAfter (Unix seconds) when it is set.
+   */
+  private validateSamlWindow(
+    el: Element,
+    now: number,
+    skew: number,
+    what: 'assertion' | 'subject confirmation'
+  ): number | null {
+    const notBefore = el.getAttribute('NotBefore')
+    if (notBefore && this.samlTime(notBefore, 'NotBefore') > now + skew) {
+      throw new SsoValidationError(`SAML ${what} is not yet valid.`)
     }
 
-    const notOnOrAfter = conditionsEl.getAttribute('NotOnOrAfter')
-    if (notOnOrAfter) {
-      const dt = Math.floor(new Date(notOnOrAfter).getTime() / 1000)
-      if (dt < now - skew) {
-        throw new SsoValidationError('SAML assertion has expired.')
+    const notOnOrAfter = el.getAttribute('NotOnOrAfter')
+    if (!notOnOrAfter) return null
+    const until = this.samlTime(notOnOrAfter, 'NotOnOrAfter')
+    if (now >= until + skew) {
+      throw new SsoValidationError(`SAML ${what} has expired.`)
+    }
+    return until
+  }
+
+  /** There must be an AudienceRestriction, and every one must name our SP entity ID. */
+  private validateSamlAudience(conditions: Element, spEntityId: string): void {
+    const restrictions = this.childElements(conditions, SAML_ASSERTION_NS, 'AudienceRestriction')
+    if (restrictions.length === 0) {
+      throw new SsoValidationError(
+        'SAML assertion has no AudienceRestriction naming this service provider.'
+      )
+    }
+    for (const restriction of restrictions) {
+      const audiences = this.childElements(restriction, SAML_ASSERTION_NS, 'Audience').map(
+        (audience) => (audience.textContent || '').trim()
+      )
+      if (!audiences.includes(spEntityId)) {
+        throw new SsoValidationError(
+          `SAML Audience mismatch: '${spEntityId}' is not an audience of this assertion.`
+        )
       }
+    }
+  }
+
+  /**
+   * The first bearer SubjectConfirmation addressed to our ACS URL and valid
+   * now. When none qualifies, the reason the first one fails is reported.
+   */
+  private bearerConfirmation(
+    assertion: Element,
+    acsUrl: string,
+    now: number,
+    skew: number
+  ): { inResponseTo: string | null; notOnOrAfter: number } {
+    const subject = this.childElements(assertion, SAML_ASSERTION_NS, 'Subject')[0]
+    const bearers = subject
+      ? this.childElements(subject, SAML_ASSERTION_NS, 'SubjectConfirmation').filter(
+          (confirmation) => confirmation.getAttribute('Method') === BEARER_METHOD
+        )
+      : []
+    if (bearers.length === 0) {
+      throw new SsoValidationError('SAML assertion has no bearer SubjectConfirmation.')
+    }
+
+    let firstError: SsoValidationError | null = null
+    for (const bearer of bearers) {
+      try {
+        const data = this.childElements(bearer, SAML_ASSERTION_NS, 'SubjectConfirmationData')[0]
+        if (!data) {
+          throw new SsoValidationError('SAML SubjectConfirmation has no SubjectConfirmationData.')
+        }
+        const recipient = data.getAttribute('Recipient')
+        if (recipient !== acsUrl) {
+          throw new SsoValidationError(
+            `SAML Recipient mismatch: expected '${acsUrl}', got '${recipient ?? ''}'.`
+          )
+        }
+        const notOnOrAfter = this.validateSamlWindow(data, now, skew, 'subject confirmation')
+        if (notOnOrAfter === null) {
+          throw new SsoValidationError('SAML SubjectConfirmationData has no NotOnOrAfter.')
+        }
+        return { inResponseTo: data.getAttribute('InResponseTo') || null, notOnOrAfter }
+      } catch (error) {
+        if (!(error instanceof SsoValidationError)) throw error
+        firstError ??= error
+      }
+    }
+    throw firstError as SsoValidationError
+  }
+
+  // -----------------------------------------------------------------
+  // SAML message IDs (issued requests, used assertions)
+  // -----------------------------------------------------------------
+
+  /**
+   * Issues an ID for an AuthnRequest and remembers it for `ttlSeconds` (ten
+   * minutes by default). Put it in the AuthnRequest's `ID`: the IdP's
+   * response must name it in InResponseTo, and it can be answered once.
+   * Keep it in the user's session as well and pass it to
+   * `validateSamlAssertion(response, { requestId })` to tie the response to
+   * the browser that started the sign-in.
+   */
+  async createSamlRequestId(ttlSeconds: number = DEFAULT_REQUEST_TTL): Promise<string> {
+    const id = `_${randomBytes(20).toString('hex')}`
+    const now = Math.floor(Date.now() / 1000)
+    await this.pruneSamlIds(now)
+    const db = await escalatedDb()
+    await db.table(SAML_IDS_TABLE).insert({
+      kind: 'request',
+      message_id: id,
+      expires_at: now + Math.max(1, Math.floor(ttlSeconds)),
+    })
+    return id
+  }
+
+  private async pruneSamlIds(now: number): Promise<void> {
+    const db = await escalatedDb()
+    await db.from(SAML_IDS_TABLE).where('expires_at', '<', now).delete()
+  }
+
+  /** Removes the issued request `id`; refuses one we never issued, already answered, or expired. */
+  private async consumeRequestId(id: string, now: number): Promise<void> {
+    const db = await escalatedDb()
+    const deleted =
+      id.length > MAX_MESSAGE_ID_LENGTH
+        ? 0
+        : await db
+            .from(SAML_IDS_TABLE)
+            .where('kind', 'request')
+            .where('message_id', id)
+            .where('expires_at', '>=', now)
+            .delete()
+    if (Number(deleted) !== 1) {
+      throw new SsoValidationError(
+        'SAML InResponseTo does not match a sign-in request we issued (unknown, expired or already answered).'
+      )
+    }
+  }
+
+  /** Records the assertion `id` as used until `until`; refuses one already used. */
+  private async recordAssertionId(id: string, until: number, now: number): Promise<void> {
+    if (id.length > MAX_MESSAGE_ID_LENGTH) {
+      throw new SsoValidationError('SAML assertion ID is too long.')
+    }
+    await this.pruneSamlIds(now)
+    const db = await escalatedDb()
+    try {
+      await db
+        .table(SAML_IDS_TABLE)
+        .insert({ kind: 'assertion', message_id: id, expires_at: until })
+    } catch (error) {
+      const existing = await db
+        .from(SAML_IDS_TABLE)
+        .where('kind', 'assertion')
+        .where('message_id', id)
+        .first()
+      if (existing) {
+        throw new SsoValidationError('SAML assertion has already been used.')
+      }
+      throw error
     }
   }
 
