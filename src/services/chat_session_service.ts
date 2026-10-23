@@ -4,6 +4,7 @@ import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
 import ChatSession from '../models/chat_session.js'
+import ChatRoutingService from './chat_routing_service.js'
 import type { ChatSessionStatus } from '../models/chat_session.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import type { TicketStatus } from '../types.js'
@@ -140,26 +141,50 @@ export default class ChatSessionService {
   }
 
   /**
-   * Transfer a chat to another agent.
+   * Transfer a chat to another agent and/or department.
    */
-  async transfer(sessionId: number, newAgentId: UserId, _causer?: any): Promise<ChatSession> {
+  async transfer(
+    sessionId: number,
+    newAgentId: UserId | null,
+    _causer?: any,
+    options: { departmentId?: number | null } = {}
+  ): Promise<ChatSession> {
     const session = await ChatSession.findOrFail(sessionId)
     const previousAgentId = session.agentId
+    const toAgentId = newAgentId === undefined || newAgentId === '' ? null : newAgentId
+    const toDepartmentId = options.departmentId ?? null
 
-    if (!(await agentCanAccessTicket(newAgentId, { id: session.ticketId })))
+    if (toAgentId === null && toDepartmentId === null)
+      throw Object.assign(new Error('Provide an agent or a department'), { status: 400 })
+    if (toAgentId !== null && !(await agentCanAccessTicket(toAgentId, { id: session.ticketId })))
       throw Object.assign(new Error('Agent cannot access this ticket'), { status: 403 })
-    session.agentId = newAgentId
+
+    // As escalated-laravel's ChatSessionService::transferChat: an agent takes
+    // the chat and its ticket; a department takes the ticket, and without an
+    // agent the chat goes back to the queue and is routed again.
+    const ticket = await Ticket.findOrFail(session.ticketId)
+    if (toDepartmentId !== null) {
+      ticket.departmentId = toDepartmentId
+      session.departmentId = toDepartmentId
+    }
+    if (toAgentId !== null) {
+      session.agentId = toAgentId
+      ticket.assignedTo = toAgentId
+    } else {
+      session.agentId = null
+      session.status = 'waiting'
+      ticket.assignedTo = null
+    }
     session.lastActivityAt = DateTime.now()
     await session.save()
-
-    const ticket = await Ticket.findOrFail(session.ticketId)
-    ticket.assignedTo = newAgentId
     await ticket.save()
 
-    await emitter.emit(ESCALATED_EVENTS.TICKET_ASSIGNED, {
-      ticket,
-      agentId: newAgentId,
-    })
+    if (toAgentId !== null) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_ASSIGNED, {
+        ticket,
+        agentId: toAgentId,
+      })
+    }
 
     if (previousAgentId) {
       await emitter.emit(ESCALATED_EVENTS.TICKET_UNASSIGNED, {
@@ -172,8 +197,17 @@ export default class ChatSessionService {
       ticket,
       sessionId: session.id,
       fromAgentId: previousAgentId ?? null,
-      toAgentId: newAgentId,
+      toAgentId,
+      toDepartmentId,
     })
+
+    if (toAgentId === null) {
+      const routed = await new ChatRoutingService().findAvailableAgent({
+        ticketId: ticket.id,
+        departmentId: toDepartmentId,
+      })
+      if (routed) await this.assignAgent(session.id, routed)
+    }
 
     return session.refresh()
   }

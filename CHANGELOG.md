@@ -9,6 +9,18 @@
 ### Security
 - **SAML assertions are signature-checked.** `SsoService.validateSamlAssertion` read the email from whatever XML it was given, so an unsigned or forged assertion could name any user to a host that wired it into a login route. It now verifies the XML signature against the configured IdP certificate with `xml-crypto`, never trusts a key carried in the message's `KeyInfo`, and reads the user, issuer and conditions only from the XML the signature covers, so a signature-wrapping response cannot substitute another user.
 
+### Fixed
+- **Chat transfer reads `department_id`.** `POST /agent/chats/:id/transfer`
+  took only `agent_id`, so the shared ticket view's Transfer menu (which offers
+  departments and posts `{"department_id"}`) was refused with 400. It now reads
+  `agent_id` and/or `department_id`, as escalated-laravel does: a department
+  takes the ticket (and the session), and without an agent the chat goes back
+  to the queue (unassigned, waiting) and is routed again for that department.
+  The older `{"type", "id"}` body is read too, and `agent_id` alone behaves as
+  before. An unknown department is a 422. `chat.transferred` carries
+  `to_department_id`. `ChatSessionService.transfer(sessionId, agentId, causer,
+  { departmentId })` takes the department as a new optional fourth argument.
+
 ## [0.7.5] - 2026-10-22
 
 ### Upgrading

@@ -136,6 +136,7 @@ export function buildWebhookPayload(data: any): Record<string, any> {
     const chat: Record<string, any> = { session_id: data.sessionId }
     if (data.fromAgentId !== undefined) chat.from_agent_id = data.fromAgentId ?? null
     if (data.toAgentId !== undefined) chat.to_agent_id = data.toAgentId ?? null
+    if (data.toDepartmentId !== undefined) chat.to_department_id = data.toDepartmentId ?? null
     if (data.replyId !== undefined) chat.reply_id = data.replyId
     if (data.authorType !== undefined) chat.author_type = data.authorType ?? null
     payload.chat = chat

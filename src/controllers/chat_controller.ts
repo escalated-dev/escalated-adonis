@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import ChatSessionService from '../services/chat_session_service.js'
 import type ChatSession from '../models/chat_session.js'
 import AgentProfile from '../models/agent_profile.js'
+import Department from '../models/department.js'
 import { DateTime } from 'luxon'
 import { requireAuthUser } from '../support/auth_user.js'
 
@@ -66,18 +67,36 @@ export default class ChatController {
   }
 
   /**
-   * POST /agent/chats/:id/transfer — Transfer a chat to another agent.
+   * POST /agent/chats/:id/transfer — Transfer a chat to another agent and/or department.
    */
   async transfer(ctx: HttpContext) {
     const user = requireAuthUser(ctx.auth)
     const sessionId = ctx.params.id
-    const { agent_id: newAgentId } = ctx.request.only(['agent_id'])
+    // {"agent_id", "department_id"} (either or both), as escalated-laravel's
+    // ChatController::transfer reads it; the older {"type", "id"} is read too.
+    const body = ctx.request.only(['agent_id', 'department_id', 'type', 'id'])
+    const blank = (value: unknown) => value === undefined || value === null || value === ''
+    let agentId = blank(body.agent_id) ? null : body.agent_id
+    let departmentId = blank(body.department_id) ? null : body.department_id
+    if (body.type === 'agent' && agentId === null && !blank(body.id)) agentId = body.id
+    if (body.type === 'department' && departmentId === null && !blank(body.id))
+      departmentId = body.id
 
-    if (!newAgentId) {
-      return ctx.response.badRequest({ error: 'agent_id is required' })
+    if (agentId === null && departmentId === null) {
+      return ctx.response.badRequest({ error: 'Provide an agent_id or department_id.' })
     }
 
-    const session = await this.chatService.transfer(sessionId, newAgentId, user)
+    let toDepartmentId: number | null = null
+    if (departmentId !== null) {
+      toDepartmentId = Number(departmentId)
+      if (!Number.isInteger(toDepartmentId) || !(await Department.find(toDepartmentId))) {
+        return ctx.response.unprocessableEntity({ error: 'The selected department_id is invalid.' })
+      }
+    }
+
+    const session = await this.chatService.transfer(sessionId, agentId, user, {
+      departmentId: toDepartmentId,
+    })
 
     return ctx.response.json({
       session: this.serializeSession(session),

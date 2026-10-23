@@ -301,6 +301,108 @@ test.group('Event vocabulary', (group) => {
     assert.equal(assigned.payload.agent_id, TEST_USERS.agent.id)
   })
 
+  // ---- Chat transfer body ----------------------------------------------------
+  // The shared ChatActionBar posts {"agent_id"} or {"department_id"} (what
+  // escalated-laravel's ChatController::transfer reads); the ticket view
+  // offers departments. The older {"type", "id"} body is read too.
+
+  async function acceptedChat() {
+    const started = await widget('POST', '/chat/start', {
+      name: 'Dee Visitor',
+      email: `dee-${Date.now()}-${++sequence}@example.com`,
+      message: '',
+    })
+    assert201(started)
+    const sessionId = started.data.session_id
+    const accepted = await agent('POST', `/${sessionId}/accept`)
+    if (!accepted.ok) throw new Error(accepted.text)
+    return sessionId as number
+  }
+
+  function assert201(response: { status: number; text: string }) {
+    if (response.status !== 201) throw new Error(`chat start: ${response.status} ${response.text}`)
+  }
+
+  async function department() {
+    const { default: Department } = await import('../../src/models/department.js')
+    const stamp = `${Date.now()}-${++sequence}`
+    return Department.create({ name: `Billing ${stamp}`, slug: `billing-${stamp}`, isActive: true })
+  }
+
+  async function chatState(sessionId: number) {
+    const { default: ChatSession } = await import('../../src/models/chat_session.js')
+    const { default: Ticket } = await import('../../src/models/ticket.js')
+    const session = await ChatSession.findOrFail(sessionId)
+    const ticket = await Ticket.findOrFail(session.ticketId)
+    return { session, ticket }
+  }
+
+  test('a department transfer moves the ticket and puts the chat back in the queue', async ({
+    assert,
+  }) => {
+    const hook = await webhook(['chat.transferred'])
+    const sessionId = await acceptedChat()
+    const billing = await department()
+
+    const transferred = await agent('POST', `/${sessionId}/transfer`, { department_id: billing.id })
+    assert.isTrue(transferred.ok, transferred.text)
+
+    const { session, ticket } = await chatState(sessionId)
+    assert.equal(session.status, 'waiting')
+    assert.isNull(session.agentId)
+    assert.equal(session.departmentId, billing.id)
+    assert.equal(ticket.departmentId, billing.id)
+    assert.isNull(ticket.assignedTo)
+
+    const [delivery] = await deliveredEvents(hook.id, 1)
+    assert.equal(delivery.event, 'chat.transferred')
+    assert.equal(delivery.payload.chat.from_agent_id, TEST_USERS.agent.id)
+    assert.isNull(delivery.payload.chat.to_agent_id)
+    assert.equal(delivery.payload.chat.to_department_id, billing.id)
+  })
+
+  test('a transfer to an agent and a department does both', async ({ assert }) => {
+    const sessionId = await acceptedChat()
+    const billing = await department()
+
+    const transferred = await agent('POST', `/${sessionId}/transfer`, {
+      agent_id: TEST_USERS.admin.id,
+      department_id: billing.id,
+    })
+    assert.isTrue(transferred.ok, transferred.text)
+
+    const { session, ticket } = await chatState(sessionId)
+    assert.equal(session.status, 'active')
+    assert.equal(session.agentId, TEST_USERS.admin.id)
+    assert.equal(ticket.departmentId, billing.id)
+    assert.equal(ticket.assignedTo, TEST_USERS.admin.id)
+  })
+
+  test('the type and id transfer body is still read', async ({ assert }) => {
+    const sessionId = await acceptedChat()
+    const billing = await department()
+
+    const transferred = await agent('POST', `/${sessionId}/transfer`, {
+      type: 'department',
+      id: billing.id,
+    })
+    assert.isTrue(transferred.ok, transferred.text)
+    const { ticket } = await chatState(sessionId)
+    assert.equal(ticket.departmentId, billing.id)
+  })
+
+  test('a transfer needs a known target', async ({ assert }) => {
+    const sessionId = await acceptedChat()
+
+    const none = await agent('POST', `/${sessionId}/transfer`, {})
+    assert.equal(none.status, 400)
+    const unknown = await agent('POST', `/${sessionId}/transfer`, { department_id: 999999 })
+    assert.equal(unknown.status, 422)
+    const { session } = await chatState(sessionId)
+    assert.equal(session.agentId, TEST_USERS.agent.id)
+    assert.equal(session.status, 'active')
+  })
+
   // ---- Workflows -----------------------------------------------------------
 
   async function storeWorkflow(triggerEvent: string, tagName: string) {
