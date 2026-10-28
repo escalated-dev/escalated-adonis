@@ -9,6 +9,7 @@ import {
   TooManyChallenges,
   challenge,
   consume,
+  isValidEmail,
   issue,
   markVerified,
   normalizeEmail,
@@ -30,7 +31,7 @@ export default class GuestVerificationController {
     const email = text(request.input('email'))
     const purpose = text(request.input('purpose'))
     const errors: Record<string, string> = {}
-    if (!email || email.length > 255) errors.email = 'Enter a valid email address.'
+    if (!isValidEmail(email)) errors.email = 'Enter a valid email address.'
     if (!(PURPOSES as readonly string[]).includes(purpose)) {
       errors.purpose = 'The selected purpose is invalid.'
     }

@@ -28,7 +28,22 @@
   Only its SHA-256 is stored now, the start answer carries `expires_at`, and
   an unknown or expired token is a 404 on every chat path.
 
+### Added
+- **Mobile guest API**, per the shared contract
+  (https://github.com/escalated-dev/escalated-developer-context/blob/main/domain-model/mobile-guest-api.md):
+  `POST guest/verification`, `POST guest/lookup`, `POST guest/tickets`,
+  `GET guest/tickets/:token` and `POST guest/tickets/:token/replies` under
+  `{api.prefix}/mobile` (default `support/api/v1/mobile`). They reuse the
+  verified guest access codes and grants, so a grant from one surface opens the
+  others, and share the API rate limit and the per-IP guest buckets with the
+  browser and widget guest routes. Registered only while `api.enabled` is on;
+  hosts that never enabled the API see no new routes. See
+  `docs/guest-access.md`.
+
 ### Changed
+- `POST verification` on every guest surface now answers 422 on a malformed
+  `email` even when `purpose` is also invalid (it was accepted as far as the
+  purpose check).
 - An ended chat answers 422 (was 400) to a message and to a second `end`, and
   422 to `typing` (was 200). `rate` answers 422 until the chat has ended (it
   rated open chats), as in escalated-laravel. The token is now checked before

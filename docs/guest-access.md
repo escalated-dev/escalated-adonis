@@ -110,9 +110,59 @@ new chat. An ended chat answers 422 to messages, typing and a second end, and
 `rate` answers 422 until the chat has ended; the transcript and rating stay
 available until the token expires.
 
+## Mobile guest API
+
+The mobile app's guest routes live under the REST API prefix plus `/mobile`
+(`{api.prefix}/mobile`, default `support/api/v1/mobile`) and follow the shared
+contract:
+https://github.com/escalated-dev/escalated-developer-context/blob/main/domain-model/mobile-guest-api.md
+
+| Method | Path | Guest bucket |
+|---|---|---|
+| POST | `guest/verification` | ticket (submissions) |
+| POST | `guest/lookup` | reply |
+| POST | `guest/tickets` | ticket (submissions) |
+| GET | `guest/tickets/:token` | none (API limit only) |
+| POST | `guest/tickets/:token/replies` | reply |
+
+They are registered only while `api.enabled` is on (default off), next to the
+other API routes. `verification` and `lookup` are the same handlers as on the
+browser and widget surfaces. `:token` is a guest grant: a grant from any
+surface opens the mobile routes and the reverse, and an expired, rotated,
+malformed or unknown grant, or a chat token, is a 404. Legacy permanent tokens
+are not accepted here, even with `guestAccess.legacyTokens`.
+
+- `POST guest/tickets` takes JSON or multipart: `name`, `email`, `subject`,
+  `description`, `verification_id` (uuid), `verification_code`, optional
+  `priority`, `department_id` and up to ten `attachments[]` within
+  `tickets.maxAttachmentSizeKb`. Checks run in the contract's order: 403 while
+  guest tickets are off, then 422 for fields, then 422 on
+  `verification_code` for bad proof (nothing is created). Other fields
+  (`external_reference`, `metadata`, status, assignee) are ignored. 201
+  `{ data: <mobile ticket>, message: "Ticket created." }` with
+  `data.guest_access_token`.
+- `GET guest/tickets/:token`: `{ data: <mobile ticket> }` with public replies,
+  newest first; attachment `url`s are guest download links bound to the grant.
+- `POST guest/tickets/:token/replies`: `{ email, body }` plus optional
+  `attachments[]`. 404 bad grant, 422 closed ticket, 422 fields, 403 when the
+  email (trimmed, lower-cased) is not the ticket's guest email, else 201
+  `{ message: "Reply sent." }`.
+
+Every answer, errors and 429s included, carries `Cache-Control: no-store,
+private` and `Referrer-Policy: no-referrer`. The whole group runs the API rate
+limiter (`api.rateLimit`, per IP, with `X-RateLimit-*` headers) and the guest
+buckets above, which are the same per-IP counters the browser and widget guest
+routes use.
+
 ## Not in this package
 
-- Mobile guest routes: this package has none.
+- Mobile guest API: there is no separate "requests" guest bucket (the contract's
+  60 per minute on every guest route); the API rate limit covers every mobile
+  route, and the reply bucket defaults to 10 per minute (contract: 30). Tune
+  them with `api.rateLimit` and `guestRateLimit.repliesPerMinute`.
+- Mobile guest ticket creation and the code are not one transaction (see
+  below); the authenticated customer mobile routes, mobile knowledge base and
+  departments are not provided.
 - Lookup matches the Escalated reference only (no host `external_reference`).
 - Consumption and the operation are not one database transaction: the code is
   claimed with a conditional update first and released if the operation fails.
