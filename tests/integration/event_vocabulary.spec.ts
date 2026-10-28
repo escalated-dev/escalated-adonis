@@ -1,5 +1,6 @@
 import { test } from '@japa/runner'
 import { withGuestProof } from './fixtures/guest_codes.js'
+import { chatSessionFor, chatSessionIdFor } from './fixtures/chat_sessions.js'
 import {
   InertiaClient,
   sqlTimestamp,
@@ -269,7 +270,7 @@ test.group('Event vocabulary', (group) => {
       message: '',
     })
     assert.equal(started.status, 201, started.text)
-    const sessionId = started.data.session_id
+    const sessionId = await chatSessionIdFor(started.data.id)
 
     const sent = await widget('POST', `/chat/${started.data.id}/messages`, { body: 'Hello?' })
     assert.isTrue(sent.ok, sent.text)
@@ -313,7 +314,7 @@ test.group('Event vocabulary', (group) => {
       message: '',
     })
     assert201(started)
-    const sessionId = started.data.session_id
+    const sessionId = await chatSessionIdFor(started.data.id)
     const accepted = await agent('POST', `/${sessionId}/accept`)
     if (!accepted.ok) throw new Error(accepted.text)
     return sessionId as number
@@ -492,7 +493,7 @@ test.group('Event vocabulary', (group) => {
     })
     assert.equal(started.status, 201, started.text)
     const { default: ChatSession } = await import('../../src/models/chat_session.js')
-    const session = await ChatSession.findOrFail(started.data.session_id)
+    const session = await chatSessionFor(started.data.id)
     assert.include(await tagNames(session.ticketId), 'chat-began')
 
     const ended = await widget('POST', `/chat/${started.data.id}/end`)

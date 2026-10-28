@@ -148,7 +148,7 @@ stay, so existing clients keep working.
 | `POST /tickets` | Needs `verification_id` and `verification_code` (a `ticket` code). 201 `{ message, reference, ticket_reference, guest_access_token, expires_at }`. An active `department_id` is kept; any other is ignored. |
 | `POST /lookup` | `{ email, reference, verification_id, verification_code }` (a `lookup` code): `{ data: [{ reference, subject, guest_access_token, expires_at }] }` |
 | `GET /tickets/:reference` | With `Authorization: Bearer <guest_access_token>`: `reference`, `subject`, `status`, `status_label`, `status_color`, `created_at`, `department`, `replies` |
-| `POST /chat/start` | Needs a `chat` code for `email`. 201 `{ id, session_id, visitor_token, expires_at, ticket_reference, status, messages, agent }`. `message` is optional. `id` is the visitor token, the random key of every chat path below. |
+| `POST /chat/start` | Needs a `chat` code for `email`. 201 `{ id, session_id, visitor_token, expires_at, ticket_reference, status, agent_name, messages, agent }`. `message` is optional. `id` is the visitor token, the random key of every chat path below; `session_id` and `visitor_token` repeat it, as in escalated-laravel. |
 | `GET /chat/:id/messages` | `{ messages: [{ id, body, is_agent, author: { name }, created_at }], agent, typing, ended }` (the latest 100 messages) |
 | `POST /chat/:id/messages` | `{ body }`, the same action as `POST /chat/:id/message` |
 | `POST /chat/:id/typing`, `/end`, `/rate` | as before; `typing` without a body means "typing" |

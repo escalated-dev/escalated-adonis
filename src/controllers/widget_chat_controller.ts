@@ -127,19 +127,24 @@ export default class WidgetChatController {
     const names = new AgentNames()
     const visitorName = guestName(session, ticket)
 
+    const agentName = agentId ? await names.nameOf(agentId) : null
+
     privateResponse(ctx.response)
     return ctx.response.created({
       // The shared widget addresses the chat by `id` in every chat path. It is
       // the visitor token: random, and the only key the chat routes accept.
+      // As in escalated-laravel, `session_id` is the token too; the numeric
+      // session id stays internal.
       id: visitorToken,
-      session_id: session.id,
+      session_id: visitorToken,
       ticket_reference: ticket.reference,
       visitor_token: visitorToken,
       // The token stops working after this; the visitor starts a new chat.
       expires_at: visitorTokenExpiresAt.toISO(),
       status: agentId ? 'active' : 'waiting',
+      agent_name: agentName,
       messages: firstReply ? [await serializeMessage(firstReply, session, visitorName, names)] : [],
-      agent: agentId ? { name: await names.nameOf(agentId) } : null,
+      agent: agentName ? { name: agentName } : null,
     })
   }
 
