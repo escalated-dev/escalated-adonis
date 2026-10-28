@@ -28,8 +28,13 @@ export default class ChatSession extends EscalatedBaseModel {
   @column()
   declare visitorEmail: string | null
 
-  @column()
+  /** SHA-256 of the visitor's chat token (plain only for chats started before hashing). */
+  @column({ serializeAs: null })
   declare visitorToken: string | null
+
+  /** When the visitor's chat token stops working; null only for chats started before expiry. */
+  @column.dateTime()
+  declare visitorTokenExpiresAt: DateTime | null
 
   @column()
   declare status: ChatSessionStatus

@@ -1,5 +1,7 @@
 import { agentCanAccessTicket } from '../support/ticket_access.js'
 import { DateTime } from 'luxon'
+import { createHash, randomBytes } from 'node:crypto'
+import { grantTtlMinutes } from '../support/guest_access.js'
 import emitter from '@adonisjs/core/services/emitter'
 import Ticket from '../models/ticket.js'
 import Reply from '../models/reply.js'
@@ -9,6 +11,16 @@ import type { ChatSessionStatus } from '../models/chat_session.js'
 import { ESCALATED_EVENTS } from '../events/index.js'
 import type { TicketStatus } from '../types.js'
 import type { UserId } from '../helpers/user_id_column.js'
+
+/** Chat tokens are stored as their SHA-256, like guest grants. */
+export function hashVisitorToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex')
+}
+
+/** Chat tokens live as long as guest grants (`guestAccess.ttlMinutes`), as in escalated-laravel. */
+function visitorTokenExpiry(): DateTime {
+  return DateTime.now().plus({ minutes: grantTtlMinutes() }).startOf('second')
+}
 
 export default class ChatSessionService {
   /**
@@ -29,12 +41,14 @@ export default class ChatSessionService {
     ticket: Ticket
     session: ChatSession
     visitorToken: string
+    visitorTokenExpiresAt: DateTime
     firstReply: Reply | null
   }> {
     const message =
       typeof data.message === 'string' && data.message.trim() !== '' ? data.message : ''
-    const { randomBytes } = await import('node:crypto')
+    // The visitor's only key to this chat: random, expiring, stored hashed.
     const visitorToken = randomBytes(32).toString('hex')
+    const visitorTokenExpiresAt = visitorTokenExpiry()
     const reference = await Ticket.generateReference()
 
     const ticket = await Ticket.create({
@@ -43,7 +57,7 @@ export default class ChatSessionService {
       requesterId: data.visitorId ?? null,
       guestName: data.visitorName ?? null,
       guestEmail: data.visitorEmail ?? null,
-      guestToken: data.visitorId ? null : visitorToken,
+      guestToken: null,
       subject: data.subject || 'Live Chat',
       description: message,
       status: 'open' as TicketStatus,
@@ -62,7 +76,8 @@ export default class ChatSessionService {
       visitorId: data.visitorId ?? null,
       visitorName: data.visitorName ?? null,
       visitorEmail: data.visitorEmail ?? null,
-      visitorToken,
+      visitorToken: hashVisitorToken(visitorToken),
+      visitorTokenExpiresAt,
       status: 'waiting' as ChatSessionStatus,
       departmentId: data.departmentId ?? null,
       messagesCount: message ? 1 : 0,
@@ -86,7 +101,7 @@ export default class ChatSessionService {
     await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
     await emitter.emit(ESCALATED_EVENTS.CHAT_STARTED, { ticket, sessionId: session.id })
 
-    return { ticket, session, visitorToken, firstReply }
+    return { ticket, session, visitorToken, visitorTokenExpiresAt, firstReply }
   }
 
   /**
@@ -308,9 +323,30 @@ export default class ChatSessionService {
   }
 
   /**
-   * Find a session by visitor token.
+   * The chat a visitor's unexpired token unlocks, or null (answered with 404).
+   * A chat started before tokens were hashed holds its plain token and no
+   * expiry: the first request with it stores the hash and gives it a full
+   * lifetime, so chats in progress during an upgrade keep working.
    */
-  async findByVisitorToken(token: string): Promise<ChatSession | null> {
-    return ChatSession.query().where('visitor_token', token).preload('ticket').first()
+  async findByVisitorToken(token: unknown): Promise<ChatSession | null> {
+    if (typeof token !== 'string' || token === '' || token.length > 255) return null
+    let session = await ChatSession.query()
+      .where('visitor_token', hashVisitorToken(token))
+      .preload('ticket')
+      .first()
+    if (!session) {
+      session = await ChatSession.query()
+        .where('visitor_token', token)
+        .whereNull('visitor_token_expires_at')
+        .preload('ticket')
+        .first()
+      if (!session) return null
+      session.visitorToken = hashVisitorToken(token)
+    }
+    if (!session.visitorTokenExpiresAt) {
+      session.visitorTokenExpiresAt = visitorTokenExpiry()
+      await session.save()
+    }
+    return session.visitorTokenExpiresAt > DateTime.now() ? session : null
   }
 }

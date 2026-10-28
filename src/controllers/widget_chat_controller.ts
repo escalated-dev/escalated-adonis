@@ -111,7 +111,7 @@ export default class WidgetChatController {
       }
       throw failure
     }
-    const { ticket, session, visitorToken, firstReply } = started
+    const { ticket, session, visitorToken, visitorTokenExpiresAt, firstReply } = started
 
     // Attempt auto-assignment
     const agentId = await this.routingService.findAvailableAgent({
@@ -135,6 +135,8 @@ export default class WidgetChatController {
       session_id: session.id,
       ticket_reference: ticket.reference,
       visitor_token: visitorToken,
+      // The token stops working after this; the visitor starts a new chat.
+      expires_at: visitorTokenExpiresAt.toISO(),
       status: agentId ? 'active' : 'waiting',
       messages: firstReply ? [await serializeMessage(firstReply, session, visitorName, names)] : [],
       agent: agentId ? { name: await names.nameOf(agentId) } : null,
@@ -168,7 +170,7 @@ export default class WidgetChatController {
       agent: session.agentId ? { name: await names.nameOf(session.agentId) } : null,
       // Agent typing is broadcast, not stored, so a polling widget sees none.
       typing: null,
-      ended: session.status === 'ended' || session.status === 'abandoned',
+      ended: isEnded(session),
     })
   }
 
@@ -187,17 +189,17 @@ export default class WidgetChatController {
     const { token } = ctx.params
     const { body } = ctx.request.only(['body'])
 
-    if (!body) {
-      return error(ctx, 'body is required')
-    }
-
     const session = await this.chatService.findByVisitorToken(token)
     if (!session) {
       return notFound(ctx)
     }
 
-    if (session.status === 'ended' || session.status === 'abandoned') {
-      return error(ctx, 'Chat session has ended')
+    if (isEnded(session)) {
+      return ended(ctx, 'Chat has ended.')
+    }
+
+    if (!body) {
+      return error(ctx, 'body is required')
     }
 
     const reply = await this.chatService.sendMessage(
@@ -231,6 +233,10 @@ export default class WidgetChatController {
       return notFound(ctx)
     }
 
+    if (isEnded(session)) {
+      return ended(ctx, 'Chat has ended.')
+    }
+
     // The shared widget posts no body: a call means "typing".
     const payload = this.chatService.updateTyping(
       session.id,
@@ -252,8 +258,8 @@ export default class WidgetChatController {
       return notFound(ctx)
     }
 
-    if (session.status === 'ended') {
-      return error(ctx, 'Chat session already ended')
+    if (isEnded(session)) {
+      return ended(ctx, 'Chat has already ended.')
     }
 
     await this.chatService.endChat(session.id)
@@ -268,13 +274,17 @@ export default class WidgetChatController {
     const { token } = ctx.params
     const { rating, comment } = ctx.request.only(['rating', 'comment'])
 
-    if (!rating || rating < 1 || rating > 5) {
-      return error(ctx, 'rating is required (1-5)')
-    }
-
     const session = await this.chatService.findByVisitorToken(token)
     if (!session) {
       return notFound(ctx)
+    }
+
+    if (!isEnded(session)) {
+      return ended(ctx, 'Chat must be ended before rating.')
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
+      return error(ctx, 'rating is required (1-5)')
     }
 
     await this.chatService.rateChat(session.id, rating, comment)
@@ -304,6 +314,15 @@ export default class WidgetChatController {
  */
 function error(ctx: HttpContext, message: string) {
   return ctx.response.badRequest({ message, error: message })
+}
+
+function isEnded(session: ChatSession) {
+  return session.status === 'ended' || session.status === 'abandoned'
+}
+
+/** A chat that has ended (or has not, for `rate`): 422, as in escalated-laravel. */
+function ended(ctx: HttpContext, message: string) {
+  return ctx.response.unprocessableEntity({ message, error: message })
 }
 
 function notFound(ctx: HttpContext) {
