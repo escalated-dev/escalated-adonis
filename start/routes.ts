@@ -9,6 +9,7 @@
 */
 
 import router from '@adonisjs/core/services/router'
+import type { Router } from '@adonisjs/core/http'
 import { getConfig } from '../src/helpers/config.js'
 import { isUiEnabled } from '../src/rendering/renderer.js'
 import {
@@ -96,6 +97,8 @@ const ApiAuthController = () => import('../src/controllers/api/api_auth_controll
 const ApiDashboardController = () => import('../src/controllers/api/api_dashboard_controller.js')
 const ApiTicketController = () => import('../src/controllers/api/api_ticket_controller.js')
 const ApiResourceController = () => import('../src/controllers/api/api_resource_controller.js')
+const MobileGuestTicketsController = () =>
+  import('../src/controllers/api/mobile_guest_tickets_controller.js')
 
 const AdminNewsletterController = () => import('../src/controllers/admin_newsletter_controller.js')
 const AdminNewsletterListController = () =>
@@ -239,6 +242,7 @@ function registerCoreRoutes(config: any) {
   // ---- API Routes ----
   if ((config as any).api?.enabled) {
     registerApiRoutes(config)
+    registerMobileGuestRoutes(config)
   }
 }
 
@@ -1446,4 +1450,44 @@ export function registerApiRoutes(config: any) {
     })
     .prefix(apiPrefix)
     .use([middleware.apiRateLimit(), middleware.ticketAccess()])
+}
+
+/**
+ * The mobile guest routes, under the API prefix plus `/mobile`: email codes,
+ * lookup, and ticket create/show/reply opened by a guest grant. Registered
+ * only while the REST API is enabled (`api.enabled`). They share the API rate
+ * limit and the per-IP guest buckets with the browser and widget guest
+ * routes. Contract:
+ * https://github.com/escalated-dev/escalated-developer-context/blob/main/domain-model/mobile-guest-api.md
+ */
+export function registerMobileGuestRoutes(config: any, target: Router = router) {
+  if (!config.api?.enabled) return
+  const apiPrefix = String(config.api?.prefix ?? 'support/api/v1').replace(/\/+$/, '')
+  const middleware = escalatedMiddleware(target)
+
+  target
+    .group(() => {
+      target
+        .post('/verification', [GuestVerificationController, 'verification'])
+        .as('escalated.api.mobile.guest.verification')
+        .use(middleware.guestRateLimit({ scope: 'ticket' }))
+      target
+        .post('/lookup', [GuestVerificationController, 'lookup'])
+        .as('escalated.api.mobile.guest.lookup')
+        .use(middleware.guestRateLimit({ scope: 'reply' }))
+      target
+        .post('/tickets', [MobileGuestTicketsController, 'store'])
+        .as('escalated.api.mobile.guest.tickets.store')
+        .use(middleware.guestRateLimit({ scope: 'ticket' }))
+      target
+        .get('/tickets/:token', [MobileGuestTicketsController, 'show'])
+        .as('escalated.api.mobile.guest.tickets.show')
+      // The reply limit runs before the grant is resolved, so bad grants count too.
+      target
+        .post('/tickets/:token/replies', [MobileGuestTicketsController, 'reply'])
+        .as('escalated.api.mobile.guest.tickets.reply')
+        .use(middleware.guestRateLimit({ scope: 'reply' }))
+    })
+    .prefix(`${apiPrefix}/mobile/guest`)
+    .use([middleware.guestPrivacyHeaders(), middleware.apiRateLimit(), middleware.ticketAccess()])
 }

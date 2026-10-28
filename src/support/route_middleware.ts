@@ -36,6 +36,7 @@ export function escalatedMiddleware(router: Router) {
     authenticateApiToken: () => import('../middleware/authenticate_api_token.js'),
     apiRateLimit: () => import('../middleware/api_rate_limit.js'),
     guestRateLimit: () => import('../middleware/guest_rate_limit.js'),
+    guestPrivacyHeaders: () => import('../middleware/guest_privacy_headers.js'),
     widgetCors: () => import('../middleware/widget_cors.js'),
     knowledgeBaseGuard: () => import('../middleware/knowledge_base_guard.js'),
   })
