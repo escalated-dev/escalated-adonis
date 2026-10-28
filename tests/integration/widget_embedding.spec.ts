@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { test } from '@japa/runner'
 import { withGuestProof } from './fixtures/guest_codes.js'
+import { chatSessionFor } from './fixtures/chat_sessions.js'
 import { InertiaClient, sqlTimestamp, testApp, type TestApp } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
 import { MemoryGuestRateLimitStore } from '../../src/support/guest_rate_limit.js'
@@ -397,7 +398,7 @@ test.group('Widget embedding', (group) => {
     assert.deepEqual(ticket.chatMetadata, expected)
     assert.deepEqual(ticket.metadata, { source: 'live_chat' })
     const { default: ChatSession } = await import('../../src/models/chat_session.js')
-    const session = await ChatSession.findOrFail(response.body.session_id)
+    const session = await chatSessionFor(response.body.id)
     assert.deepEqual(session.metadata, expected)
   })
 

@@ -1,5 +1,6 @@
 import { test } from '@japa/runner'
 import { withGuestProof } from './fixtures/guest_codes.js'
+import { chatSessionIdFor } from './fixtures/chat_sessions.js'
 import { sqlTimestamp, testApp, TEST_USER_HEADER, type TestApp } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
 import { MemoryGuestRateLimitStore } from '../../src/support/guest_rate_limit.js'
@@ -74,7 +75,7 @@ test.group('Chat end route', (group) => {
     })
     const started = await post(path, body, null)
     if (started.status !== 201) throw new Error(`chat start: ${started.status} ${started.text}`)
-    const sessionId = started.data.session_id as number
+    const sessionId = await chatSessionIdFor(started.data.id)
     const accepted = await post(`/support/agent/chats/${sessionId}/accept`, {}, TEST_USERS.agent)
     if (accepted.status !== 200) throw new Error(`accept: ${accepted.status} ${accepted.text}`)
     return sessionId

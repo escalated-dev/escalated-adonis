@@ -1,5 +1,6 @@
 import { test } from '@japa/runner'
 import { withGuestProof } from './fixtures/guest_codes.js'
+import { chatSessionFor, chatSessionIdFor } from './fixtures/chat_sessions.js'
 import { sqlTimestamp, testApp, type TestApp } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
 import { MemoryGuestRateLimitStore } from '../../src/support/guest_rate_limit.js'
@@ -262,13 +263,16 @@ test.group('Widget API contract', (group) => {
     assert.equal(response.data.id, response.data.visitor_token)
     assert.equal(response.data.status, 'waiting')
     assert.deepEqual(response.data.messages, [])
-    // Existing keys stay.
-    assert.isNumber(response.data.session_id)
+    // As in escalated-laravel, `session_id` is the token too.
+    assert.equal(response.data.session_id, response.data.id)
     assert.isString(response.data.ticket_reference)
+    assert.isAbove(Date.parse(response.data.expires_at), Date.now())
+    assert.property(response.data, 'agent_name')
+    assert.isNull(response.data.agent_name)
 
     const { default: Reply } = await import('../../src/models/reply.js')
     const { default: ChatSession } = await import('../../src/models/chat_session.js')
-    const session = await ChatSession.findOrFail(response.data.session_id)
+    const session = await chatSessionFor(response.data.id)
     assert.lengthOf(await Reply.query().where('ticket_id', session.ticketId), 0)
   })
 
@@ -297,8 +301,8 @@ test.group('Widget API contract', (group) => {
 
     assert.equal(kept.status, 201, kept.text)
     assert.equal(dropped.status, 201, dropped.text)
-    const keptSession = await ChatSession.findOrFail(kept.data.session_id)
-    const droppedSession = await ChatSession.findOrFail(dropped.data.session_id)
+    const keptSession = await chatSessionFor(kept.data.id)
+    const droppedSession = await chatSessionFor(dropped.data.id)
     assert.equal(keptSession.departmentId, active.id)
     assert.isNull(droppedSession.departmentId)
   })
@@ -316,7 +320,7 @@ test.group('Widget API contract', (group) => {
       await import('../../src/services/chat_session_service.js')
     const { default: ChatSession } = await import('../../src/models/chat_session.js')
     const service = new ChatSessionService()
-    const session = await ChatSession.findOrFail(started.data.session_id)
+    const session = await chatSessionFor(started.data.id)
     await ChatSession.query().where('id', session.id).update({
       agent_id: TEST_USERS.agent.id,
       status: 'active',
@@ -408,7 +412,7 @@ test.group('Widget API contract', (group) => {
     const expiresAt = Date.parse(started.data.expires_at)
     assert.isAtLeast(expiresAt, before + 1440 * 60_000 - 5_000)
     assert.isAtMost(expiresAt, Date.now() + 1440 * 60_000 + 5_000)
-    const session = await ChatSession.findOrFail(started.data.session_id)
+    const session = await chatSessionFor(started.data.id)
     assert.equal(session.visitorToken, hashVisitorToken(started.data.id))
     assert.equal(session.visitorTokenExpiresAt!.toMillis(), expiresAt)
     const { default: Ticket } = await import('../../src/models/ticket.js')
@@ -437,7 +441,7 @@ test.group('Widget API contract', (group) => {
     const started = await api('POST', '/chat/start', preChat())
     const id = started.data.id
     const { DateTime } = await import('luxon')
-    const session = await ChatSession.findOrFail(started.data.session_id)
+    const session = await chatSessionFor(started.data.id)
     session.visitorTokenExpiresAt = DateTime.now().minus({ minutes: 1 })
     await session.save()
 
@@ -465,14 +469,14 @@ test.group('Widget API contract', (group) => {
     const id = started.data.id
     // The shape such a chat has after the migration: plain token, no expiry.
     await ChatSession.query()
-      .where('id', started.data.session_id)
+      .where('id', await chatSessionIdFor(started.data.id))
       .update({ visitor_token: id, visitor_token_expires_at: null })
     const before = Date.now()
 
     const polled = await api('GET', `/chat/${id}/messages`)
     assert.equal(polled.status, 200, polled.text)
 
-    const session = await ChatSession.findOrFail(started.data.session_id)
+    const session = await chatSessionFor(started.data.id)
     assert.equal(session.visitorToken, hashVisitorToken(id))
     assert.isAtLeast(session.visitorTokenExpiresAt!.toMillis(), before + 1440 * 60_000 - 5_000)
     const sent = await api('POST', `/chat/${id}/messages`, { body: 'Still here' })
