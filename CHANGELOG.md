@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+### Upgrading
+- Run the migrations (`0072_add_chat_visitor_token_expiry`): it adds a nullable
+  `visitor_token_expires_at` to `escalated_chat_sessions`. Chats already in
+  progress keep working: the next widget request with their token stores the
+  token's hash in place of the plain value and gives it a full lifetime.
+- Widget chat tokens now expire `guestAccess.ttlMinutes` after the chat starts
+  (default 1440, clamped to 5 minutes .. 7 days), as in escalated-laravel.
+  After that every `/widget/chat/:token/*` path answers 404 and the visitor
+  starts a new chat.
+- `ChatSession.visitorToken` now holds the token's SHA-256 and is no longer
+  serialized; `ChatSessionService.startChat` still returns the token once as
+  `visitorToken` (with `visitorTokenExpiresAt`). The chat's ticket no longer
+  gets the token as its `guest_token`.
+
+### Security
+- **Widget chat tokens are stored hashed and expire.** The token returned by
+  `POST /widget/chat/start` (`id`, `visitor_token`) was stored in plain text,
+  on the chat session and as the ticket's `guest_token`, and never expired.
+  Only its SHA-256 is stored now, the start answer carries `expires_at`, and
+  an unknown or expired token is a 404 on every chat path.
+
+### Changed
+- An ended chat answers 422 (was 400) to a message and to a second `end`, and
+  422 to `typing` (was 200). `rate` answers 422 until the chat has ended (it
+  rated open chats), as in escalated-laravel. The token is now checked before
+  the request body, so an unknown token is a 404 even with an empty message.
+
 ## [0.7.6] - 2026-10-22
 
 ### Upgrading

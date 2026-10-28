@@ -396,6 +396,115 @@ test.group('Widget API contract', (group) => {
     )
   })
 
+  test('a chat token expires with the guest access lifetime and only its hash is stored', async ({
+    assert,
+  }) => {
+    const { default: ChatSession } = await import('../../src/models/chat_session.js')
+    const { hashVisitorToken } = await import('../../src/services/chat_session_service.js')
+    const before = Date.now()
+    const started = await api('POST', '/chat/start', preChat())
+    assert.equal(started.status, 201, started.text)
+
+    const expiresAt = Date.parse(started.data.expires_at)
+    assert.isAtLeast(expiresAt, before + 1440 * 60_000 - 5_000)
+    assert.isAtMost(expiresAt, Date.now() + 1440 * 60_000 + 5_000)
+    const session = await ChatSession.findOrFail(started.data.session_id)
+    assert.equal(session.visitorToken, hashVisitorToken(started.data.id))
+    assert.equal(session.visitorTokenExpiresAt!.toMillis(), expiresAt)
+    const { default: Ticket } = await import('../../src/models/ticket.js')
+    const ticket = await Ticket.findOrFail(session.ticketId)
+    assert.notEqual(ticket.guestToken, started.data.id)
+  })
+
+  test('the chat token lifetime follows guestAccess.ttlMinutes', async ({ assert }) => {
+    const config = getConfig() as any
+    const previousAccess = config.guestAccess
+    config.guestAccess = { ...previousAccess, ttlMinutes: 30 }
+    try {
+      const before = Date.now()
+      const started = await api('POST', '/chat/start', preChat())
+      assert.equal(started.status, 201, started.text)
+      const expiresAt = Date.parse(started.data.expires_at)
+      assert.isAtLeast(expiresAt, before + 30 * 60_000 - 5_000)
+      assert.isAtMost(expiresAt, Date.now() + 30 * 60_000 + 5_000)
+    } finally {
+      config.guestAccess = previousAccess
+    }
+  })
+
+  test('every chat path answers 404 once the token has expired', async ({ assert }) => {
+    const { default: ChatSession } = await import('../../src/models/chat_session.js')
+    const started = await api('POST', '/chat/start', preChat())
+    const id = started.data.id
+    const { DateTime } = await import('luxon')
+    const session = await ChatSession.findOrFail(started.data.session_id)
+    session.visitorTokenExpiresAt = DateTime.now().minus({ minutes: 1 })
+    await session.save()
+
+    const answers = [
+      await api('GET', `/chat/${id}/messages`),
+      await api('POST', `/chat/${id}/messages`, { body: 'x' }),
+      await api('POST', `/chat/${id}/message`, { body: 'x' }),
+      await api('POST', `/chat/${id}/typing`),
+      await api('POST', `/chat/${id}/end`),
+      await api('POST', `/chat/${id}/rate`, { rating: 5 }),
+    ]
+
+    assert.deepEqual(
+      answers.map((answer) => answer.status),
+      [404, 404, 404, 404, 404, 404]
+    )
+  })
+
+  test('a chat started before tokens expired keeps working and gets a full lifetime', async ({
+    assert,
+  }) => {
+    const { default: ChatSession } = await import('../../src/models/chat_session.js')
+    const { hashVisitorToken } = await import('../../src/services/chat_session_service.js')
+    const started = await api('POST', '/chat/start', preChat())
+    const id = started.data.id
+    // The shape such a chat has after the migration: plain token, no expiry.
+    await ChatSession.query()
+      .where('id', started.data.session_id)
+      .update({ visitor_token: id, visitor_token_expires_at: null })
+    const before = Date.now()
+
+    const polled = await api('GET', `/chat/${id}/messages`)
+    assert.equal(polled.status, 200, polled.text)
+
+    const session = await ChatSession.findOrFail(started.data.session_id)
+    assert.equal(session.visitorToken, hashVisitorToken(id))
+    assert.isAtLeast(session.visitorTokenExpiresAt!.toMillis(), before + 1440 * 60_000 - 5_000)
+    const sent = await api('POST', `/chat/${id}/messages`, { body: 'Still here' })
+    assert.equal(sent.status, 200, sent.text)
+  })
+
+  test('an ended chat refuses messages, typing and a second end with 422, but stays readable and rateable', async ({
+    assert,
+  }) => {
+    const started = await api('POST', '/chat/start', preChat())
+    const id = started.data.id
+
+    const early = await api('POST', `/chat/${id}/rate`, { rating: 5 })
+    assert.equal(early.status, 422, early.text)
+
+    const ended = await api('POST', `/chat/${id}/end`)
+    assert.equal(ended.status, 200, ended.text)
+    const refused = [
+      await api('POST', `/chat/${id}/messages`, { body: 'late' }),
+      await api('POST', `/chat/${id}/typing`),
+      await api('POST', `/chat/${id}/end`),
+    ]
+    assert.deepEqual(
+      refused.map((answer) => answer.status),
+      [422, 422, 422]
+    )
+    const polled = await api('GET', `/chat/${id}/messages`)
+    assert.equal(polled.data.ended, true)
+    const rated = await api('POST', `/chat/${id}/rate`, { rating: 5 })
+    assert.equal(rated.status, 200, rated.text)
+  })
+
   test('the new chat routes get CORS for an allowed site', async ({ assert }) => {
     const started = await api('POST', '/chat/start', preChat(), { origin: SHOP })
     assert.equal(started.status, 201, started.text)

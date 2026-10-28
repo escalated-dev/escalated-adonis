@@ -102,8 +102,13 @@ unlocks nothing; the list may be empty, and the code is spent either way.
 ## Live chat
 
 `POST {prefix}/widget/chat/start` needs a `chat` code for the visitor's email.
-The chat paths still use the chat's random visitor token (`id`); chat grants do
-not expire in this package.
+The chat paths use the chat's random visitor token (`id`). Only its SHA-256 is
+stored, and it expires `guestAccess.ttlMinutes` after the chat starts
+(`expires_at` in the start answer), as Laravel's chat grant does. After that,
+and for any unknown token, every chat path answers 404 and the visitor starts a
+new chat. An ended chat answers 422 to messages, typing and a second end, and
+`rate` answers 422 until the chat has ended; the transcript and rating stay
+available until the token expires.
 
 ## Not in this package
 
