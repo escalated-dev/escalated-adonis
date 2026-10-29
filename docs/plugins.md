@@ -46,7 +46,7 @@ The main file is loaded when the plugin is activated. Use it to register hooks:
 import { escalated_addAction, escalated_addFilter } from '@escalated-dev/escalated-adonis/support/helpers'
 
 // Runs every time a ticket is created
-escalated_addAction('ticket_created', async (ticket) => {
+escalated_addAction('ticket.created', async (ticket) => {
   // Send a Slack notification, create a Jira issue, etc.
   console.log(`New ticket: ${ticket.reference}`)
 })
@@ -149,17 +149,41 @@ Lower numbers run first. The default priority is `10`. Use lower values (e.g. `5
 
 ```typescript
 // This runs first
-escalated_addAction('ticket_created', async (ticket) => {
+escalated_addAction('ticket.created', async (ticket) => {
   // early processing
 }, 5)
 
 // This runs second
-escalated_addAction('ticket_created', async (ticket) => {
+escalated_addAction('ticket.created', async (ticket) => {
   // later processing
 }, 20)
 ```
 
 ## Available Hooks
+
+### Domain events
+
+Plugins receive the canonical events of the event vocabulary
+(`ticket.created`, `ticket.updated`, `ticket.status_changed`,
+`ticket.resolved`, `ticket.closed`, `ticket.reopened`, `ticket.assigned`,
+`ticket.unassigned`, `ticket.escalated`, `ticket.priority_changed`,
+`ticket.department_changed`, `ticket.tag_added`, `ticket.tag_removed`,
+`reply.created`, `note.created`, `sla.warning`, `sla.breached` and the
+`chat.*` events) as actions. Native plugins get them through
+`escalated_addAction()`; SDK plugins get them in their `actions`. Legacy names
+(`ticket_created`, `ticket.replied`, ...) are never delivered.
+
+The payload is a plain object. Ticket events carry the ticket's fields flat
+(`id`, `reference`, `subject`, `title`, `status`, `priority`,
+`department_id`, `assigned_to`, `requester_id`, `metadata`, ...) and the same
+object under `ticket`, plus the event's extras (`old_status`/`new_status`,
+`agent_id`, `old_priority`/`new_priority`,
+`old_department_id`/`new_department_id`, `tag`, or `type` for SLA events).
+`reply.created` and `note.created` carry the reply flat plus `reply` and
+`ticket`. Chat events carry `session`, without the visitor's token or email.
+
+Delivery is fire-and-forget: a plugin action that throws is logged and never
+fails the request.
 
 ### Plugin Lifecycle
 
@@ -264,7 +288,7 @@ escalated_addAction('plugin_activated_slack-notifier', async () => {
   console.log('Slack Notifier plugin activated')
 })
 
-escalated_addAction('ticket_created', async (ticket) => {
+escalated_addAction('ticket.created', async (ticket) => {
   const webhookUrl = env.get('SLACK_WEBHOOK_URL')
 
   if (!webhookUrl) {
@@ -323,7 +347,7 @@ An npm-distributed plugin follows the same conventions. Your `package.json` and 
 import { escalated_addAction, escalated_registerMenuItem } from '@escalated-dev/escalated-adonis/support/helpers'
 import { BillingService } from './src/billing_service.js'
 
-escalated_addAction('ticket_created', async (ticket) => {
+escalated_addAction('ticket.created', async (ticket) => {
   const billingService = new BillingService()
   await billingService.trackTicket(ticket)
 })

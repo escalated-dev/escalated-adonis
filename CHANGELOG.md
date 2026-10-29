@@ -2,6 +2,37 @@
 
 ## [Unreleased]
 
+### Upgrading
+- **Plugin UI extensions are shared as `escalated.plugins`** (`menuItems`,
+  `pageComponents`, `dashboardWidgets`), the shape the shared frontend reads.
+  Before, nothing was shared, so plugin menus, widgets and slots never
+  appeared. Built from native plugins' registrations and SDK plugins'
+  manifests (`pages[].menu`, `widgets`, `components`); admin menu items go to
+  admins only and items whose permission or capability the viewer lacks are
+  left out. `{}` when there is nothing to show.
+- **Plugins receive the canonical domain events under their canonical names.**
+  SDK plugins got `ticket_created`, `reply_created`, `department_changed` and
+  so on, with the ticket's Lucid JSON under `ticket`; they now get
+  `ticket.created`, `reply.created`, `ticket.department_changed`, ... with the
+  plugin contract's payload (the ticket flat and under `ticket`, snake_case).
+  Native plugins now receive them too, through `escalated_addAction()`.
+  Delivery no longer depends on the SDK bridge having booted, and a failing
+  plugin never fails the request. Rename any action handlers keyed on the old
+  names.
+- **`ctx.tickets.query` and `ctx.replies.query` only accept the plugin
+  contract's filter keys.** Tickets: `id`, `reference`, `status`, `priority`,
+  `channel`, `ticket_type`, `department_id`, `requester_id`, `contact_id`,
+  `assigned_to`. Replies: `ticket_id`, `is_internal`, `type`. Any other key,
+  or a non-scalar value, throws instead of becoming a column name. Results are
+  capped at 500 rows.
+
+### Security
+- Plugin ticket and reply queries used the filter's keys as column names, so a
+  plugin could filter on any column (such as the guest access hash). Keys are
+  now whitelisted.
+- `ctx.emit` drops hook names that would impersonate a canonical event, a
+  legacy alias of one, or a plugin lifecycle action.
+
 ## [0.7.7] - 2026-10-28
 
 ### Upgrading

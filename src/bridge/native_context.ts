@@ -39,6 +39,42 @@ import type {
 } from '@escalated-dev/plugin-sdk'
 import PluginStoreRecord from '../models/plugin_store_record.js'
 import { resolveUserModel } from '../support/user_model.js'
+import { isReservedHook } from '../support/plugin_events.js'
+
+/**
+ * ctx.tickets.query filter keys (plugin contract) and the column each reads.
+ * Any other key is an error, never a column name.
+ */
+const TICKET_FILTERS: Record<string, string> = {
+  id: 'id',
+  reference: 'reference',
+  status: 'status',
+  priority: 'priority',
+  channel: 'channel',
+  ticket_type: 'ticket_type',
+  department_id: 'department_id',
+  requester_id: 'requester_id',
+  contact_id: 'contact_id',
+  assigned_to: 'assigned_to',
+}
+
+/** The most rows a ticket or reply query hands back. */
+const QUERY_LIMIT = 500
+
+/** Equality filters only: an object of single values. */
+function contractFilter(filter: unknown, method: string): Array<[string, unknown]> {
+  if (filter === null || filter === undefined) return []
+  if (typeof filter !== 'object' || Array.isArray(filter)) {
+    throw new Error(`${method} requires an object filter`)
+  }
+  const entries = Object.entries(filter as Record<string, unknown>)
+  for (const [key, value] of entries) {
+    if (value !== null && !['string', 'number', 'boolean'].includes(typeof value)) {
+      throw new Error(`${method} filter "${key}" must be a single value`)
+    }
+  }
+  return entries
+}
 
 export default class NativeContext implements PluginContext {
   readonly config: ConfigStore
@@ -75,6 +111,13 @@ export default class NativeContext implements PluginContext {
   // ---------------------------------------------------------------------------
 
   async emit(hook: string, data: unknown): Promise<void> {
+    // A plugin may not impersonate a host event or lifecycle action.
+    if (isReservedHook(hook)) {
+      console.warn(
+        `[Escalated Bridge] dropped ctx.emit of reserved hook "${hook}" from ${this.pluginName}`
+      )
+      return
+    }
     const dispatcher = this.getDispatcher()
     await dispatcher.dispatchAction(hook, data)
   }
@@ -392,10 +435,12 @@ export default class NativeContext implements PluginContext {
       async query(filter): Promise<Ticket[]> {
         const { default: TicketModel } = await import('../models/ticket.js')
         const q = TicketModel.query()
-        for (const [col, val] of Object.entries(filter)) {
-          q.where(col, val as any)
+        for (const [key, val] of contractFilter(filter, 'ctx.tickets.query')) {
+          const column = TICKET_FILTERS[key]
+          if (!column) throw new Error(`ctx.tickets.query cannot filter by "${key}"`)
+          val === null ? q.whereNull(column) : q.where(column, val as any)
         }
-        const rows = await q
+        const rows = await q.orderBy('id', 'asc').limit(QUERY_LIMIT)
         return rows.map(NativeContext.serializeTicket)
       },
 
@@ -431,10 +476,14 @@ export default class NativeContext implements PluginContext {
       async query(filter): Promise<Reply[]> {
         const { default: ReplyModel } = await import('../models/reply.js')
         const q = ReplyModel.query()
-        for (const [col, val] of Object.entries(filter)) {
-          q.where(col, val as any)
+        for (const [key, val] of contractFilter(filter, 'ctx.replies.query')) {
+          if (key === 'ticket_id') q.where('ticket_id', val as any)
+          else if (key === 'is_internal')
+            q.where('is_internal_note', val === true || val === 1 || val === '1' || val === 'true')
+          else if (key === 'type') q.where('type', String(val))
+          else throw new Error(`ctx.replies.query cannot filter by "${key}"`)
         }
-        const rows = await q
+        const rows = await q.orderBy('id', 'asc').limit(QUERY_LIMIT)
         return rows.map(NativeContext.serializeReply)
       },
 
