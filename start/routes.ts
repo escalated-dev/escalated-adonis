@@ -102,6 +102,10 @@ const ApiResourceController = () => import('../src/controllers/api/api_resource_
 const MobileGuestTicketsController = () =>
   import('../src/controllers/api/mobile_guest_tickets_controller.js')
 
+const SsoController = () => import('../src/controllers/sso_controller.js')
+const AdminSsoSettingsController = () =>
+  import('../src/controllers/admin_sso_settings_controller.js')
+
 const AdminNewsletterController = () => import('../src/controllers/admin_newsletter_controller.js')
 const AdminNewsletterListController = () =>
   import('../src/controllers/admin_newsletter_list_controller.js')
@@ -263,6 +267,28 @@ async function registerUiRoutes(config: any) {
     config.routes?.adminMiddleware ?? ['auth'],
     'routes.adminMiddleware'
   )
+
+  // ---- Single sign-on (ADR 2026-10-29-configurable-access-features) ----
+  // Guests sign in here through the provider chosen in Admin > Settings > SSO.
+  // 404 while the SSO switch is off; the controller also answers 404 for a
+  // provider other than the chosen one. Registered before the customer routes
+  // so `{prefix}/:ticket` patterns never shadow them. The ACS and the JWT
+  // callback receive cross-site POSTs: hosts using shield's CSRF check list
+  // them through `isSsoCsrfExempt` (docs/access-control.md).
+  router
+    .group(() => {
+      router.get('/login', [SsoController, 'login']).as('escalated.sso.login')
+      router.get('/saml/metadata', [SsoController, 'metadata']).as('escalated.sso.saml.metadata')
+      router.post('/saml/acs', [SsoController, 'samlAcs']).as('escalated.sso.saml.acs')
+      router
+        .get('/oauth/callback', [SsoController, 'oauthCallback'])
+        .as('escalated.sso.oauth.callback')
+      router
+        .route('/jwt/callback', ['GET', 'POST'], [SsoController, 'jwtCallback'])
+        .as('escalated.sso.jwt.callback')
+    })
+    .prefix(`${prefix}/sso`)
+    .use([middleware.ensureFeatureEnabled({ feature: 'sso' })])
 
   // ---- Customer Routes ----
   router
@@ -688,6 +714,18 @@ async function registerUiRoutes(config: any) {
       router
         .post('/settings/database', [AdminDatabaseConnectionController, 'update'])
         .as('escalated.admin.settings.database.update')
+
+      // Single sign-on settings: only while SSO is switched on (404 otherwise).
+      router
+        .group(() => {
+          router
+            .get('/settings/sso', [AdminSsoSettingsController, 'index'])
+            .as('escalated.admin.settings.sso')
+          router
+            .post('/settings/sso', [AdminSsoSettingsController, 'update'])
+            .as('escalated.admin.settings.sso.update')
+        })
+        .use([middleware.ensureFeatureEnabled({ feature: 'sso' })])
 
       // Departments CRUD
       router

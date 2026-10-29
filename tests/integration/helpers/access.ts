@@ -1,4 +1,5 @@
 import type { AccessConfig } from '../../../src/support/access_features.js'
+import type { SsoConfig } from '../../../src/support/sso.js'
 
 /*
 |--------------------------------------------------------------------------
@@ -18,5 +19,15 @@ export function setAccess(access: AccessConfig | undefined) {
     delete config.access
   } else {
     config.access = { ...access }
+  }
+}
+
+/** Sets `config.sso` (the SSO options); `undefined` removes it. */
+export function setSso(sso: SsoConfig | undefined) {
+  const config = ((globalThis as any).__escalated_config ??= {})
+  if (sso === undefined) {
+    delete config.sso
+  } else {
+    config.sso = { ...sso }
   }
 }

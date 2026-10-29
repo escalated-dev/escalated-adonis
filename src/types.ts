@@ -300,6 +300,15 @@ export interface EscalatedConfig {
    */
   twoFactor?: import('./support/two_factor.js').TwoFactorConfig
 
+  /**
+   * Single sign-on options, used while `access.sso` is on: `baseUrl`,
+   * `spEntityId`, `acsUrl`, `allowIdpInitiated`, `jwtAudience`, `clockSkew`,
+   * `createUsers`, `syncRoles`, `guard`, `redirectTo` and the `login` /
+   * `findUserByEmail` / `createUser` hooks. Unset keys fall back to the
+   * ESCALATED_SSO_* environment variables. See docs/access-control.md.
+   */
+  sso?: import('./support/sso.js').SsoConfig
+
   authorization: {
     isAgent: (user: any) => boolean | Promise<boolean>
     isAdmin: (user: any) => boolean | Promise<boolean>

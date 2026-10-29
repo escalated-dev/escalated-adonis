@@ -34,8 +34,9 @@ export interface AccessConfig {
    */
   twoFactor?: boolean
   /**
-   * Single sign-on. Not enforced by this release yet, so it stays off whatever
-   * is configured (see `sso()` below).
+   * Single sign-on: users sign in at `{prefix}/sso/login` through the provider
+   * chosen in Admin > Settings > SSO (SAML, OAuth 2 / OIDC or JWT). Options in
+   * `sso` (config/escalated.ts). Run the migrations first.
    */
   sso?: boolean
 }
@@ -64,13 +65,8 @@ export function twoFactorEnabled(): boolean {
   return configured('twoFactor', 'ESCALATED_TWO_FACTOR')
 }
 
-/**
- * Single sign-on is not enforced by this port yet (no sign-in routes). It
- * stays off until the release that adds them reads `access.sso` /
- * ESCALATED_SSO here.
- */
 export function ssoEnabled(): boolean {
-  return false
+  return configured('sso', 'ESCALATED_SSO')
 }
 
 export function accessFeatureEnabled(feature: AccessFeature): boolean {

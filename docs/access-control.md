@@ -16,18 +16,16 @@ falls back to its environment variable.
 |---|---|---|---|
 | Roles & permissions | `access.rolesPermissions` | `ESCALATED_ROLES_PERMISSIONS` | enforced when on |
 | Two-factor authentication | `access.twoFactor` | `ESCALATED_TWO_FACTOR` | enforced when on |
-| Single sign-on | `access.sso` | `ESCALATED_SSO` | not enforced yet: always off |
+| Single sign-on | `access.sso` | `ESCALATED_SSO` | enforced when on |
 
 ```ts
 // config/escalated.ts
 access: {
   rolesPermissions: process.env.ESCALATED_ROLES_PERMISSIONS === 'true',
   twoFactor: process.env.ESCALATED_TWO_FACTOR === 'true',
+  sso: process.env.ESCALATED_SSO === 'true',
 },
 ```
-
-SSO stays off until the release that enforces it, so the shared
-`features.sso` prop is `false`.
 
 ## Roles & permissions
 
@@ -173,3 +171,123 @@ user's enrolment so they can sign in and set it up again.
    Staff who enrolled while it was off are challenged from their next visit.
 3. Only after telling staff, require it (`ESCALATED_TWO_FACTOR_REQUIRED=true`
    or the setting): everyone without an enrolment is sent to enrol.
+
+## Single sign-on
+
+### What is enforced
+
+With `ESCALATED_SSO=true`, users sign in at `GET {prefix}/sso/login` through
+the provider chosen in **Admin > Settings > SSO** (`sso_provider`: `saml`,
+`oauth` or `jwt`). With `none`, and for any provider other than the chosen
+one, the sign-in routes answer 404. With the switch off, every route below
+and the SSO settings screen (`escalated.admin.settings.sso*`) answer 404.
+
+| Route | Name | Use |
+|---|---|---|
+| `GET sso/login` | `escalated.sso.login` | Start sign-in (`?intended=/local/path` to land there) |
+| `GET sso/saml/metadata` | `escalated.sso.saml.metadata` | SP metadata; its URL is the default SP entity ID |
+| `POST sso/saml/acs` | `escalated.sso.saml.acs` | SAML assertion consumer (HTTP-POST) |
+| `GET sso/oauth/callback` | `escalated.sso.oauth.callback` | OAuth 2 / OIDC redirect URI |
+| `GET\|POST sso/jwt/callback` | `escalated.sso.jwt.callback` | JWT hand-off (`jwt` parameter) |
+
+The SSO settings page receives these as `endpoints` to give the IdP, built
+from `sso.baseUrl` (default `appUrl` / `APP_URL`), never from the request's
+Host header. Secrets (`sso_jwt_secret`, `sso_oauth_client_secret`) reach the
+page only as `********`; posting the mask back keeps the stored value.
+
+The ACS and the JWT callback receive cross-site POSTs from the IdP, which
+carry no CSRF token. If you use `@adonisjs/shield`'s CSRF check, let them
+through (the signed, single-use assertion or token authenticates them):
+
+```ts
+// config/shield.ts
+import { isSsoCsrfExempt, isWidgetCsrfExempt } from '@escalated-dev/escalated-adonis'
+
+csrf: {
+  enabled: true,
+  exceptRoutes: (ctx) => isSsoCsrfExempt(ctx) || isWidgetCsrfExempt(ctx),
+},
+```
+
+**SAML** (`xml-crypto` signatures). Refused unless: the IdP certificate is
+configured; the **assertion** is signed by it (a signed Response alone is not
+enough; `KeyInfo` keys are ignored); there is exactly one assertion and it is
+not encrypted; `Issuer` is `sso_entity_id`; every `AudienceRestriction` names
+the SP entity ID (`sso.spEntityId`, default the metadata URL); the Response
+`Destination` and the bearer `Recipient` are the ACS URL; the validity windows
+hold (`sso.clockSkew`, default 120 seconds, at most 300); `InResponseTo` names
+an AuthnRequest this install issued in the last 10 minutes, used once
+(IdP-initiated responses only with `sso.allowIdpInitiated`); and the assertion
+ID has not been used before. Request IDs, used assertion IDs and JWT `jti`s
+are kept in `escalated_sso_message_ids`, server-side, because the IdP's
+cross-site POST does not carry a SameSite=Lax session cookie. Details in
+[sso.md](sso.md).
+
+**OAuth 2 / OIDC** (`openid-client`). Authorization-code flow with a
+single-use `state` in the session and PKCE `S256`. The code is exchanged at
+the token URL server to server (client secret posted in the body) and the
+profile read from the userinfo URL with the access token. A missing or
+mismatched `state`, an IdP `error`, or a profile with `email_verified: false`
+is refused. If the provider returns an OIDC ID token, its `iss` must equal
+`sso_entity_id` (default: the authorize URL's origin), so set that field to
+the provider's issuer.
+
+**JWT** (`jose`). The IdP sends the user back to the callback with `jwt`. The
+algorithm is pinned to `sso_jwt_algorithm` (HS256/384/512 with the secret,
+RS256/384/512 with a PEM public key or certificate in the same field), so
+`alg: none` and algorithm switching fail. `exp`, `aud` (=
+`sso.jwtAudience`, default the base URL) and `jti` are required; `nbf`/`iat`
+are honoured with the clock skew; a `jti` works once.
+
+### Users and roles
+
+- The email comes from `sso_attr_email` (SAML falls back to an email-shaped
+  NameID), the name from `sso_attr_name`, the role from `sso_attr_role`.
+- The email is matched to a host user case-insensitively
+  (`User.query().whereRaw('LOWER(email) = ?', ...)`, or your
+  `sso.findUserByEmail`). An unknown email is refused unless
+  `sso.createUsers` is on, which creates the user through `User.create()` (or
+  your `sso.createUser`) with an unusable random password.
+- With roles & permissions on and `sso.syncRoles` on, a role value naming an
+  Escalated role slug replaces the user's roles; unknown values change
+  nothing. SSO never changes your `isAdmin` / `isAgent` callbacks; it only
+  signs the user in.
+- The user is signed in with `ctx.auth.use(sso.guard).login(user)` (or your
+  `sso.login`), the session is regenerated, and they land on the `intended`
+  path, `sso.redirectTo`, or their dashboard. **With two-factor on, they
+  still pass the challenge**: SSO sign-in clears the session's two-factor pass.
+- Every refusal answers 403 with the same generic message; the reason is
+  logged.
+
+Escalated does not switch off your password login; do that in your app if you
+want SSO only.
+
+### Options
+
+```ts
+// config/escalated.ts
+sso: {
+  baseUrl: 'https://help.example.com', // default appUrl / APP_URL
+  spEntityId: undefined,               // ESCALATED_SSO_SP_ENTITY_ID; default the metadata URL
+  acsUrl: undefined,                   // ESCALATED_SSO_ACS_URL; default {baseUrl}/{prefix}/sso/saml/acs
+  allowIdpInitiated: false,            // ESCALATED_SSO_ALLOW_IDP_INITIATED
+  jwtAudience: undefined,              // ESCALATED_SSO_JWT_AUDIENCE; default baseUrl
+  clockSkew: 120,                      // ESCALATED_SSO_CLOCK_SKEW; at most 300
+  createUsers: false,                  // ESCALATED_SSO_CREATE_USERS
+  syncRoles: false,                    // ESCALATED_SSO_SYNC_ROLES
+  guard: undefined,                    // auth guard; default guard
+  redirectTo: undefined,
+},
+```
+
+These are install-level: no admin screen or stored setting changes them.
+
+### Turning it on
+
+1. Run the migrations (`0074` renames `escalated_saml_message_ids` to
+   `escalated_sso_message_ids`).
+2. Let the ACS and JWT callback past shield's CSRF check (above).
+3. Set `ESCALATED_SSO=true` (or `access.sso: true`), choose the provider in
+   Admin > Settings > SSO and give the IdP the endpoints shown there. SAML
+   needs the IdP certificate and entity ID.
+4. Decide on `sso.createUsers` and `sso.syncRoles`.

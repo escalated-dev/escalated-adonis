@@ -39,8 +39,32 @@
 - **New TOTP secrets are 160 bits** (32 base32 characters, was 16), and TOTP
   now runs on the `otpauth` library instead of hand-written code. Existing
   secrets keep working.
-- **SSO is an install-level switch too, and stays off in this release**
-  because it does not enforce it yet: `features.sso` is `false`.
+- **Single sign-on is an install-level switch, off by default** (`access.sso`,
+  env `ESCALATED_SSO`). SSO settings were saved but no route signed anyone in.
+  While it is off, the SSO settings screen (`{prefix}/admin/settings/sso`) and
+  every sign-in route answer 404; stored settings are kept. To use it: run the
+  migrations (`0074` renames `escalated_saml_message_ids` to
+  `escalated_sso_message_ids`), let `{prefix}/sso/saml/acs` and
+  `{prefix}/sso/jwt/callback` past shield's CSRF check
+  (`csrf.exceptRoutes: (ctx) => isSsoCsrfExempt(ctx)`), set `appUrl` (or
+  `sso.baseUrl`) to your public URL, set `ESCALATED_SSO=true`, give the IdP
+  the endpoints from the SSO settings page, and decide on `sso.createUsers` /
+  `sso.syncRoles` (both default off). See `docs/access-control.md`.
+- **SAML's SP entity ID, ACS URL, IdP-initiated sign-in and clock skew are
+  install-level options now** (`sso.spEntityId`, `sso.acsUrl`,
+  `sso.allowIdpInitiated`, `sso.clockSkew`, or `ESCALATED_SSO_*`), not the
+  `sso_sp_entity_id`, `sso_acs_url`, `sso_allow_idp_initiated` and
+  `sso_clock_skew` settings, which are ignored. The entity ID and ACS URL
+  default to `{baseUrl}/{prefix}/sso/saml/metadata` and `.../saml/acs`; if
+  your IdP was registered with other values, set them in config.
+  `sso_entity_id` (the IdP's Issuer) is now required, and only a signature on
+  the assertion itself counts: a signed Response around an unsigned assertion
+  is refused.
+- `SsoService.validateSamlAssertion()` and `validateJwtToken()` return
+  `{ email, name, role }` (no `attributes` / `claims`), and
+  `validateJwtToken()` now verifies with `jose` and requires `exp`, `aud` and
+  a single-use `jti`. Hosts that called them from their own routes can use
+  the package's routes instead.
 - **Plugin UI extensions are shared as `escalated.plugins`** (`menuItems`,
   `pageComponents`, `dashboardWidgets`), the shape the shared frontend reads.
   Before, nothing was shared, so plugin menus, widgets and slots never
@@ -65,6 +89,22 @@
   capped at 500 rows.
 
 ### Added
+- **Single sign-on works when switched on.** `GET {prefix}/sso/login` starts
+  sign-in with the provider chosen in Admin > Settings > SSO. SAML requires a
+  signed assertion from the configured certificate and checks Issuer,
+  Audience, Destination, Recipient, validity windows, InResponseTo against
+  AuthnRequests this install issued (stored server-side, single use) and
+  assertion replay; `{prefix}/sso/saml/metadata` serves the SP metadata.
+  OAuth 2 / OIDC (`openid-client`) uses a session-bound single-use `state` and
+  PKCE S256 and reads the userinfo endpoint. JWT (`jose`) pins the configured
+  algorithm and requires `exp`, `aud` and a single-use `jti`. Users are matched
+  by email (case-insensitive); `sso.createUsers` creates unknown ones and
+  `sso.syncRoles` maps the role attribute to an Escalated role while roles are
+  on. SSO sign-in is still challenged for two-factor. New routes
+  `escalated.sso.login`, `.saml.metadata`, `.saml.acs`, `.oauth.callback`,
+  `.jwt.callback`; `Admin/Settings/SsoSettings` is rendered (secrets masked,
+  plus `endpoints`), and the shared `features.sso` follows the switch.
+- `isSsoCsrfExempt(ctx)` for shield's `csrf.exceptRoutes`.
 - **Two-factor authentication is enforced when switched on.** A staff user
   with a confirmed enrolment is sent to `{prefix}/two-factor/challenge`, which
   renders `Auth/TwoFactorChallenge` with `action`, before any admin, agent or
