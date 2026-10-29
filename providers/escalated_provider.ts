@@ -230,53 +230,11 @@ export default class EscalatedProvider {
         share: (producer: () => Record<string, unknown>) => void
       }
 
+      const { escalatedSharedData } = await import('../src/support/shared_data.js')
+
       inertia.share(() => {
         return {
-          escalated: async (ctx: any) => {
-            const config: EscalatedConfig = (globalThis as any).__escalated_config ?? {}
-            const user = ctx?.auth?.user
-
-            const data: Record<string, any> = {
-              prefix: config.routes?.prefix ?? 'support',
-              is_agent: false,
-              is_admin: false,
-              permissions: [],
-            }
-
-            if (user) {
-              if (config.authorization?.isAgent) {
-                data.is_agent = await config.authorization.isAgent(user)
-              }
-              if (config.authorization?.isAdmin) {
-                data.is_admin = await config.authorization.isAdmin(user)
-              }
-              try {
-                const { default: NewsletterPermissionService } =
-                  await import('../src/services/newsletter/newsletter_permission_service.js')
-                data.permissions = await new NewsletterPermissionService().userPermissions(
-                  (user as { id: any }).id
-                )
-              } catch {
-                // permission tables may not exist yet
-              }
-            }
-
-            // Share guest tickets setting
-            try {
-              const { default: EscalatedSetting } =
-                await import('../src/models/escalated_setting.js')
-              data.guest_tickets_enabled = await EscalatedSetting.guestTicketsEnabled()
-              data.show_powered_by = await EscalatedSetting.getBool('show_powered_by', true)
-            } catch {
-              // Settings table may not exist yet
-            }
-
-            data.features = {
-              newsletters: Boolean((config as any).enableNewsletters),
-            }
-
-            return data
-          },
+          escalated: async (ctx: any) => escalatedSharedData(ctx),
         }
       })
     } catch {
@@ -373,115 +331,57 @@ export default class EscalatedProvider {
   }
 
   /**
-   * Subscribe to AdonisJS emitter events and forward them to the plugin
-   * bridge's dispatchAction() so SDK plugins can react to core lifecycle
-   * events without requiring each service to know about the bridge.
+   * Deliver the canonical events (decisions/2026-10-21-event-vocabulary.md)
+   * to plugins' actions, under the canonical name only and with the payload
+   * of domain-model/plugin-contract.md: native plugins through the hook
+   * manager (only active ones are loaded), SDK plugins through the bridge.
    *
-   * The mapping follows the same hook naming convention used by the Laravel
-   * bridge so plugin code can be host-agnostic.
+   * Fire-and-forget: a slow or failing plugin is logged and never fails or
+   * delays the change that emitted the event.
    */
   protected async wireEventsToBridge() {
     try {
       // From the container: the `@adonisjs/core/services/emitter` export is only
       // assigned once the app has booted, so during boot() it is undefined.
       const emitter = await this.app.container.make('emitter')
-      const { ESCALATED_EVENTS } = await import('../src/events/index.js')
+      const { ESCALATED_EVENT_WEBHOOK_MAP } = await import('../src/support/webhook_events.js')
+      const { pluginEventPayload } = await import('../src/support/plugin_events.js')
 
-      const bridge = (globalThis as any).__escalated_pluginBridge
-      if (!bridge) return
+      const deliver = async (name: string, data: unknown) => {
+        const payload = await pluginEventPayload(name, data)
+        if (!payload) return
 
-      const dispatch = (hook: string, data: unknown) => {
-        bridge.dispatchAction(hook, data).catch((err: Error) => {
-          console.warn(`[Escalated Bridge] dispatchAction("${hook}") failed:`, err.message)
-        })
+        const hooks = (globalThis as any).__escalated_hooks
+        if (hooks) {
+          try {
+            await hooks.doAction(name, payload)
+          } catch (err) {
+            console.error(`[Escalated] plugin action "${name}" failed:`, (err as Error).message)
+          }
+        }
+
+        const bridge = (globalThis as any).__escalated_pluginBridge
+        if (bridge?.isBooted?.()) {
+          try {
+            await bridge.dispatchAction(name, payload)
+          } catch (err) {
+            console.warn(
+              `[Escalated Bridge] dispatchAction("${name}") failed:`,
+              (err as Error).message
+            )
+          }
+        }
       }
 
-      emitter.on(ESCALATED_EVENTS.TICKET_CREATED, (data) =>
-        dispatch('ticket_created', { ticket: data.ticket?.toJSON?.() ?? data.ticket })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_UPDATED, (data) =>
-        dispatch('ticket_updated', { ticket: data.ticket?.toJSON?.() ?? data.ticket })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_STATUS_CHANGED, (data) =>
-        dispatch('ticket_status_changed', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          old_status: data.oldStatus,
-          new_status: data.newStatus,
-          old_custom_status: data.oldCustomStatus ?? null,
-          new_custom_status: data.newCustomStatus ?? null,
-          ...(data.oldCategory ? { old_category: data.oldCategory } : {}),
-          ...(data.newCategory ? { new_category: data.newCategory } : {}),
+      for (const [escalatedEvent, name] of Object.entries(ESCALATED_EVENT_WEBHOOK_MAP)) {
+        emitter.on(escalatedEvent as any, (data: unknown) => {
+          setImmediate(() => {
+            deliver(name, data).catch((err: Error) => {
+              console.warn(`[Escalated] delivering "${name}" to plugins failed:`, err.message)
+            })
+          })
         })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_RESOLVED, (data) =>
-        dispatch('ticket_resolved', { ticket: data.ticket?.toJSON?.() ?? data.ticket })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_CLOSED, (data) =>
-        dispatch('ticket_closed', { ticket: data.ticket?.toJSON?.() ?? data.ticket })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_REOPENED, (data) =>
-        dispatch('ticket_reopened', { ticket: data.ticket?.toJSON?.() ?? data.ticket })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_ASSIGNED, (data) =>
-        dispatch('ticket_assigned', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          agent_id: data.agentId,
-        })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_UNASSIGNED, (data) =>
-        dispatch('ticket_unassigned', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          previous_agent_id: data.previousAgentId,
-        })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_ESCALATED, (data) =>
-        dispatch('ticket_escalated', { ticket: data.ticket?.toJSON?.() ?? data.ticket })
-      )
-      emitter.on(ESCALATED_EVENTS.TICKET_PRIORITY_CHANGED, (data) =>
-        dispatch('ticket_priority_changed', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          old_priority: data.oldPriority,
-          new_priority: data.newPriority,
-        })
-      )
-      emitter.on(ESCALATED_EVENTS.DEPARTMENT_CHANGED, (data) =>
-        dispatch('department_changed', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          old_department_id: data.oldDepartmentId,
-          new_department_id: data.newDepartmentId,
-        })
-      )
-      emitter.on(ESCALATED_EVENTS.REPLY_CREATED, (data) =>
-        dispatch('reply_created', { reply: data.reply?.toJSON?.() ?? data.reply })
-      )
-      emitter.on(ESCALATED_EVENTS.INTERNAL_NOTE_ADDED, (data) =>
-        dispatch('internal_note_added', { reply: data.reply?.toJSON?.() ?? data.reply })
-      )
-      emitter.on(ESCALATED_EVENTS.SLA_BREACHED, (data) =>
-        dispatch('sla_breached', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          type: data.type,
-        })
-      )
-      emitter.on(ESCALATED_EVENTS.SLA_WARNING, (data) =>
-        dispatch('sla_warning', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          type: data.type,
-          minutes_remaining: data.minutesRemaining,
-        })
-      )
-      emitter.on(ESCALATED_EVENTS.TAG_ADDED, (data) =>
-        dispatch('tag_added', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          tag: data.tag?.toJSON?.() ?? data.tag,
-        })
-      )
-      emitter.on(ESCALATED_EVENTS.TAG_REMOVED, (data) =>
-        dispatch('tag_removed', {
-          ticket: data.ticket?.toJSON?.() ?? data.ticket,
-          tag: data.tag?.toJSON?.() ?? data.tag,
-        })
-      )
+      }
     } catch (error) {
       // Logged rather than swallowed: a subscription that fails silently leaves
       // its feature dead with nothing to show why.
