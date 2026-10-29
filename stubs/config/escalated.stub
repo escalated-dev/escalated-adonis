@@ -272,6 +272,32 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | Access features
+  |--------------------------------------------------------------------------
+  |
+  | Roles & permissions, two-factor authentication and single sign-on are
+  | switched per installation (ADR 2026-10-29-configurable-access-features).
+  | Off (the default): the feature's admin screens and routes answer 404 and
+  | nothing is enforced; the authorization callbacks above decide everything.
+  | On: the feature is enforced.
+  |
+  | These are read from configuration only. No admin setting changes them.
+  |
+  | rolesPermissions: every admin, agent and staff API route also requires its
+  | permission (src/support/route_permissions.ts) from the user's roles. Seed
+  | the permissions and give every staff user a role first:
+  |   node ace escalated:seed-permissions
+  |   node ace escalated:roles:assign you@example.com admin
+  |
+  | twoFactor and sso are not enforced by this release yet and stay off.
+  |
+  */
+  access: {
+    rolesPermissions: process.env.ESCALATED_ROLES_PERMISSIONS === 'true',
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Plugins
   |--------------------------------------------------------------------------
   |

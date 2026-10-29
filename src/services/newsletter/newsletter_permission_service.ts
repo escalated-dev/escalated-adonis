@@ -3,6 +3,7 @@ import db from '@adonisjs/lucid/services/db'
 import Permission from '../../models/permission.js'
 import Role from '../../models/role.js'
 import { getAuthUser } from '../../support/auth_user.js'
+import { allows } from '../../support/permissions.js'
 import type { UserId } from '../../helpers/user_id_column.js'
 
 export type NewsletterPermission = 'newsletters.manage' | 'newsletters.send'
@@ -16,7 +17,9 @@ export default class NewsletterPermissionService {
       return false
     }
 
-    const allowed = await this.userHasPermission((user as { id: UserId }).id, permission)
+    // Only while roles & permissions is switched on; off, the admin gate the
+    // route already passed decides (ADR 2026-10-29-configurable-access-features).
+    const allowed = await allows((user as { id: UserId }).id, permission)
     if (!allowed) {
       ctx.response.forbidden({ error: 'Insufficient permissions' })
       return false

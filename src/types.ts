@@ -284,6 +284,14 @@ export interface EscalatedConfig {
     downloadTtlMinutes?: number
   }
 
+  /**
+   * Install-level access switches (ADR 2026-10-29-configurable-access-features),
+   * all off by default. Read from config only; no admin setting changes them.
+   * Unset keys fall back to ESCALATED_ROLES_PERMISSIONS / ESCALATED_TWO_FACTOR /
+   * ESCALATED_SSO. See docs/access-control.md.
+   */
+  access?: import('./support/access_features.js').AccessConfig
+
   authorization: {
     isAgent: (user: any) => boolean | Promise<boolean>
     isAdmin: (user: any) => boolean | Promise<boolean>

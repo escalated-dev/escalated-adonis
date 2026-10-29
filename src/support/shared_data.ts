@@ -10,6 +10,8 @@
 
 import type { EscalatedConfig } from '../types.js'
 import { pluginSlug } from './plugin_events.js'
+import { sharedAccessFeatures } from './access_features.js'
+import { sharedPermissions } from './permissions.js'
 
 type Allows = (ability: unknown) => boolean
 
@@ -164,10 +166,11 @@ export async function escalatedSharedData(ctx: any): Promise<Record<string, any>
       data.is_admin = await config.authorization.isAdmin(user)
     }
     try {
-      const { default: NewsletterPermissionService } =
-        await import('../services/newsletter/newsletter_permission_service.js')
-      data.permissions = await new NewsletterPermissionService().userPermissions(
-        (user as { id: any }).id
+      // ADR 2026-10-29-configurable-access-features: the user's slugs while
+      // roles & permissions is on; `['*']` for staff while it is off.
+      data.permissions = await sharedPermissions(
+        (user as { id: any }).id,
+        Boolean(data.is_agent || data.is_admin)
       )
     } catch {
       // permission tables may not exist yet
@@ -185,7 +188,10 @@ export async function escalatedSharedData(ctx: any): Promise<Record<string, any>
 
   data.features = {
     newsletters: Boolean((config as any).enableNewsletters),
+    ...sharedAccessFeatures(),
   }
+  // Enforced by the two-factor switch, which this release keeps off.
+  data.two_factor_required = false
 
   try {
     data.plugins = pluginExtensions({

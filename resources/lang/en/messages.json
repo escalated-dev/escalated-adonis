@@ -64,6 +64,7 @@
     "settings_updated": "Settings updated.",
     "user_updated": "User updated.",
     "cannot_remove_own_admin": "You cannot remove your own admin role.",
+    "cannot_remove_own_role_management": "You cannot remove your own role management.",
     "skill_created": "Skill created.",
     "skill_updated": "Skill updated.",
     "skill_deleted": "Skill deleted.",
