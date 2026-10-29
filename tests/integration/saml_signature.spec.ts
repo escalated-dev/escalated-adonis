@@ -1,6 +1,7 @@
 import { test } from '@japa/runner'
 import { generateKeyPairSync } from 'node:crypto'
 import { testApp, type TestApp } from './helpers/app.js'
+import { setSso } from './helpers/access.js'
 import {
   ACS_URL,
   IDP_CERT,
@@ -22,9 +23,11 @@ import {
 |
 | SsoService.validateSamlAssertion read the email out of whatever XML it was
 | handed: anyone could post an unsigned assertion naming any user. It now
-| verifies the XML signature against `sso_certificate` (and refuses to sign
-| anyone in when no certificate is configured), never trusts a key carried in
-| the message, and reads the user only from the XML the signature covers.
+| verifies the assertion's own XML signature against `sso_certificate` (and
+| refuses to sign anyone in when no certificate is configured; a signed
+| Response around an unsigned assertion is not enough), never trusts a key
+| carried in the message, and reads the user only from the XML the signature
+| covers.
 |
 | The IdP key and certificate under fixtures/saml are throwaway test material.
 |
@@ -50,14 +53,12 @@ test.group('SAML assertion signatures', (group) => {
   async function configure(certificate: string) {
     const { default: SsoService } = await import('../../src/services/sso_service.js')
     const service = new SsoService()
+    // These responses answer no AuthnRequest; saml_assertion_binding.spec.ts covers that.
+    setSso({ spEntityId: SP_ENTITY_ID, acsUrl: ACS_URL, allowIdpInitiated: true })
     await service.saveConfig({
       sso_provider: 'saml',
       sso_entity_id: IDP_ENTITY_ID,
       sso_certificate: certificate,
-      sso_sp_entity_id: SP_ENTITY_ID,
-      sso_acs_url: ACS_URL,
-      // These responses answer no AuthnRequest; saml_assertion_binding.spec.ts covers that.
-      sso_allow_idp_initiated: '1',
       sso_attr_email: 'email',
       sso_attr_name: 'name',
     })
@@ -73,12 +74,18 @@ test.group('SAML assertion signatures', (group) => {
     assert.equal(user.name, 'Signed User')
   })
 
-  test('accepts a signed Response and a PEM certificate', async ({ assert }) => {
+  test('accepts a PEM certificate', async ({ assert }) => {
     const service = await configure(IDP_CERT)
-    const signed = sign(responseXml(assertionXml('bob@example.test')), 'Response', IDP_KEY)
+    const signed = sign(responseXml(assertionXml('bob@example.test')), 'Assertion', IDP_KEY)
 
     const user = await service.validateSamlAssertion(b64(signed))
     assert.equal(user.email, 'bob@example.test')
+  })
+
+  test('rejects a signed Response around an unsigned assertion', async () => {
+    const service = await configure(IDP_CERT)
+    const signed = sign(responseXml(assertionXml('bob@example.test')), 'Response', IDP_KEY)
+    await rejects(service.validateSamlAssertion(b64(signed)), /assertion is not signed/)
   })
 
   test('rejects an unsigned assertion', async () => {
@@ -165,6 +172,7 @@ test.group('SAML assertion signatures', (group) => {
   })
 
   group.teardown(async () => {
+    setSso(undefined)
     await running.db.from('escalated_settings').whereLike('key', 'sso_%').delete()
   })
 })

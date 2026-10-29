@@ -293,12 +293,50 @@ const escalatedConfig: EscalatedConfig = {
   | challenge once per login before any admin or agent route. Run the
   | migrations first.
   |
-  | sso is not enforced by this release yet and stays off.
+  | sso: users sign in at {prefix}/sso/login through the provider chosen in
+  | Admin > Settings > SSO (SAML, OAuth 2 / OIDC or JWT). Run the migrations
+  | first and see `sso` below.
   |
   */
   access: {
     rolesPermissions: process.env.ESCALATED_ROLES_PERMISSIONS === 'true',
     twoFactor: process.env.ESCALATED_TWO_FACTOR === 'true',
+    sso: process.env.ESCALATED_SSO === 'true',
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Single sign-on
+  |--------------------------------------------------------------------------
+  |
+  | Used while access.sso is on. The provider and its fields are chosen in
+  | Admin > Settings > SSO; these are the install-level rules around it.
+  |
+  | baseUrl            Public URL the SSO endpoints are built from (default:
+  |                    appUrl). Never taken from the request's Host header.
+  | spEntityId         SAML SP entity ID (default: the SP metadata URL).
+  | allowIdpInitiated  Accept SAML responses that answer no request.
+  | jwtAudience        The `aud` a JWT must carry (default: baseUrl).
+  | clockSkew          Seconds of SAML / JWT clock skew (max 300).
+  | createUsers        Create a host user for an unknown email. Off: unknown
+  |                    emails are refused.
+  | syncRoles          With roles & permissions on, replace the user's roles
+  |                    with the role the IdP asserts (by slug).
+  | guard              Auth guard to sign in on (default guard if unset).
+  | redirectTo         Where to land after sign-in (default: agent tickets,
+  |                    or admin reports for admin-only users).
+  |
+  | shield's CSRF check must let the IdP's cross-site POSTs through:
+  |   csrf: { exceptRoutes: (ctx) => isSsoCsrfExempt(ctx) }
+  |
+  */
+  sso: {
+    spEntityId: process.env.ESCALATED_SSO_SP_ENTITY_ID || undefined,
+    allowIdpInitiated: process.env.ESCALATED_SSO_ALLOW_IDP_INITIATED === 'true',
+    jwtAudience: process.env.ESCALATED_SSO_JWT_AUDIENCE || undefined,
+    clockSkew: Number(process.env.ESCALATED_SSO_CLOCK_SKEW ?? 120),
+    createUsers: process.env.ESCALATED_SSO_CREATE_USERS === 'true',
+    syncRoles: process.env.ESCALATED_SSO_SYNC_ROLES === 'true',
   },
 
   /*

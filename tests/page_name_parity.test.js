@@ -54,10 +54,6 @@ const KNOWN_BLANK = []
 const NOT_YET_RENDERED = [
   // Not rendered by escalated-laravel either: a static page with no route.
   'Escalated/Admin/Settings/Sandbox',
-  // SSO: SsoService parses assertions, but there is no sign-in route that
-  // uses it, and SAML responses are not signature-checked. A settings screen
-  // would configure a sign-in that does not exist.
-  'Escalated/Admin/Settings/SsoSettings',
   // Not rendered by escalated-laravel either: the builder is part of
   // Workflows/Form, and errors render through the host.
   'Escalated/Admin/Workflows/Builder',

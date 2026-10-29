@@ -1,5 +1,7 @@
 import { test } from '@japa/runner'
 import { testApp, type TestApp } from './helpers/app.js'
+import { setSso } from './helpers/access.js'
+import type { SsoConfig } from '../../src/support/sso.js'
 import {
   ACS_URL,
   IDP_CERT_BODY,
@@ -30,7 +32,7 @@ import {
 | bearer SubjectConfirmationData Recipient; Conditions and confirmation
 | NotBefore / NotOnOrAfter inside the window (configurable clock skew); an
 | InResponseTo naming a request we issued and have not used (IdP-initiated
-| only when `sso_allow_idp_initiated` is on); and an assertion ID not seen
+| only when `sso.allowIdpInitiated` is on in config); and an assertion ID not seen
 | before within its validity window.
 |
 */
@@ -47,18 +49,16 @@ test.group('SAML assertion binding', (group) => {
 
   group.each.timeout(30_000)
 
-  async function configure(overrides: Record<string, string> = {}) {
+  /** `options` are the install-level `sso` config; `settings` the stored `sso_*` keys. */
+  async function configure(options: SsoConfig = {}, settings: Record<string, string> = {}) {
     const { default: SsoService } = await import('../../src/services/sso_service.js')
     const service = new SsoService()
+    setSso({ spEntityId: SP_ENTITY_ID, acsUrl: ACS_URL, clockSkew: 120, ...options })
     await service.saveConfig({
       sso_provider: 'saml',
       sso_entity_id: IDP_ENTITY_ID,
       sso_certificate: IDP_CERT_BODY,
-      sso_sp_entity_id: SP_ENTITY_ID,
-      sso_acs_url: ACS_URL,
-      sso_allow_idp_initiated: '0',
-      sso_clock_skew: '120',
-      ...overrides,
+      ...settings,
     } as any)
     return service
   }
@@ -86,11 +86,13 @@ test.group('SAML assertion binding', (group) => {
     assert.equal(user.email, 'alice@example.test')
   })
 
-  test('accepts a signed Response that answers our request', async ({ assert }) => {
+  test('refuses a signed Response whose assertion is unsigned', async () => {
     const service = await configure()
     const requestId = await service.createSamlRequestId()
-    const user = await service.validateSamlAssertion(response(requestId, {}, {}, 'Response'))
-    assert.equal(user.email, 'alice@example.test')
+    await rejects(
+      service.validateSamlAssertion(response(requestId, {}, {}, 'Response')),
+      /assertion is not signed/
+    )
   })
 
   // ----- Audience -----------------------------------------------------
@@ -226,14 +228,14 @@ test.group('SAML assertion binding', (group) => {
   })
 
   test('applies the configured clock skew', async ({ assert }) => {
-    const lenient = await configure({ sso_clock_skew: '120' })
+    const lenient = await configure({ clockSkew: 120 })
     const first = await lenient.createSamlRequestId()
     const user = await lenient.validateSamlAssertion(
       response(first, { notOnOrAfter: ago(30_000), confirmationNotOnOrAfter: ago(30_000) })
     )
     assert.equal(user.email, 'alice@example.test')
 
-    const strict = await configure({ sso_clock_skew: '0' })
+    const strict = await configure({ clockSkew: 0 })
     const second = await strict.createSamlRequestId()
     await rejects(
       strict.validateSamlAssertion(response(second, { notOnOrAfter: ago(30_000) })),
@@ -242,7 +244,7 @@ test.group('SAML assertion binding', (group) => {
   })
 
   test('caps the clock skew at five minutes', async () => {
-    const service = await configure({ sso_clock_skew: '86400' })
+    const service = await configure({ clockSkew: 86400 })
     const requestId = await service.createSamlRequestId()
     await rejects(
       service.validateSamlAssertion(response(requestId, { notOnOrAfter: ago(10 * 60_000) })),
@@ -268,7 +270,7 @@ test.group('SAML assertion binding', (group) => {
     const service = await configure()
     const requestId = await service.createSamlRequestId()
     await running.db
-      .from('escalated_saml_message_ids')
+      .from('escalated_sso_message_ids')
       .where('kind', 'request')
       .where('message_id', requestId)
       .update({ expires_at: Math.floor(Date.now() / 1000) - 1 })
@@ -305,13 +307,13 @@ test.group('SAML assertion binding', (group) => {
   })
 
   test('refuses an unsolicited response when the host expects a request', async () => {
-    const service = await configure({ sso_allow_idp_initiated: '1' })
+    const service = await configure({ allowIdpInitiated: true })
     const requestId = await service.createSamlRequestId()
     await rejects(service.validateSamlAssertion(response(null), { requestId }), /InResponseTo/)
   })
 
-  test('accepts IdP-initiated responses when sso_allow_idp_initiated is on', async ({ assert }) => {
-    const service = await configure({ sso_allow_idp_initiated: '1' })
+  test('accepts IdP-initiated responses when sso.allowIdpInitiated is on', async ({ assert }) => {
+    const service = await configure({ allowIdpInitiated: true })
     const user = await service.validateSamlAssertion(response(null))
     assert.equal(user.email, 'alice@example.test')
   })
@@ -319,7 +321,7 @@ test.group('SAML assertion binding', (group) => {
   // ----- Replay -------------------------------------------------------
 
   test('rejects a replayed assertion ID', async ({ assert }) => {
-    const service = await configure({ sso_allow_idp_initiated: '1' })
+    const service = await configure({ allowIdpInitiated: true })
     const notOnOrAfter = ahead(5 * 60_000)
     const message = response(null, {
       id: '_replay-me',
@@ -338,7 +340,7 @@ test.group('SAML assertion binding', (group) => {
 
     // The ID is kept until the assertion would have expired anyway.
     const row = await running.db
-      .from('escalated_saml_message_ids')
+      .from('escalated_sso_message_ids')
       .where('kind', 'assertion')
       .where('message_id', '_replay-me')
       .first()
@@ -354,15 +356,15 @@ test.group('SAML assertion binding', (group) => {
   })
 
   test('forgets used assertion IDs once they have expired', async ({ assert }) => {
-    const service = await configure({ sso_allow_idp_initiated: '1' })
-    await running.db.table('escalated_saml_message_ids').insert({
+    const service = await configure({ allowIdpInitiated: true })
+    await running.db.table('escalated_sso_message_ids').insert({
       kind: 'assertion',
       message_id: '_long-gone',
       expires_at: Math.floor(Date.now() / 1000) - 60,
     })
     await service.validateSamlAssertion(response(null))
     const row = await running.db
-      .from('escalated_saml_message_ids')
+      .from('escalated_sso_message_ids')
       .where('message_id', '_long-gone')
       .first()
     assert.notExists(row)
@@ -370,18 +372,45 @@ test.group('SAML assertion binding', (group) => {
 
   // ----- Configuration ------------------------------------------------
 
-  test('refuses every response until the SP entity ID is configured', async () => {
-    const service = await configure({ sso_sp_entity_id: '' })
-    await rejects(service.validateSamlAssertion(response(null)), /sso_sp_entity_id/)
+  test('refuses every response until the IdP entity ID is configured', async () => {
+    const service = await configure({ allowIdpInitiated: true }, { sso_entity_id: '' })
+    await rejects(service.validateSamlAssertion(response(null)), /sso_entity_id/)
   })
 
-  test('refuses every response until the ACS URL is configured', async () => {
-    const service = await configure({ sso_acs_url: '' })
-    await rejects(service.validateSamlAssertion(response(null)), /sso_acs_url/)
+  test('defaults the SP entity ID and ACS URL to the metadata and ACS routes', async ({
+    assert,
+  }) => {
+    const service = await configure({
+      spEntityId: undefined,
+      acsUrl: undefined,
+      baseUrl: 'https://help.example.test',
+    })
+    const metadata = 'https://help.example.test/support/sso/saml/metadata'
+    const acs = 'https://help.example.test/support/sso/saml/acs'
+    assert.equal(service.endpoints().sp_entity_id, metadata)
+    assert.equal(service.endpoints().acs, acs)
+
+    const requestId = await service.createSamlRequestId()
+    const user = await service.validateSamlAssertion(
+      response(requestId, { audiences: [metadata], recipient: acs }, { destination: acs })
+    )
+    assert.equal(user.email, 'alice@example.test')
+
+    const second = await service.createSamlRequestId()
+    await rejects(service.validateSamlAssertion(response(second)), /Audience/)
+  })
+
+  test('a stored setting cannot allow IdP-initiated responses', async () => {
+    const service = await configure(
+      {},
+      { sso_allow_idp_initiated: '1', sso_clock_skew: '300', sso_sp_entity_id: 'x' }
+    )
+    await rejects(service.validateSamlAssertion(response(null)), /IdP-initiated/)
   })
 
   group.teardown(async () => {
+    setSso(undefined)
     await running.db.from('escalated_settings').whereLike('key', 'sso_%').delete()
-    await running.db.from('escalated_saml_message_ids').delete()
+    await running.db.from('escalated_sso_message_ids').delete()
   })
 })

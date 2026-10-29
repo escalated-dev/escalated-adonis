@@ -48,7 +48,9 @@
     "@escalated-dev/locale": "^0.1.8",
     "@escalated-dev/plugin-sdk": "https://codeload.github.com/escalated-dev/escalated-plugin-sdk/tar.gz/refs/tags/v0.1.2",
     "@xmldom/xmldom": "^0.9.12",
+    "jose": "^6.2.13",
     "luxon": "^3.7.2",
+    "openid-client": "^6.8.8",
     "otpauth": "^9.5.2",
     "xml-crypto": "^6.3.3"
   },

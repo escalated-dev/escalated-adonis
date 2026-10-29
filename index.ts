@@ -31,6 +31,8 @@ export { default as AuthenticateApiToken } from './src/middleware/authenticate_a
 export { default as ApiRateLimit } from './src/middleware/api_rate_limit.js'
 // Embedding the widget on other sites: for shield's `csrf.exceptRoutes`.
 export { isWidgetCsrfExempt } from './src/support/widget_origins.js'
+// Single sign-on: the ACS and JWT callback take the IdP's cross-site POSTs.
+export { isSsoCsrfExempt } from './src/support/sso.js'
 // Two-factor authentication (TOTP + recovery codes)
 export { default as TwoFactor } from './src/models/two_factor.js'
 export { default as TwoFactorService } from './src/services/two_factor_service.js'

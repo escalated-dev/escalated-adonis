@@ -15,6 +15,7 @@ import User, { type TestUser } from '../fixtures/user.js'
 import { hostImporter } from '../fixtures/importer.js'
 import { captureCode } from '../fixtures/guest_codes.js'
 import { isWidgetCsrfExempt } from '../../../src/support/widget_origins.js'
+import { isSsoCsrfExempt } from '../../../src/support/sso.js'
 
 /*
 |--------------------------------------------------------------------------
@@ -46,9 +47,37 @@ import { isWidgetCsrfExempt } from '../../../src/support/widget_origins.js'
 /** The header the fixture `auth` middleware reads the signed-in user's id from. */
 export const TEST_USER_HEADER = 'x-test-user-id'
 
+/** Where the stand-in session guard keeps the signed-in user's id (see `login` below). */
+export const TEST_SESSION_USER = 'test_auth_user_id'
+
+/** The signed-in user: the header's, else the one the session guard signed in. */
+export async function currentTestUser(ctx: HttpContext) {
+  const id = ctx.request.header(TEST_USER_HEADER) ?? ctx.session?.get(TEST_SESSION_USER) ?? ''
+  return User.find(id)
+}
+
 class InertiaStandIn {
   async handle(ctx: HttpContext, next: NextFn) {
-    ;(ctx as any).auth = { user: await User.find(ctx.request.header(TEST_USER_HEADER) ?? '') }
+    const emitter = await ctx.containerResolver.make('emitter')
+    ;(ctx as any).auth = {
+      user: await currentTestUser(ctx),
+      // Plays @adonisjs/auth's session guard: `ctx.auth.use(guard).login(user)`
+      // keeps the user in the session and emits the guard's login event.
+      use: (guard?: string) => ({
+        login: async (user: TestUser) => {
+          ctx.session.put(TEST_SESSION_USER, user.id)
+          ;(ctx as any).auth.user = user
+          ;(ctx as any).auth.lastGuard = guard ?? 'web'
+          await emitter.emit('session_auth:login_succeeded' as any, {
+            ctx,
+            guardName: guard ?? 'web',
+            user,
+            sessionId: ctx.session.sessionId,
+          })
+          ctx.session.regenerate()
+        },
+      }),
+    }
     ;(ctx as any).inertia = {
       render: (component: string, props: Record<string, unknown> = {}) =>
         ctx.response.json({ component, props, flash: ctx.session.flashMessages.all() }),
@@ -71,7 +100,8 @@ class CsrfStandIn {
     if (!(globalThis as any).__escalated_test_csrf) return next()
     if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(ctx.request.method())) return next()
 
-    const exceptRoutes = (context: HttpContext) => isWidgetCsrfExempt(context)
+    const exceptRoutes = (context: HttpContext) =>
+      isSsoCsrfExempt(context) || isWidgetCsrfExempt(context)
     if (exceptRoutes(ctx)) return next()
 
     const token = ctx.request.header('x-csrf-token')
@@ -320,7 +350,13 @@ export class InertiaClient {
   async visit(
     method: string,
     path: string,
-    options: { data?: unknown; referer?: string; headers?: Record<string, string> } = {}
+    options: {
+      data?: unknown
+      /** Sent as an HTML form post (application/x-www-form-urlencoded), as an IdP does. */
+      form?: Record<string, string>
+      referer?: string
+      headers?: Record<string, string>
+    } = {}
   ): Promise<Visit> {
     const headers: Record<string, string> = {
       'X-Inertia': 'true',
@@ -330,6 +366,9 @@ export class InertiaClient {
     }
     if (this.options.user) headers[TEST_USER_HEADER] = String(this.options.user.id)
     if (options.data !== undefined) headers['Content-Type'] = 'application/json'
+    if (options.form !== undefined) {
+      headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    }
     if (options.referer) headers['Referer'] = this.baseUrl + options.referer
     if (this.#cookies.size > 0) {
       headers['Cookie'] = [...this.#cookies].map(([name, value]) => `${name}=${value}`).join('; ')
@@ -339,7 +378,12 @@ export class InertiaClient {
       method,
       headers,
       redirect: 'manual',
-      body: options.data === undefined ? undefined : JSON.stringify(options.data),
+      body:
+        options.form !== undefined
+          ? new URLSearchParams(options.form).toString()
+          : options.data === undefined
+            ? undefined
+            : JSON.stringify(options.data),
     })
 
     for (const cookie of response.headers.getSetCookie()) {

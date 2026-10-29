@@ -13,6 +13,9 @@ export type TestUser = { id: number; role: 'admin' | 'agent' | 'customer' }
 export default class User implements TestUser {
   declare id: number
   declare role: TestUser['role']
+  #name: string | null = null
+  #email: string | null = null
+  password: string | null = null
 
   constructor(id: number, role: TestUser['role']) {
     this.id = id
@@ -21,17 +24,56 @@ export default class User implements TestUser {
 
   /** Read where a person is shown by name, such as the widget's chat transcript. */
   get name(): string {
-    return `${this.role[0].toUpperCase()}${this.role.slice(1)} ${this.id}`
+    return this.#name ?? `${this.role[0].toUpperCase()}${this.role.slice(1)} ${this.id}`
   }
 
   /** Read by inbound email, which compares a sender to the requester's address. */
   get email(): string {
-    return `user${this.id}@example.test`
+    return this.#email ?? `user${this.id}@example.test`
   }
 
   static async find(id: number | string): Promise<User | null> {
-    return Object.values(TEST_USERS).find((user) => String(user.id) === String(id)) ?? null
+    return allUsers().find((user) => String(user.id) === String(id)) ?? null
   }
+
+  /**
+   * The slice of a Lucid query SSO uses to match an email case-insensitively:
+   * `query().whereRaw('LOWER(email) = ?', [email]).first()`.
+   */
+  static query() {
+    let email = ''
+    const builder = {
+      whereRaw(_sql: string, bindings: string[]) {
+        email = String(bindings[0] ?? '')
+        return builder
+      },
+      async first() {
+        return allUsers().find((user) => user.email.toLowerCase() === email) ?? null
+      },
+    }
+    return builder
+  }
+
+  /** Like Lucid's `create()`: a new customer with the given email and name. */
+  static async create(values: { email: string; name?: string; password?: string }) {
+    const user = new User(100 + CREATED.length, 'customer')
+    user.#email = values.email
+    user.#name = values.name ?? null
+    user.password = values.password ?? null
+    CREATED.push(user)
+    return user
+  }
+
+  /** Forgets the users `create()` made. */
+  static forgetCreated() {
+    CREATED.length = 0
+  }
+}
+
+const CREATED: User[] = []
+
+function allUsers(): User[] {
+  return [...Object.values(TEST_USERS), ...CREATED]
 }
 
 export const TEST_USERS = {
