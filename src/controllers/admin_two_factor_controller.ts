@@ -6,13 +6,21 @@ import AuditService from '../services/audit_service.js'
 import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { requireAuthUser } from '../support/auth_user.js'
 import { getRenderer } from '../rendering/renderer.js'
+import {
+  confirmedEnrolment,
+  consumeCode,
+  twoFactorIssuer,
+  twoFactorRequired,
+} from '../support/two_factor.js'
+import TwoFactorSession from '../support/two_factor_session.js'
 
 /**
- * Two-factor authentication (TOTP + recovery codes) for agents/admins.
+ * Two-factor enrolment (TOTP + recovery codes) for the signed-in staff user,
+ * agents as well as admins. Ports the Laravel `TwoFactorController`
+ * (index/setup/confirm/disable) and adds recovery-code regeneration. The
+ * post-login challenge is TwoFactorChallengeController.
  *
- * Ports the Laravel `TwoFactorController` (index/setup/confirm/disable) and adds
- * recovery-code regeneration plus a post-login challenge/verify path, matching
- * the Symfony service semantics.
+ * 404 while `access.twoFactor` is off (ADR 2026-10-29-configurable-access-features).
  */
 export default class AdminTwoFactorController {
   private service = new TwoFactorService()
@@ -27,6 +35,7 @@ export default class AdminTwoFactorController {
     return getRenderer().render(ctx, 'Escalated/Admin/Settings/TwoFactor', {
       enabled: record?.isConfirmed() ?? false,
       pending: !!record && !record.isConfirmed(),
+      required: await twoFactorRequired(),
     })
   }
 
@@ -39,6 +48,14 @@ export default class AdminTwoFactorController {
    */
   async setup(ctx: HttpContext) {
     const user = requireAuthUser(ctx.auth)
+
+    if (await confirmedEnrolment(user)) {
+      ctx.session.flash(
+        'error',
+        'Two-factor authentication is already enabled. Disable it first to set it up again.'
+      )
+      return ctx.response.redirect().back()
+    }
 
     // Drop any previous unconfirmed setup for this user.
     await TwoFactor.query().where('user_id', user.id).whereNull('confirmed_at').delete()
@@ -53,9 +70,12 @@ export default class AdminTwoFactorController {
       confirmedAt: null,
     })
 
-    const email = (user as any).email ?? ''
+    // Shown again once the code is confirmed; the database keeps only hashes.
+    TwoFactorSession.putPendingRecoveryCodes(ctx.session, recoveryCodes)
+
+    const email = (user as any).email ?? String(user.id)
     ctx.session.flash('two_factor_setup', {
-      qr_uri: this.service.generateQrUri(secret, email),
+      qr_uri: this.service.generateQrUri(secret, email, twoFactorIssuer()),
       recovery_codes: recoveryCodes,
     })
     return ctx.response.redirect().back()
@@ -72,7 +92,8 @@ export default class AdminTwoFactorController {
       return ctx.response.redirect().back()
     }
 
-    const userId = requireAuthUser(ctx.auth).id
+    const user = requireAuthUser(ctx.auth)
+    const userId = user.id
     const record = await TwoFactor.query()
       .where('user_id', userId)
       .whereNull('confirmed_at')
@@ -83,13 +104,29 @@ export default class AdminTwoFactorController {
       return ctx.response.redirect().back()
     }
 
-    if (!this.service.verify(record.secret, code)) {
+    // Records the code's time step, so the code cannot be replayed at the challenge.
+    if (!(await consumeCode(record, code))) {
       ctx.session.flash('errors', { code: 'Invalid verification code.' })
       return ctx.response.redirect().back()
     }
 
+    // The setup's codes, from this session; issued afresh if confirmed elsewhere.
+    let recoveryCodes = TwoFactorSession.pullPendingRecoveryCodes(ctx.session)
+    const hashes = record.recoveryCodes ?? []
+    if (
+      !recoveryCodes ||
+      recoveryCodes.length !== hashes.length ||
+      !recoveryCodes.every((plain) => hashes.includes(this.service.hashRecoveryCode(plain)))
+    ) {
+      recoveryCodes = this.service.generateRecoveryCodes()
+      record.recoveryCodes = recoveryCodes.map((plain) => this.service.hashRecoveryCode(plain))
+    }
+
     record.confirmedAt = DateTime.now()
     await record.save()
+
+    // The code just entered proves the second factor for this session.
+    TwoFactorSession.markPassed(ctx.session, user)
 
     await AuditService.fromContext(ctx, AUDIT_ACTIONS.TWO_FACTOR_ENABLED, {
       auditableType: 'TwoFactor',
@@ -97,7 +134,7 @@ export default class AdminTwoFactorController {
     })
 
     ctx.session.flash('success', 'Two-factor authentication enabled.')
-    ctx.session.flash('two_factor_confirmed', true)
+    ctx.session.flash('two_factor_confirmed', { recovery_codes: recoveryCodes })
     return ctx.response.redirect().back()
   }
 
@@ -144,53 +181,6 @@ export default class AdminTwoFactorController {
 
     ctx.session.flash('success', 'Recovery codes regenerated.')
     ctx.session.flash('two_factor_recovery_codes', recoveryCodes)
-    return ctx.response.redirect().back()
-  }
-
-  /**
-   * GET /support/two-factor/challenge — render the post-login challenge page.
-   */
-  async challenge(ctx: HttpContext) {
-    return getRenderer().render(ctx, 'Escalated/Auth/TwoFactorChallenge', {})
-  }
-
-  /**
-   * POST /support/two-factor/challenge — verify a TOTP code or a single-use
-   * recovery code at login/challenge time.
-   */
-  async verify(ctx: HttpContext) {
-    const userId = requireAuthUser(ctx.auth).id
-    const record = await TwoFactor.query()
-      .where('user_id', userId)
-      .whereNotNull('confirmed_at')
-      .first()
-
-    if (!record) {
-      ctx.session.flash('errors', { code: 'Two-factor authentication is not enabled.' })
-      return ctx.response.redirect().back()
-    }
-
-    const code = String(ctx.request.input('code', '')).trim()
-    const recoveryCode = String(ctx.request.input('recovery_code', '')).trim()
-
-    // Recovery-code path (single use): consume the matched code on success.
-    if (recoveryCode) {
-      const result = this.service.verifyRecoveryCode(record.recoveryCodes ?? [], recoveryCode)
-      if (!result.valid) {
-        ctx.session.flash('errors', { code: 'Invalid recovery code.' })
-        return ctx.response.redirect().back()
-      }
-      record.recoveryCodes = result.remaining
-      await record.save()
-    } else if (!code || !this.service.verify(record.secret, code)) {
-      ctx.session.flash('errors', { code: 'Invalid verification code.' })
-      return ctx.response.redirect().back()
-    }
-
-    // Mark this session as having passed the two-factor challenge. Host apps can
-    // gate sensitive routes on this flag.
-    ctx.session.put('two_factor_passed', true)
-    ctx.session.flash('success', 'Two-factor challenge passed.')
     return ctx.response.redirect().back()
   }
 }

@@ -1,11 +1,11 @@
 import {
   randomBytes,
-  createHmac,
   createHash,
   createCipheriv,
   createDecipheriv,
   timingSafeEqual,
 } from 'node:crypto'
+import { HOTP, Secret, TOTP } from 'otpauth'
 
 /**
  * Result of attempting to consume a recovery code.
@@ -21,99 +21,104 @@ export interface RecoveryCodeResult {
 /**
  * Two-factor authentication service.
  *
- * Implements RFC-6238 TOTP (HMAC-SHA1, 6 digits, 30s period) using Node's
- * built-in `crypto` module — no third-party OTP dependency — mirroring the
- * Laravel/Symfony reference ports. Also handles single-use recovery codes and
- * at-rest encryption of the shared secret.
+ * TOTP is RFC 6238 (HMAC-SHA1, 6 digits, 30 s steps) through the maintained
+ * `otpauth` library, accepting one step of clock drift either side. Also
+ * handles single-use recovery codes (stored as SHA-256 hashes) and at-rest
+ * encryption of the shared secret.
  */
 export default class TwoFactorService {
-  /** Base32 (RFC 4648) alphabet used for secrets. */
-  private readonly base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
-
   /** TOTP time step, in seconds. */
-  private readonly period = 30
+  static readonly PERIOD = 30
 
-  /** Number of digits in a generated code. */
-  private readonly digits = 6
+  /** Number of digits in a code. */
+  static readonly DIGITS = 6
+
+  /** Steps of clock drift accepted either side of now. */
+  static readonly WINDOW = 1
 
   /**
-   * Generate a random base32 secret (16 chars by default).
+   * A random base32 secret: 20 bytes (160 bits, the RFC 4226 recommendation)
+   * by default, which is 32 base32 characters.
    */
-  generateSecret(length = 16): string {
-    const bytes = randomBytes(length)
-    let secret = ''
-    for (let i = 0; i < length; i++) {
-      secret += this.base32Chars[bytes[i] % 32]
-    }
-    return secret
+  generateSecret(bytes = 20): string {
+    return new Secret({ size: bytes }).base32
   }
 
   /**
-   * Build an otpauth:// URI for QR-code enrollment in an authenticator app.
+   * The otpauth:// URI an authenticator app reads from a QR code.
    */
   generateQrUri(secret: string, email: string, issuer?: string): string {
     const appName = issuer ?? process.env.APP_NAME ?? 'Escalated'
-    const label = encodeURIComponent(`${appName}:${email}`)
-    const params = new URLSearchParams({
-      secret,
-      issuer: appName,
-      algorithm: 'SHA1',
-      digits: String(this.digits),
-      period: String(this.period),
-    })
-    return `otpauth://totp/${label}?${params.toString()}`
+    return this.totp(secret, { issuer: appName, label: email }).toString()
   }
 
   /**
-   * Generate the TOTP code for a specific counter (time-slice) value.
-   *
-   * The `secret` is the base32-encoded shared secret. This is the low-level
-   * RFC-6238 primitive; `verify()` calls it across a small window.
+   * The code for a specific counter (time step).
    */
   generateTotp(secret: string, timeSlice: number): string {
-    const key = this.base32Decode(secret)
-
-    // Pack the counter as a 64-bit big-endian integer.
-    const counter = Buffer.alloc(8)
-    counter.writeBigUInt64BE(BigInt(timeSlice))
-
-    const hmac = createHmac('sha1', key).update(counter).digest()
-
-    // Dynamic truncation (RFC 4226 §5.3).
-    const offset = hmac[hmac.length - 1] & 0x0f
-    const binary =
-      ((hmac[offset] & 0x7f) << 24) |
-      ((hmac[offset + 1] & 0xff) << 16) |
-      ((hmac[offset + 2] & 0xff) << 8) |
-      (hmac[offset + 3] & 0xff)
-
-    const code = binary % 10 ** this.digits
-    return code.toString().padStart(this.digits, '0')
+    return HOTP.generate({
+      secret: Secret.fromBase32(secret),
+      algorithm: 'SHA1',
+      digits: TwoFactorService.DIGITS,
+      counter: timeSlice,
+    })
   }
 
   /**
-   * Generate the TOTP code for a given unix timestamp (defaults to now).
+   * The code for a given Unix timestamp in seconds (default now).
    */
   codeForTimestamp(secret: string, timestamp: number = Date.now() / 1000): string {
-    return this.generateTotp(secret, Math.floor(timestamp / this.period))
+    return this.totp(secret).generate({ timestamp: timestamp * 1000 })
+  }
+
+  /** The time step a Unix timestamp in milliseconds falls in (default now). */
+  currentStep(timestamp: number = Date.now()): number {
+    return TOTP.counter({ period: TwoFactorService.PERIOD, timestamp })
   }
 
   /**
-   * Verify a TOTP code against a secret, tolerating +/- `window` time-slices
-   * of clock drift (default +/- 1 slice = +/- 30s).
+   * Whether the code is valid for the secret now, within +/- `window` steps.
+   * No replay check: see `matchStep()`.
    */
-  verify(secret: string, code: string, window = 1): boolean {
-    if (!/^\d{6}$/.test(code)) {
-      return false
+  verify(secret: string, code: string, window = TwoFactorService.WINDOW): boolean {
+    return this.matchStep(secret, code, null, window) !== null
+  }
+
+  /**
+   * The time step the code belongs to, within +/- `window` steps of now and
+   * later than `lastUsedStep`, or null. A step at or before the last one
+   * accepted is never matched, so a code works once.
+   */
+  matchStep(
+    secret: string,
+    code: string,
+    lastUsedStep: number | null,
+    window = TwoFactorService.WINDOW
+  ): number | null {
+    const token = this.normalizeCode(code)
+    if (!/^\d{6}$/.test(token)) return null
+
+    let key: Secret
+    try {
+      key = Secret.fromBase32(secret)
+    } catch {
+      return null
     }
 
-    const currentSlice = Math.floor(Date.now() / 1000 / this.period)
-    for (let i = -window; i <= window; i++) {
-      if (this.timingSafeEqualString(this.generateTotp(secret, currentSlice + i), code)) {
-        return true
-      }
+    const now = this.currentStep()
+    for (let step = now - window; step <= now + window; step++) {
+      if (lastUsedStep !== null && step <= lastUsedStep) continue
+      const delta = HOTP.validate({
+        token,
+        secret: key,
+        algorithm: 'SHA1',
+        digits: TwoFactorService.DIGITS,
+        counter: step,
+        window: 0,
+      })
+      if (delta === 0) return step
     }
-    return false
+    return null
   }
 
   /**
@@ -131,7 +136,7 @@ export default class TwoFactorService {
 
   /**
    * Hash a recovery code for storage. Recovery codes are stored hashed (never
-   * in plaintext) and shown to the user only once, at generation time.
+   * in plaintext) and shown to the user only once, at enrolment.
    */
   hashRecoveryCode(code: string): string {
     return createHash('sha256').update(code.trim().toUpperCase()).digest('hex')
@@ -145,6 +150,9 @@ export default class TwoFactorService {
    * original list, unchanged.
    */
   verifyRecoveryCode(hashedCodes: string[], submitted: string): RecoveryCodeResult {
+    if (submitted.trim() === '') {
+      return { valid: false, remaining: hashedCodes }
+    }
     const target = this.hashRecoveryCode(submitted)
     const index = hashedCodes.findIndex((hash) => this.timingSafeEqualString(hash, target))
 
@@ -194,6 +202,21 @@ export default class TwoFactorService {
     }
   }
 
+  private totp(secret: string, extra: { issuer?: string; label?: string } = {}): TOTP {
+    return new TOTP({
+      ...extra,
+      secret: Secret.fromBase32(secret),
+      algorithm: 'SHA1',
+      digits: TwoFactorService.DIGITS,
+      period: TwoFactorService.PERIOD,
+    })
+  }
+
+  /** Authenticator apps show codes in groups ("123 456"); spaces are not part of it. */
+  private normalizeCode(code: string): string {
+    return String(code ?? '').replace(/\s+/g, '')
+  }
+
   /**
    * Derive a 32-byte AES key from the host app key.
    */
@@ -201,31 +224,6 @@ export default class TwoFactorService {
     const appKey =
       process.env.APP_KEY ?? process.env.ESCALATED_APP_KEY ?? 'escalated-two-factor-fallback-key'
     return createHash('sha256').update(String(appKey)).digest()
-  }
-
-  /**
-   * Decode a base32 (RFC 4648) string to its raw bytes.
-   */
-  private base32Decode(input: string): Buffer {
-    const map: Record<string, number> = {}
-    for (let i = 0; i < this.base32Chars.length; i++) {
-      map[this.base32Chars[i]] = i
-    }
-
-    const clean = input.toUpperCase().replace(/=+$/, '')
-    let bits = ''
-    for (const char of clean) {
-      if (!(char in map)) {
-        continue
-      }
-      bits += map[char].toString(2).padStart(5, '0')
-    }
-
-    const bytes: number[] = []
-    for (let i = 0; i + 8 <= bits.length; i += 8) {
-      bytes.push(Number.parseInt(bits.slice(i, i + 8), 2))
-    }
-    return Buffer.from(bytes)
   }
 
   /**

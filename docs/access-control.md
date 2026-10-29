@@ -15,20 +15,19 @@ falls back to its environment variable.
 | Feature | Config key | Env var | This release |
 |---|---|---|---|
 | Roles & permissions | `access.rolesPermissions` | `ESCALATED_ROLES_PERMISSIONS` | enforced when on |
-| Two-factor authentication | `access.twoFactor` | `ESCALATED_TWO_FACTOR` | not enforced yet: always off |
+| Two-factor authentication | `access.twoFactor` | `ESCALATED_TWO_FACTOR` | enforced when on |
 | Single sign-on | `access.sso` | `ESCALATED_SSO` | not enforced yet: always off |
 
 ```ts
 // config/escalated.ts
 access: {
   rolesPermissions: process.env.ESCALATED_ROLES_PERMISSIONS === 'true',
+  twoFactor: process.env.ESCALATED_TWO_FACTOR === 'true',
 },
 ```
 
-Two-factor and SSO stay off until the releases that enforce them, so the
-two-factor enrolment screen (`{prefix}/admin/settings/two-factor*`) and the
-challenge (`{prefix}/two-factor/challenge`) answer 404 and the shared
-`features.two_factor` / `features.sso` props are `false`.
+SSO stays off until the release that enforces it, so the shared
+`features.sso` prop is `false`.
 
 ## Roles & permissions
 
@@ -101,4 +100,76 @@ Staff without a role can still reach their personal screens and nothing else.
 - `escalated.permissions`: with roles & permissions on, the signed-in user's
   slugs. Off, `['*']` for staff (the gates decide everything) and `[]` for
   anyone else.
-- `escalated.two_factor_required`: `false` in this release.
+- `escalated.two_factor_required`: whether the signed-in staff user must
+  enrol before using anything (two-factor on, required, and not enrolled).
+
+## Two-factor authentication
+
+### What is enforced
+
+With two-factor on (`access.twoFactor` / `ESCALATED_TWO_FACTOR`):
+
+- **Enrolment** is at `{prefix}/admin/settings/two-factor`
+  (`Admin/Settings/TwoFactor`), open to every agent and admin for their own
+  account. `setup` creates a pending secret and flashes
+  `two_factor_setup: { qr_uri, recovery_codes }`; `confirm` takes the 6-digit
+  `code` and flashes `two_factor_confirmed: { recovery_codes }`; `disable`
+  removes the enrolment; `recovery-codes` issues a new set. The secret is
+  stored encrypted (AES-256-GCM, keyed from `APP_KEY`) and the recovery codes
+  as SHA-256 hashes; neither is ever sent in props.
+- **The challenge.** A staff user with a confirmed enrolment who opens any
+  admin, agent or admin plugin route is redirected to
+  `{prefix}/two-factor/challenge`, which renders `Auth/TwoFactorChallenge`
+  with `action` (the absolute URL to post to) and `error`. JSON requests get
+  403 with `two_factor_required: true` instead. Posting a `code` or a
+  `recovery_code` there passes the challenge for that user in this session,
+  regenerates the session ID and redirects to the page they asked for (else
+  the agent ticket list, or reports for admins). A wrong code comes back as a
+  validation error on the field sent.
+- **TOTP** is RFC 6238 (SHA-1, 6 digits, 30 seconds) through the
+  [`otpauth`](https://github.com/hectorm/otpauth) library, with one step of
+  clock drift either side. The step of every accepted code is stored in
+  `escalated_two_factor.last_used_step`; that step and earlier ones are
+  refused afterwards, so a code works once.
+- **Recovery codes**: eight are issued at setup; each signs in once.
+- **Throttle**: 5 verify attempts per minute per user, then 429 with
+  `Retry-After` (`twoFactor.verifyAttemptsPerMinute`; counters are per
+  process unless you set `twoFactor.rateLimitStore`, the same store interface
+  as `guestRateLimit.store`).
+- **Every login is challenged.** The pass is cleared on
+  `session_auth:login_succeeded` and `session_auth:logged_out`, which the
+  `@adonisjs/auth` session guard emits. If your app signs users in some other
+  way, clear it yourself on sign-in:
+  `import TwoFactorSession from '@escalated-dev/escalated-adonis/support/two_factor_session'`
+  and call `TwoFactorSession.forget(ctx.session)`.
+- The token API is not session-based and is not challenged. Escalated does
+  not own your password form; the challenge sits between the session and the
+  panel. Customer pages are never challenged.
+
+### Requiring it
+
+`twoFactor.required` (`ESCALATED_TWO_FACTOR_REQUIRED`, default `false`) and the
+runtime setting `two_factor_required` (Admin > Settings; the saved setting wins
+once present). When required, a staff user without a confirmed enrolment is
+redirected to the enrolment page and can use nothing else until they enrol.
+
+```ts
+// config/escalated.ts
+twoFactor: {
+  required: process.env.ESCALATED_TWO_FACTOR_REQUIRED === 'true',
+  issuer: 'Acme Support', // the name authenticator apps show (default APP_NAME)
+},
+```
+
+### Lost device
+
+`node ace escalated:two-factor:reset you@example.com` (email or ID) removes a
+user's enrolment so they can sign in and set it up again.
+
+### Turning it on
+
+1. Run the migrations (`0073` adds `last_used_step`).
+2. Set `ESCALATED_TWO_FACTOR=true` (or `access.twoFactor: true`) and restart.
+   Staff who enrolled while it was off are challenged from their next visit.
+3. Only after telling staff, require it (`ESCALATED_TWO_FACTOR_REQUIRED=true`
+   or the setting): everyone without an enrolment is sent to enrol.

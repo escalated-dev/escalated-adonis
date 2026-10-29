@@ -292,6 +292,14 @@ export interface EscalatedConfig {
    */
   access?: import('./support/access_features.js').AccessConfig
 
+  /**
+   * Two-factor options, used while `access.twoFactor` is on: `required`
+   * (ESCALATED_TWO_FACTOR_REQUIRED; the `two_factor_required` setting wins once
+   * saved), `issuer`, `verifyAttemptsPerMinute` (default 5) and
+   * `rateLimitStore`. See docs/access-control.md.
+   */
+  twoFactor?: import('./support/two_factor.js').TwoFactorConfig
+
   authorization: {
     isAgent: (user: any) => boolean | Promise<boolean>
     isAdmin: (user: any) => boolean | Promise<boolean>

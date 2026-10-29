@@ -7,8 +7,9 @@ import TwoFactorService from '../../src/services/two_factor_service.ts'
 | Two-Factor Service Unit Tests
 |--------------------------------------------------------------------------
 |
-| Pure-logic tests for the RFC-6238 TOTP implementation and recovery-code
-| handling in src/services/two_factor_service.ts. No database access.
+| Pure-logic tests for TOTP (RFC 6238 through the otpauth library) and the
+| recovery-code handling in src/services/two_factor_service.ts. No database
+| access.
 |
 | The known-answer TOTP vectors come from RFC 6238 Appendix B (SHA-1),
 | whose shared secret is the ASCII string "12345678901234567890", i.e.
@@ -21,9 +22,9 @@ const RFC_SECRET = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'
 describe('TwoFactorService — secret generation', () => {
   const service = new TwoFactorService()
 
-  it('generates a 16-character base32 secret', () => {
+  it('generates a 160-bit (32-character) base32 secret', () => {
     const secret = service.generateSecret()
-    assert.equal(secret.length, 16)
+    assert.equal(secret.length, 32)
     assert.match(secret, /^[A-Z2-7]+$/)
   })
 
@@ -84,6 +85,32 @@ describe('TwoFactorService — verification', () => {
     assert.equal(service.verify(secret, '000000'), false)
     assert.equal(service.verify(secret, 'abcdef'), false)
     assert.equal(service.verify(secret, ''), false)
+  })
+
+  it('accepts a code typed with a space, as authenticator apps show it', () => {
+    const secret = service.generateSecret()
+    const code = service.generateTotp(secret, Math.floor(Date.now() / 1000 / 30))
+    assert.equal(service.verify(secret, `${code.slice(0, 3)} ${code.slice(3)}`), true)
+  })
+})
+
+describe('TwoFactorService — single use (replay)', () => {
+  const service = new TwoFactorService()
+
+  it('returns the step a code belongs to', () => {
+    const secret = service.generateSecret()
+    const step = service.currentStep()
+    assert.equal(service.matchStep(secret, service.generateTotp(secret, step), null), step)
+  })
+
+  it('refuses a code for the last used step or an earlier one', () => {
+    const secret = service.generateSecret()
+    const step = service.currentStep()
+    const code = service.generateTotp(secret, step)
+    assert.equal(service.matchStep(secret, code, step), null)
+    assert.equal(service.matchStep(secret, service.generateTotp(secret, step - 1), step - 1), null)
+    // A later step is still accepted.
+    assert.equal(service.matchStep(secret, service.generateTotp(secret, step + 1), step), step + 1)
   })
 })
 

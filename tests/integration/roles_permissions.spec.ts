@@ -17,8 +17,9 @@ import { setAccess } from './helpers/access.js'
 | On: every admin, agent and staff API route also needs its permission from
 | the user's roles (src/support/route_permissions.ts), failing closed.
 |
-| The two-factor and SSO switches are reported off and their screens 404,
-| because this release does not enforce them yet.
+| The two-factor and SSO switches are left at their default here, off, so
+| they are reported off and their screens 404 (two-factor on is covered by
+| two_factor.spec.ts).
 |
 */
 

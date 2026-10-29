@@ -190,8 +190,16 @@ export async function escalatedSharedData(ctx: any): Promise<Record<string, any>
     newsletters: Boolean((config as any).enableNewsletters),
     ...sharedAccessFeatures(),
   }
-  // Enforced by the two-factor switch, which this release keeps off.
+  // A staff user who must enrol before using anything (ADR 2026-10-29).
   data.two_factor_required = false
+  if (user && (data.is_agent || data.is_admin)) {
+    try {
+      const { confirmedEnrolment, twoFactorRequired } = await import('./two_factor.js')
+      data.two_factor_required = (await twoFactorRequired()) && !(await confirmedEnrolment(user))
+    } catch {
+      // two-factor table may not exist yet
+    }
+  }
 
   try {
     data.plugins = pluginExtensions({

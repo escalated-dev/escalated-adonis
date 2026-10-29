@@ -21,11 +21,26 @@
   then set `ESCALATED_ROLES_PERMISSIONS=true` (or `access.rolesPermissions: true`).
   Passing the admin check grants no permissions by itself, so an admin without
   a role is refused everywhere. See `docs/access-control.md`.
-- **Two-factor and SSO are install-level switches too, and stay off in this
-  release** because it does not enforce them yet: the two-factor enrolment
+- **Two-factor authentication is an install-level switch, off by default**
+  (`access.twoFactor`, env `ESCALATED_TWO_FACTOR`). Staff could enrol in TOTP
+  but no sign-in ever asked for the code. While it is off, the enrolment
   screen (`{prefix}/admin/settings/two-factor*`) and the challenge
-  (`{prefix}/two-factor/challenge`) now answer 404, and `features.two_factor`
-  / `features.sso` are `false`. Enrolments already stored are kept.
+  (`{prefix}/two-factor/challenge`) answer 404 and nobody is challenged;
+  enrolments already stored are kept. To enforce it: run the migrations
+  (`0073` adds `escalated_two_factor.last_used_step`), then set
+  `ESCALATED_TWO_FACTOR=true`. Staff who enrolled while it was unenforced are
+  challenged from their next visit. Set `ESCALATED_TWO_FACTOR_REQUIRED=true`
+  (or `twoFactor.required`, or the `two_factor_required` setting) only after
+  telling staff, since everyone without an enrolment is sent to enrol.
+  Hosts that sign users in with `@adonisjs/auth`'s session guard need nothing
+  else; a host with its own login must call
+  `TwoFactorSession.forget(ctx.session)` on sign-in. See
+  `docs/access-control.md`.
+- **New TOTP secrets are 160 bits** (32 base32 characters, was 16), and TOTP
+  now runs on the `otpauth` library instead of hand-written code. Existing
+  secrets keep working.
+- **SSO is an install-level switch too, and stays off in this release**
+  because it does not enforce it yet: `features.sso` is `false`.
 - **Plugin UI extensions are shared as `escalated.plugins`** (`menuItems`,
   `pageComponents`, `dashboardWidgets`), the shape the shared frontend reads.
   Before, nothing was shared, so plugin menus, widgets and slots never
@@ -50,6 +65,24 @@
   capped at 500 rows.
 
 ### Added
+- **Two-factor authentication is enforced when switched on.** A staff user
+  with a confirmed enrolment is sent to `{prefix}/two-factor/challenge`, which
+  renders `Auth/TwoFactorChallenge` with `action`, before any admin, agent or
+  admin plugin route (`requireTwoFactor` middleware; JSON requests get 403
+  with `two_factor_required: true`). A TOTP code (one step of drift, each
+  code works once: the step is recorded in `last_used_step`) or a single-use
+  recovery code passes it for that user until the next login or logout; the
+  session ID is regenerated. Verify is throttled to 5 attempts a minute per
+  user (`twoFactor.verifyAttemptsPerMinute`, `twoFactor.rateLimitStore`).
+  The token API is not challenged.
+- Two-factor enrolment is open to agents, not only admins. `confirm` flashes
+  `two_factor_confirmed: { recovery_codes }` and the page gets `required`.
+- "Require two-factor": `twoFactor.required` / `ESCALATED_TWO_FACTOR_REQUIRED`
+  and the runtime `two_factor_required` setting (Admin > Settings; wins once
+  saved). Staff without an enrolment are sent to enrol and reach nothing else.
+  The shared `escalated.two_factor_required` prop says so.
+- `node ace escalated:two-factor:reset <email or id>` clears a user's
+  enrolment (lost device).
 - **Roles & permissions are enforced when switched on.** Every admin, agent
   and staff API route needs its permission from the user's roles as well as
   the `isAdmin` / `isAgent` check (`enforceRoutePermissions` middleware, map in

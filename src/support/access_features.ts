@@ -28,8 +28,9 @@ export interface AccessConfig {
   /** Enforce roles & permissions on every admin, agent and staff API route. */
   rolesPermissions?: boolean
   /**
-   * Two-factor authentication. Not enforced by this release yet, so it stays
-   * off whatever is configured (see `twoFactor()` below).
+   * Two-factor authentication: staff with a confirmed TOTP enrolment pass the
+   * Auth/TwoFactorChallenge page once per login before any admin or agent
+   * route (RequireTwoFactor). Run the migrations first.
    */
   twoFactor?: boolean
   /**
@@ -59,14 +60,8 @@ export function rolesPermissionsEnabled(): boolean {
   return configured('rolesPermissions', 'ESCALATED_ROLES_PERMISSIONS')
 }
 
-/**
- * Two-factor authentication is not enforced by this port yet (no challenge
- * after sign-in), and a port must not show a screen for a feature it does not
- * enforce. It stays off, so its screens answer 404, until the release that
- * enforces it reads `access.twoFactor` / ESCALATED_TWO_FACTOR here.
- */
 export function twoFactorEnabled(): boolean {
-  return false
+  return configured('twoFactor', 'ESCALATED_TWO_FACTOR')
 }
 
 /**

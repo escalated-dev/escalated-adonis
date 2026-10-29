@@ -262,6 +262,25 @@
       "filePath": "seed_permissions_command.js"
     },
     {
+      "commandName": "escalated:two-factor:reset",
+      "description": "Remove a user's two-factor enrolment so they can set it up again",
+      "help": "",
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [
+        {
+          "name": "user",
+          "argumentName": "user",
+          "required": true,
+          "description": "The user's email address or ID",
+          "type": "string"
+        }
+      ],
+      "options": { "startApp": true },
+      "filePath": "reset_two_factor_command.js"
+    },
+    {
       "commandName": "escalated:wake-snoozed-tickets",
       "description": "Unsnooze tickets whose snooze period has elapsed",
       "help": [

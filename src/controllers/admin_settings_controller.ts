@@ -3,6 +3,7 @@ import EscalatedSetting from '../models/escalated_setting.js'
 import AuditService from '../services/audit_service.js'
 import { AUDIT_ACTIONS } from '../support/audit_events.js'
 import { getConfig } from '../helpers/config.js'
+import { configuredRequired } from '../support/two_factor.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 import { invalidOriginEntries, rememberWidgetOriginSetting } from '../support/widget_origins.js'
@@ -39,6 +40,7 @@ export default class AdminSettingsController {
       'show_powered_by',
       'widget_enabled',
       'widget_allowed_origins',
+      'two_factor_required',
     ])
 
     const sensitiveKeys = ['mailgun_signing_key', 'postmark_inbound_token', 'imap_password']
@@ -106,6 +108,11 @@ export default class AdminSettingsController {
       // Defaults on, as the widget routes read it, so existing installs keep their widget.
       widget_enabled: await EscalatedSetting.getBool('widget_enabled', true),
       widget_allowed_origins: (await EscalatedSetting.get('widget_allowed_origins', '')) ?? '',
+      // Used while the two-factor switch is on; the saved value wins over config.
+      two_factor_required: await EscalatedSetting.getBool(
+        'two_factor_required',
+        configuredRequired()
+      ),
       inbound_email_enabled: await EscalatedSetting.getBool(
         'inbound_email_enabled',
         config.inboundEmail?.enabled ?? false
