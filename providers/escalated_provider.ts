@@ -147,6 +147,9 @@ export default class EscalatedProvider {
     // Run admin workflows on the ticket events they are triggered by
     await this.wireWorkflows()
 
+    // Every login (and logout) has to pass the two-factor challenge afresh
+    await this.forgetTwoFactorPassOnLogin()
+
     // Reset the cached renderer so it picks up the freshly-loaded config
     resetRenderer()
 
@@ -239,6 +242,35 @@ export default class EscalatedProvider {
       })
     } catch {
       // Inertia may not be available
+    }
+  }
+
+  /**
+   * The host's session guard (@adonisjs/auth) emits `session_auth:login_succeeded`
+   * and `session_auth:logged_out` with the request's context. Either one
+   * clears the session's two-factor pass, so every new login is challenged
+   * (ADR 2026-10-29-configurable-access-features).
+   */
+  protected async forgetTwoFactorPassOnLogin() {
+    try {
+      // From the container: the `@adonisjs/core/services/emitter` export is only
+      // assigned once the app has booted, so during boot() it is undefined.
+      const emitter = await this.app.container.make('emitter')
+      const { default: TwoFactorSession } = await import('../src/support/two_factor_session.js')
+      const forget = (data: any) => {
+        try {
+          TwoFactorSession.forget(data?.ctx?.session)
+        } catch {
+          // No session on this request.
+        }
+      }
+      emitter.on('session_auth:login_succeeded' as any, forget)
+      emitter.on('session_auth:logged_out' as any, forget)
+    } catch (error) {
+      console.warn(
+        '[Escalated] could not subscribe to sign-in events for two-factor:',
+        (error as Error).message
+      )
     }
   }
 

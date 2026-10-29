@@ -53,6 +53,8 @@ const SatisfactionRatingController = () =>
 const GuestTicketsController = () => import('../src/controllers/guest_tickets_controller.js')
 const AdminApiTokensController = () => import('../src/controllers/admin_api_tokens_controller.js')
 const AdminTwoFactorController = () => import('../src/controllers/admin_two_factor_controller.js')
+const TwoFactorChallengeController = () =>
+  import('../src/controllers/two_factor_challenge_controller.js')
 const AdminImportController = () => import('../src/controllers/admin_import_controller.js')
 const AdminAutomationsController = () =>
   import('../src/controllers/admin_automations_controller.js')
@@ -401,6 +403,7 @@ async function registerUiRoutes(config: any) {
     .use([
       ...adminMiddleware,
       middleware.ensureIsAgent(),
+      middleware.requireTwoFactor(),
       middleware.enforceRoutePermissions(),
       middleware.ticketAccess(),
     ])
@@ -423,6 +426,7 @@ async function registerUiRoutes(config: any) {
     .use([
       ...adminMiddleware,
       middleware.ensureIsAgent(),
+      middleware.requireTwoFactor(),
       middleware.enforceRoutePermissions(),
       middleware.ticketAccess(),
     ])
@@ -436,6 +440,7 @@ async function registerUiRoutes(config: any) {
     .use([
       ...adminMiddleware,
       middleware.ensureIsAgent(),
+      middleware.requireTwoFactor(),
       middleware.enforceRoutePermissions(),
       middleware.ticketAccess(),
     ])
@@ -860,31 +865,6 @@ async function registerUiRoutes(config: any) {
         .delete('/api-tokens/:id', [AdminApiTokensController, 'destroy'])
         .as('escalated.admin.api-tokens.destroy')
 
-      // Two-Factor Authentication (agent/admin self-service). 404 while the
-      // two-factor switch is off (ADR 2026-10-29-configurable-access-features).
-      router
-        .group(() => {
-          router
-            .get('/settings/two-factor', [AdminTwoFactorController, 'index'])
-            .as('escalated.admin.two-factor.index')
-          router
-            .post('/settings/two-factor/setup', [AdminTwoFactorController, 'setup'])
-            .as('escalated.admin.two-factor.setup')
-          router
-            .post('/settings/two-factor/confirm', [AdminTwoFactorController, 'confirm'])
-            .as('escalated.admin.two-factor.confirm')
-          router
-            .post('/settings/two-factor/disable', [AdminTwoFactorController, 'disable'])
-            .as('escalated.admin.two-factor.disable')
-          router
-            .post('/settings/two-factor/recovery-codes', [
-              AdminTwoFactorController,
-              'regenerateRecoveryCodes',
-            ])
-            .as('escalated.admin.two-factor.recovery-codes')
-        })
-        .use([middleware.ensureFeatureEnabled({ feature: 'two_factor' })])
-
       // Import
       // Import wizard, on escalated-laravel's paths (escalated.admin.import.*).
       router.get('/import', [AdminImportController, 'index']).as('escalated.admin.import.index')
@@ -1191,24 +1171,62 @@ async function registerUiRoutes(config: any) {
     .use([
       ...adminMiddleware,
       middleware.ensureIsAdmin(),
+      middleware.requireTwoFactor(),
       middleware.enforceRoutePermissions(),
       middleware.ticketAccess(),
     ])
 
-  // ---- Two-Factor Challenge (post-login, auth-only) ----
+  // ---- Two-Factor Authentication (ADR 2026-10-29-configurable-access-features) ----
+  // 404 while the two-factor switch is off.
+  //
+  // Enrolment is about the signed-in user's own account, so every staff user
+  // reaches it, not only admins. It keeps its /admin/settings URL and names.
   router
     .group(() => {
       router
-        .get('/two-factor/challenge', [AdminTwoFactorController, 'challenge'])
+        .get('/settings/two-factor', [AdminTwoFactorController, 'index'])
+        .as('escalated.admin.two-factor.index')
+      router
+        .post('/settings/two-factor/setup', [AdminTwoFactorController, 'setup'])
+        .as('escalated.admin.two-factor.setup')
+      router
+        .post('/settings/two-factor/confirm', [AdminTwoFactorController, 'confirm'])
+        .as('escalated.admin.two-factor.confirm')
+      router
+        .post('/settings/two-factor/disable', [AdminTwoFactorController, 'disable'])
+        .as('escalated.admin.two-factor.disable')
+      router
+        .post('/settings/two-factor/recovery-codes', [
+          AdminTwoFactorController,
+          'regenerateRecoveryCodes',
+        ])
+        .as('escalated.admin.two-factor.recovery-codes')
+    })
+    .prefix(`${prefix}/admin`)
+    .use([
+      middleware.ensureFeatureEnabled({ feature: 'two_factor' }),
+      ...adminMiddleware,
+      middleware.ensureIsStaff(),
+      middleware.requireTwoFactor(),
+      middleware.enforceRoutePermissions(),
+      middleware.ticketAccess(),
+    ])
+
+  // The challenge after the host's password login.
+  router
+    .group(() => {
+      router
+        .get('/two-factor/challenge', [TwoFactorChallengeController, 'show'])
         .as('escalated.two-factor.challenge')
       router
-        .post('/two-factor/challenge', [AdminTwoFactorController, 'verify'])
+        .post('/two-factor/challenge', [TwoFactorChallengeController, 'verify'])
         .as('escalated.two-factor.verify')
+        .use(middleware.twoFactorThrottle())
     })
     .prefix(prefix)
     .use([
       middleware.ensureFeatureEnabled({ feature: 'two_factor' }),
-      ...authMiddleware,
+      ...adminMiddleware,
       middleware.ticketAccess(),
     ])
 

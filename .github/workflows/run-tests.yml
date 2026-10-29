@@ -95,3 +95,6 @@ jobs:
       - run: node --import=tsx bin/test.ts --files=tests/integration/saml_message_ids_migration.spec.ts
         env:
           ESCALATED_TEST_DATABASE_URL: ${{ matrix.database == 'mysql' && 'mysql://root:mysql@localhost:3306/escalated_access' || 'postgres://postgres:postgres@localhost:5432/escalated_access' }}
+      - run: node --import=tsx bin/test.ts --files=tests/integration/two_factor_step_migration.spec.ts
+        env:
+          ESCALATED_TEST_DATABASE_URL: ${{ matrix.database == 'mysql' && 'mysql://root:mysql@localhost:3306/escalated_access' || 'postgres://postgres:postgres@localhost:5432/escalated_access' }}

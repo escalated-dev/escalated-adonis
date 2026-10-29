@@ -47,6 +47,17 @@ export default class TwoFactor extends EscalatedBaseModel {
   })
   declare recoveryCodes: string[] | null
 
+  /**
+   * The TOTP time step of the last code accepted. A code for this step or an
+   * earlier one is refused, so each code works once. PostgreSQL returns
+   * bigint columns as strings, hence the conversion.
+   */
+  @column({
+    serializeAs: null,
+    consume: (value: unknown) => (value === null || value === undefined ? null : Number(value)),
+  })
+  declare lastUsedStep: number | null
+
   @column.dateTime()
   declare confirmedAt: DateTime | null
 

@@ -289,11 +289,32 @@ const escalatedConfig: EscalatedConfig = {
   |   node ace escalated:seed-permissions
   |   node ace escalated:roles:assign you@example.com admin
   |
-  | twoFactor and sso are not enforced by this release yet and stay off.
+  | twoFactor: staff with a confirmed TOTP enrolment pass the two-factor
+  | challenge once per login before any admin or agent route. Run the
+  | migrations first.
+  |
+  | sso is not enforced by this release yet and stays off.
   |
   */
   access: {
     rolesPermissions: process.env.ESCALATED_ROLES_PERMISSIONS === 'true',
+    twoFactor: process.env.ESCALATED_TWO_FACTOR === 'true',
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Two-factor authentication
+  |--------------------------------------------------------------------------
+  |
+  | Used while access.twoFactor is on. `required` sends every staff user
+  | without an enrolment to set one up; admins can also switch it at runtime
+  | with the `two_factor_required` setting, which wins once saved. `issuer`
+  | is the name authenticator apps show.
+  |
+  */
+  twoFactor: {
+    required: process.env.ESCALATED_TWO_FACTOR_REQUIRED === 'true',
+    issuer: process.env.ESCALATED_TWO_FACTOR_ISSUER || undefined,
   },
 
   /*

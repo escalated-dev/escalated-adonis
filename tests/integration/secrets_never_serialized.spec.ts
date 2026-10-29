@@ -1,6 +1,7 @@
 import { test } from '@japa/runner'
 import { InertiaClient, sqlTimestamp, testApp, type TestApp, type Visit } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
+import { setAccess } from './helpers/access.js'
 import { CREDENTIALS, FakeImportAdapter, TOKEN } from './fixtures/fake_import_adapter.js'
 import { escalated_addFilter, escalated_removeFilter } from '../../src/support/helpers.js'
 
@@ -381,12 +382,19 @@ test.group('Stored secrets are never serialized', (group) => {
       .where('user_id', TEST_USERS.admin.id)
       .first()
 
-    const visit = await client.visit('GET', `${ADMIN}/settings/two-factor`)
+    // Two-factor is an install-level switch (ADR
+    // 2026-10-29-configurable-access-features); the page exists while it is on.
+    setAccess({ twoFactor: true })
+    let visit: Visit
+    try {
+      visit = await client.visit('GET', `${ADMIN}/settings/two-factor`)
+    } finally {
+      setAccess(undefined)
+    }
 
-    // Two-factor is an install-level switch this release keeps off (ADR
-    // 2026-10-29-configurable-access-features), so the page answers 404. The
-    // release that enforces two-factor renders it again and asserts 200 here.
-    assert.equal(visit.status, 404, JSON.stringify(visit.body))
+    assert.equal(visit.status, 200, JSON.stringify(visit.body))
+    assert.equal(visit.body.component, 'Escalated/Admin/Settings/TwoFactor')
+    assert.isTrue(visit.body.props.pending)
     assertHasNoSecrets(assert, visit, ['TOTPSECRETBASE32XX', 'rc-hash-aaaa-bbbb', row.secret])
   })
 

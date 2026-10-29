@@ -76,7 +76,7 @@ export default class RouteRegistrar {
           }
         })
         .prefix(`${prefix}/admin/plugins/${this.slugify(name)}`)
-        .use([...adminMiddleware, middleware.ensureIsAdmin()])
+        .use([...adminMiddleware, middleware.ensureIsAdmin(), middleware.requireTwoFactor()])
     }
 
     // ---- Data endpoints (admin-authenticated) ----
@@ -104,7 +104,7 @@ export default class RouteRegistrar {
           }
         })
         .prefix(`${prefix}/plugins/${this.slugify(name)}/api`)
-        .use([...adminMiddleware, middleware.ensureIsAdmin()])
+        .use([...adminMiddleware, middleware.ensureIsAdmin(), middleware.requireTwoFactor()])
     }
 
     // ---- Webhook routes (no authentication) ----

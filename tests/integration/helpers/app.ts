@@ -205,6 +205,30 @@ async function boot() {
         async () => ({ default: InertiaStandIn }) as any,
         async () => ({ default: CsrfStandIn }) as any,
       ])
+
+      // The host's sign-in and sign-out. Its session guard (@adonisjs/auth)
+      // emits these events with the request's context; Escalated listens to
+      // them, so every new login has to pass the two-factor challenge again.
+      const emitter = await app.container.make('emitter')
+      router.post('/__test/login', async (ctx) => {
+        await emitter.emit('session_auth:login_succeeded' as any, {
+          ctx,
+          guardName: 'web',
+          user: (ctx as any).auth?.user,
+          sessionId: ctx.session.sessionId,
+        })
+        ctx.session.regenerate()
+        return { ok: true }
+      })
+      router.post('/__test/logout', async (ctx) => {
+        await emitter.emit('session_auth:logged_out' as any, {
+          ctx,
+          guardName: 'web',
+          user: (ctx as any).auth?.user ?? null,
+          sessionId: ctx.session.sessionId,
+        })
+        return { ok: true }
+      })
     })
     .create(new URL('../../../', import.meta.url), {
       // A host resolves `#start/kernel` and `#models/user` through its own import map.
