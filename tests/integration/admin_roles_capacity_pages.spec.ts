@@ -1,6 +1,7 @@
 import { test } from '@japa/runner'
 import { InertiaClient, sqlTimestamp, testApp, type TestApp } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
+import { setAccess } from './helpers/access.js'
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +18,7 @@ import { TEST_USERS } from './fixtures/user.js'
 
 const ROLES = '/support/admin/roles'
 const CAPACITY = '/support/admin/capacity'
+const MANAGER = 'test_role_manager'
 
 test.group('Roles and capacity pages', (group) => {
   let running: TestApp
@@ -33,7 +35,29 @@ test.group('Roles and capacity pages', (group) => {
     await running.db.from('escalated_roles').delete()
     await running.db.from('escalated_permissions').delete()
     await running.db.from('escalated_agent_capacity').delete()
+
+    // The roles screens exist only while roles & permissions is switched on
+    // (404 otherwise), and then the admin needs role.view / role.manage like
+    // anyone else. The admin holds a manager role for that, left out of what
+    // these tests count.
+    setAccess({ rolesPermissions: true })
+    const manager = await role('Test manager', MANAGER)
+    for (const slug of ['role.view', 'role.manage', 'user.view', 'user.manage']) {
+      const id = await permission(slug, 'Access')
+      await running.db
+        .table('escalated_role_permissions')
+        .insert({ role_id: manager, permission_id: id })
+    }
+    await running.db
+      .table('escalated_role_users')
+      .insert({ role_id: manager, user_id: TEST_USERS.admin.id })
+    return () => setAccess(undefined)
   })
+
+  /** The roles these tests made, without the admin's manager role. */
+  async function roleRows() {
+    return running.db.from('escalated_roles').whereNot('slug', MANAGER).orderBy('id')
+  }
 
   group.each.timeout(30_000)
 
@@ -92,7 +116,7 @@ test.group('Roles and capacity pages', (group) => {
     assert.equal(visit.status, 200, JSON.stringify(visit.body))
     assert.equal(visit.body.component, 'Escalated/Admin/Roles/Form')
     const { permissions } = visit.body.props
-    assert.sameMembers(Object.keys(permissions), ['Tickets', 'Replies'])
+    assert.sameMembers(Object.keys(permissions), ['Tickets', 'Replies', 'Access'])
     assert.equal(permissions.Tickets[0].id, view)
     assert.equal(permissions.Tickets[0].slug, 'ticket.view')
     assert.equal(permissions.Tickets[0].name, 'ticket.view')
@@ -151,7 +175,7 @@ test.group('Roles and capacity pages', (group) => {
 
     assert.equal(visit.status, 302)
     assert.equal(visit.location, `${ROLES}/create`)
-    assert.lengthOf(await running.db.from('escalated_roles'), 0)
+    assert.lengthOf(await roleRows(), 0)
   })
 
   test('store gives a second role with the same name its own slug', async ({ assert }) => {
@@ -159,7 +183,7 @@ test.group('Roles and capacity pages', (group) => {
 
     await client.visit('POST', ROLES, { data: { name: 'Agent' }, referer: `${ROLES}/create` })
 
-    const rows = await running.db.from('escalated_roles').orderBy('id')
+    const rows = await roleRows()
     const slugs = rows.map((r: any) => r.slug)
     assert.deepEqual(slugs, ['agent', 'agent-2'])
   })
@@ -213,9 +237,17 @@ test.group('Roles and capacity pages', (group) => {
     const after = await client.visit('GET', ROLES)
     assert.equal(after.body.flash.error, 'System roles cannot be deleted.')
 
-    const left = await running.db.from('escalated_roles')
+    const left = await roleRows()
     const remaining = left.map((r: any) => r.slug)
     assert.deepEqual(remaining, ['admin'])
+  })
+
+  test('roles screens answer 404 while roles & permissions is off', async ({ assert }) => {
+    setAccess(undefined)
+    for (const path of [ROLES, `${ROLES}/create`]) {
+      const visit = await client.visit('GET', path)
+      assert.equal(visit.status, 404, path)
+    }
   })
 
   test('roles pages are admin only', async ({ assert }) => {

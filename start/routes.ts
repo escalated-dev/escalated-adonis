@@ -398,7 +398,12 @@ async function registerUiRoutes(config: any) {
         .use([middleware.resolveTicket()])
     })
     .prefix(`${prefix}/agent`)
-    .use([...adminMiddleware, middleware.ensureIsAgent(), middleware.ticketAccess()])
+    .use([
+      ...adminMiddleware,
+      middleware.ensureIsAgent(),
+      middleware.enforceRoutePermissions(),
+      middleware.ticketAccess(),
+    ])
 
   // ---- Agent Chat Routes ----
   router
@@ -415,7 +420,12 @@ async function registerUiRoutes(config: any) {
       router.post('/:id/typing', [ChatController, 'typing']).as('escalated.agent.chats.typing')
     })
     .prefix(`${prefix}/agent/chats`)
-    .use([...adminMiddleware, middleware.ensureIsAgent(), middleware.ticketAccess()])
+    .use([
+      ...adminMiddleware,
+      middleware.ensureIsAgent(),
+      middleware.enforceRoutePermissions(),
+      middleware.ticketAccess(),
+    ])
 
   // End Chat from the shared ticket view: Agent/TicketShow resolves
   // route('escalated.admin.chat.end', chat_session_id), the name and path
@@ -423,7 +433,12 @@ async function registerUiRoutes(config: any) {
   router
     .post(`${prefix}/admin/chat/:session/end`, [ChatController, 'endFromTicket'])
     .as('escalated.admin.chat.end')
-    .use([...adminMiddleware, middleware.ensureIsAgent(), middleware.ticketAccess()])
+    .use([
+      ...adminMiddleware,
+      middleware.ensureIsAgent(),
+      middleware.enforceRoutePermissions(),
+      middleware.ticketAccess(),
+    ])
 
   // ---- Admin Routes ----
   router
@@ -845,25 +860,30 @@ async function registerUiRoutes(config: any) {
         .delete('/api-tokens/:id', [AdminApiTokensController, 'destroy'])
         .as('escalated.admin.api-tokens.destroy')
 
-      // Two-Factor Authentication (agent/admin self-service)
+      // Two-Factor Authentication (agent/admin self-service). 404 while the
+      // two-factor switch is off (ADR 2026-10-29-configurable-access-features).
       router
-        .get('/settings/two-factor', [AdminTwoFactorController, 'index'])
-        .as('escalated.admin.two-factor.index')
-      router
-        .post('/settings/two-factor/setup', [AdminTwoFactorController, 'setup'])
-        .as('escalated.admin.two-factor.setup')
-      router
-        .post('/settings/two-factor/confirm', [AdminTwoFactorController, 'confirm'])
-        .as('escalated.admin.two-factor.confirm')
-      router
-        .post('/settings/two-factor/disable', [AdminTwoFactorController, 'disable'])
-        .as('escalated.admin.two-factor.disable')
-      router
-        .post('/settings/two-factor/recovery-codes', [
-          AdminTwoFactorController,
-          'regenerateRecoveryCodes',
-        ])
-        .as('escalated.admin.two-factor.recovery-codes')
+        .group(() => {
+          router
+            .get('/settings/two-factor', [AdminTwoFactorController, 'index'])
+            .as('escalated.admin.two-factor.index')
+          router
+            .post('/settings/two-factor/setup', [AdminTwoFactorController, 'setup'])
+            .as('escalated.admin.two-factor.setup')
+          router
+            .post('/settings/two-factor/confirm', [AdminTwoFactorController, 'confirm'])
+            .as('escalated.admin.two-factor.confirm')
+          router
+            .post('/settings/two-factor/disable', [AdminTwoFactorController, 'disable'])
+            .as('escalated.admin.two-factor.disable')
+          router
+            .post('/settings/two-factor/recovery-codes', [
+              AdminTwoFactorController,
+              'regenerateRecoveryCodes',
+            ])
+            .as('escalated.admin.two-factor.recovery-codes')
+        })
+        .use([middleware.ensureFeatureEnabled({ feature: 'two_factor' })])
 
       // Import
       // Import wizard, on escalated-laravel's paths (escalated.admin.import.*).
@@ -1014,17 +1034,29 @@ async function registerUiRoutes(config: any) {
         .patch('/users/:user/role', [AdminUsersController, 'updateRole'])
         .as('escalated.admin.users.role')
 
-      // Roles and the permissions they grant
-      router.get('/roles', [AdminRolesController, 'index']).as('escalated.admin.roles.index')
+      // Roles and the permissions they grant, and a user's roles: only while
+      // roles & permissions is switched on (404 otherwise).
       router
-        .get('/roles/create', [AdminRolesController, 'create'])
-        .as('escalated.admin.roles.create')
-      router.post('/roles', [AdminRolesController, 'store']).as('escalated.admin.roles.store')
-      router.get('/roles/:id/edit', [AdminRolesController, 'edit']).as('escalated.admin.roles.edit')
-      router.put('/roles/:id', [AdminRolesController, 'update']).as('escalated.admin.roles.update')
-      router
-        .delete('/roles/:id', [AdminRolesController, 'destroy'])
-        .as('escalated.admin.roles.destroy')
+        .group(() => {
+          router
+            .put('/users/:user/roles', [AdminUsersController, 'updateRoles'])
+            .as('escalated.admin.users.roles')
+          router.get('/roles', [AdminRolesController, 'index']).as('escalated.admin.roles.index')
+          router
+            .get('/roles/create', [AdminRolesController, 'create'])
+            .as('escalated.admin.roles.create')
+          router.post('/roles', [AdminRolesController, 'store']).as('escalated.admin.roles.store')
+          router
+            .get('/roles/:id/edit', [AdminRolesController, 'edit'])
+            .as('escalated.admin.roles.edit')
+          router
+            .put('/roles/:id', [AdminRolesController, 'update'])
+            .as('escalated.admin.roles.update')
+          router
+            .delete('/roles/:id', [AdminRolesController, 'destroy'])
+            .as('escalated.admin.roles.destroy')
+        })
+        .use([middleware.ensureFeatureEnabled({ feature: 'roles_permissions' })])
 
       // Business hours and holidays
       router
@@ -1156,7 +1188,12 @@ async function registerUiRoutes(config: any) {
       }
     })
     .prefix(`${prefix}/admin`)
-    .use([...adminMiddleware, middleware.ensureIsAdmin(), middleware.ticketAccess()])
+    .use([
+      ...adminMiddleware,
+      middleware.ensureIsAdmin(),
+      middleware.enforceRoutePermissions(),
+      middleware.ticketAccess(),
+    ])
 
   // ---- Two-Factor Challenge (post-login, auth-only) ----
   router
@@ -1169,7 +1206,11 @@ async function registerUiRoutes(config: any) {
         .as('escalated.two-factor.verify')
     })
     .prefix(prefix)
-    .use([...authMiddleware, middleware.ticketAccess()])
+    .use([
+      middleware.ensureFeatureEnabled({ feature: 'two_factor' }),
+      ...authMiddleware,
+      middleware.ticketAccess(),
+    ])
 
   // ---- Guest Routes (no auth) ----
   // Ticket creation and replies are rate-limited per client IP (see
@@ -1416,6 +1457,7 @@ export function registerApiRoutes(config: any) {
     .use([
       middleware.authenticateApiToken({ ability: 'agent' }),
       middleware.apiRateLimit(),
+      middleware.enforceRoutePermissions(),
       middleware.ticketAccess(),
     ])
 
@@ -1432,6 +1474,7 @@ export function registerApiRoutes(config: any) {
     .use([
       middleware.authenticateApiToken({ ability: 'admin' }),
       middleware.apiRateLimit(),
+      middleware.enforceRoutePermissions(),
       middleware.ticketAccess(),
     ])
 

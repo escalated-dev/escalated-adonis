@@ -383,7 +383,10 @@ test.group('Stored secrets are never serialized', (group) => {
 
     const visit = await client.visit('GET', `${ADMIN}/settings/two-factor`)
 
-    assert.equal(visit.status, 200, JSON.stringify(visit.body))
+    // Two-factor is an install-level switch this release keeps off (ADR
+    // 2026-10-29-configurable-access-features), so the page answers 404. The
+    // release that enforces two-factor renders it again and asserts 200 here.
+    assert.equal(visit.status, 404, JSON.stringify(visit.body))
     assertHasNoSecrets(assert, visit, ['TOTPSECRETBASE32XX', 'rc-hash-aaaa-bbbb', row.secret])
   })
 

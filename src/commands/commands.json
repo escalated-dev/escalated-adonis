@@ -197,6 +197,38 @@
       "filePath": "purge_expired_command.js"
     },
     {
+      "commandName": "escalated:roles:assign",
+      "description": "Give a user an Escalated role",
+      "help": [
+        "Give a user (email address or ID) a role, admin by default:",
+        "  node ace escalated:roles:assign you@example.com admin",
+        "",
+        "Seed the permissions and system roles first:",
+        "  node ace escalated:seed-permissions"
+      ],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [],
+      "args": [
+        {
+          "name": "user",
+          "argumentName": "user",
+          "required": true,
+          "description": "The user's email address or ID",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "argumentName": "role",
+          "required": false,
+          "description": "The role slug (admin, agent, light_agent or a custom role)",
+          "type": "string"
+        }
+      ],
+      "options": { "startApp": true },
+      "filePath": "assign_role_command.js"
+    },
+    {
       "commandName": "escalated:run-automations",
       "description": "Evaluate all active automations against open tickets",
       "help": ["Run all active automations:", "  node ace escalated:run-automations"],

@@ -3,6 +3,29 @@
 ## [Unreleased]
 
 ### Upgrading
+- **Roles & permissions is now an install-level switch, off by default**
+  (`access.rolesPermissions` in `config/escalated.ts`, env
+  `ESCALATED_ROLES_PERMISSIONS`; ADR 2026-10-29-configurable-access-features).
+  Roles were stored but never enforced, so off is how every install already
+  behaved, with these visible differences:
+  - While it is off, the roles screens (`{prefix}/admin/roles*`) answer 404.
+  - While it is off, the newsletter screens no longer check
+    `newsletters.manage` / `newsletters.send`; the admin gate decides, like
+    every other screen. Installs that used those permissions to restrict
+    admins must turn the switch on.
+  - The shared `escalated.permissions` prop is `['*']` for staff while the
+    switch is off (it was the user's role slugs, which nothing enforced), and
+    `escalated.features` gains `roles_permissions`, `two_factor` and `sso`.
+  To enforce roles: seed the permissions (`node ace escalated:seed-permissions`),
+  give every staff user a role (`node ace escalated:roles:assign you@example.com admin`),
+  then set `ESCALATED_ROLES_PERMISSIONS=true` (or `access.rolesPermissions: true`).
+  Passing the admin check grants no permissions by itself, so an admin without
+  a role is refused everywhere. See `docs/access-control.md`.
+- **Two-factor and SSO are install-level switches too, and stay off in this
+  release** because it does not enforce them yet: the two-factor enrolment
+  screen (`{prefix}/admin/settings/two-factor*`) and the challenge
+  (`{prefix}/two-factor/challenge`) now answer 404, and `features.two_factor`
+  / `features.sso` are `false`. Enrolments already stored are kept.
 - **Plugin UI extensions are shared as `escalated.plugins`** (`menuItems`,
   `pageComponents`, `dashboardWidgets`), the shape the shared frontend reads.
   Before, nothing was shared, so plugin menus, widgets and slots never
@@ -25,6 +48,23 @@
   `assigned_to`. Replies: `ticket_id`, `is_internal`, `type`. Any other key,
   or a non-scalar value, throws instead of becoming a column name. Results are
   capped at 500 rows.
+
+### Added
+- **Roles & permissions are enforced when switched on.** Every admin, agent
+  and staff API route needs its permission from the user's roles as well as
+  the `isAdmin` / `isAgent` check (`enforceRoutePermissions` middleware, map in
+  `src/support/route_permissions.ts`; unmapped routes are refused, and a test
+  checks every route is mapped). Status changes to `resolved`/`closed`/`reopened`
+  also need `ticket.close`, bulk actions need each action's permission, and the
+  staff API checks the token owner's permissions. Failing answers 403.
+- `ensureFeatureEnabled({ feature })` named middleware: 404 while an access
+  feature is switched off.
+- `node ace escalated:roles:assign {user} {role=admin}` gives a user a role by
+  email or ID.
+- `PUT {prefix}/admin/users/:user/roles` (`escalated.admin.users.roles`, needs
+  `role.manage`) replaces a user's roles; you cannot remove your own
+  `role.manage`. While roles are on, the users page also receives each user's
+  `roles` and the assignable `roles`.
 
 ### Security
 - Plugin ticket and reply queries used the filter's keys as column names, so a

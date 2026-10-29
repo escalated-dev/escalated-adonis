@@ -242,7 +242,7 @@ commands: [
 - **Quick Filters:** Pre-built filter shortcuts (My Tickets, Unassigned, Breached SLA, etc.)
 - **Presence Indicators:** See who is viewing a ticket in real time
 - **SSO:** SAML (signature-verified against the IdP certificate) and JWT validation for your login routes; see [docs/sso.md](docs/sso.md)
-- **RBAC:** Role-based access control with granular permissions
+- **RBAC:** Role-based access control with granular permissions, enforced on every admin, agent and staff API route when `access.rolesPermissions` (`ESCALATED_ROLES_PERMISSIONS`) is on; off by default (see [docs/access-control.md](docs/access-control.md))
 - **Automation:** Configurable automation rules with conditions and actions; run the `node ace escalated:run-automations` Ace command on a schedule to apply them periodically
 - **i18n:** Multi-language support sourced from the central `@escalated-dev/locale` npm package, with optional per-host overrides under `resources/lang/overrides/`
 - **Plugin System:** Extensible via TypeScript SDK plugins

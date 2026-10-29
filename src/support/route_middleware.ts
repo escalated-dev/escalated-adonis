@@ -32,6 +32,8 @@ export function escalatedMiddleware(router: Router) {
     ensureIsAgent: () => import('../middleware/ensure_is_agent.js'),
     ensureIsAdmin: () => import('../middleware/ensure_is_admin.js'),
     ensureNewslettersEnabled: () => import('../middleware/ensure_newsletters_enabled.js'),
+    ensureFeatureEnabled: () => import('../middleware/ensure_feature_enabled.js'),
+    enforceRoutePermissions: () => import('../middleware/enforce_route_permissions.js'),
     resolveTicket: () => import('../middleware/resolve_ticket.js'),
     authenticateApiToken: () => import('../middleware/authenticate_api_token.js'),
     apiRateLimit: () => import('../middleware/api_rate_limit.js'),
