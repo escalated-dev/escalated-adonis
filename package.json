@@ -52,7 +52,7 @@
     "luxon": "^3.7.2",
     "openid-client": "^6.8.8",
     "otpauth": "^9.5.2",
-    "xml-crypto": "^6.3.3"
+    "xml-crypto": "^6.4.0"
   },
   "prettier": "@adonisjs/prettier-config",
   "keywords": [
