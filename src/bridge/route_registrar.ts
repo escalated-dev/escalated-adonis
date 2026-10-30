@@ -13,6 +13,7 @@
 | Pages and endpoints are protected by the same admin middleware as the
 | rest of the Escalated admin surface. Webhook routes are intentionally
 | left open so external services can POST to them without authentication.
+| Routes exist for every installed plugin and answer 404 while it is inactive.
 |
 */
 
@@ -91,6 +92,7 @@ export default class RouteRegistrar {
             const epPath = ep.path.replace(/^\/+/, '')
 
             ;(router[method] as Function)(`/${epPath}`, async (ctx: any) => {
+              if (!(await this.bridge.isActive(name))) return this.notFound(ctx)
               const response = await this.bridge.callEndpoint(name, ep.method, ep.path, {
                 body: ctx.request.body(),
                 params: ctx.params,
@@ -117,6 +119,7 @@ export default class RouteRegistrar {
             const whPath = wh.path.replace(/^\/+/, '')
 
             ;(router[method] as Function)(`/${whPath}`, async (ctx: any) => {
+              if (!(await this.bridge.isActive(name))) return this.notFound(ctx)
               const response = await this.bridge.callWebhook(name, wh.method, wh.path, {
                 body: ctx.request.body(),
                 params: ctx.params,
@@ -137,7 +140,13 @@ export default class RouteRegistrar {
    * Render a plugin page, with the props from the plugin's `GET /{component}`
    * endpoint when it has one, and none when it does not.
    */
+  private notFound(ctx: any) {
+    return ctx.response.notFound({ error: 'Not Found' })
+  }
+
   private async renderPage(ctx: any, name: string, page: PageDeclaration) {
+    // Inactive plugins have no pages.
+    if (!(await this.bridge.isActive(name))) return this.notFound(ctx)
     let props: unknown = {}
     try {
       props =

@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Upgrading
+- **SDK plugins can now be activated and deactivated, and only active ones run** (plugin contract, Lifecycle). Before, every SDK plugin the bridge loaded got every hook, cron schedule and badge, and its pages, endpoints, webhooks, menus and widgets were live, with no way to switch it off. The first time the app boots after upgrading, every SDK plugin installed at that moment is recorded active in `escalated_plugins`, so nothing that ran before stops. SDK plugins installed afterwards start inactive: activate them on **Admin > Plugins**. No migration is needed. Inactive SDK plugins get no hooks, cron or badges, add no menus, widgets or slots, and answer 404 on their pages, endpoints and webhooks.
+- An SDK plugin's `onActivate` now runs when an admin activates it and `onDeactivate` when an admin deactivates it, as the plugin contract says; they no longer run on every boot and shutdown. Plugins that set up in-memory state in `onActivate` should do it at import time instead.
+- Activating or deactivating a plugin from **Admin > Plugins** now answers with a 303 to the index instead of a redirect back, and an unknown slug is an `error` flash (404 for JSON requests). The page's `plugins` are now the contract's snake_case plugin objects (`is_active`, `activated_at`, `author_url`, `homepage`, `provides`), which the shared page reads; they were camelCase. The page receives `can_upload: true`.
 - **SDK plugin cron schedules run only if you schedule
   `node ace escalated:plugins:cron` every minute** (cron, a process manager
   or a scheduler package). Until then nothing changes: they never ran before.
@@ -92,6 +95,8 @@
   capped at 500 rows.
 
 ### Added
+- **SDK plugins on Admin > Plugins**: listed by slug with `name`, `version`, `description`, `is_active`, `activated_at`, `source: composer` and `provides` counts, activated and deactivated there (`PluginBridge.activate()` / `deactivate()`); uninstalling is refused (npm manages them).
+- **Lifecycle actions `plugin.activated`, `plugin.deactivated` and `plugin.uninstalling`** with `{plugin, slug}`, to native and SDK plugins, in the contract's order. A throwing callback is logged and does not undo the transition.
 - **Single sign-on works when switched on.** `GET {prefix}/sso/login` starts
   sign-in with the provider chosen in Admin > Settings > SSO. SAML requires a
   signed assertion from the configured certificate and checks Issuer,
@@ -128,7 +133,7 @@
   enrolment (lost device).
 - SDK plugin cron schedules (domain-model/plugin-contract.md, Cron):
   `node ace escalated:plugins:cron` runs each five-field (UTC) `cron` schedule
-  of each loaded SDK plugin that is due that minute, as no user
+  of each active SDK plugin that is due that minute, as no user
   (`ctx.currentUser()` is `null`), within 30 s each. A failing, slow or
   unreadable schedule is logged and never stops the others. `--at <ISO time>`
   runs a given minute.

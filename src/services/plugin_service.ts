@@ -16,6 +16,14 @@ import Plugin from '../models/plugin.js'
 import type HookManager from '../support/hook_manager.js'
 import { collectSafeArchiveRootFolder, resolveWithinBasePath } from '../support/plugin_archive.js'
 import type { PluginManifest, PluginInfo } from '../types.js'
+import { sdkPluginSlug } from '../bridge/sdk_plugin_activation.js'
+
+/** No native or SDK plugin has this slug. */
+export class UnknownPluginError extends Error {
+  constructor(public readonly slug: string) {
+    super(`No plugin is installed as "${slug}".`)
+  }
+}
 
 export default class PluginService {
   protected pluginsPath: string
@@ -41,7 +49,107 @@ export default class PluginService {
   async getAllPlugins(): Promise<PluginInfo[]> {
     const local = await this.getLocalPlugins()
     const npm = await this.getNpmPlugins()
-    return [...local, ...npm]
+    const native = [...local, ...npm]
+    const taken = new Set(native.map((p) => p.slug))
+    const sdkPlugins = await this.getSdkPlugins()
+    const sdk = sdkPlugins.filter((plugin) => {
+      if (!taken.has(plugin.slug)) return true
+      console.error(
+        `[Escalated] SDK plugin "${plugin.name}" and a native plugin share the slug "${plugin.slug}"; the SDK plugin is not listed.`
+      )
+      return false
+    })
+    return [...native, ...sdk]
+  }
+
+  /**
+   * SDK plugins the bridge loaded, listed with the native ones. npm installs
+   * them, so their source is `composer` (managed by a package manager) and
+   * the admin cannot delete them.
+   */
+  private async getSdkPlugins(): Promise<PluginInfo[]> {
+    const manifests = this.sdkManifests()
+    if (manifests.size === 0) return []
+    let rows: Plugin[] = []
+    try {
+      rows = await Plugin.query().whereIn(
+        'slug',
+        [...manifests.keys()].map((name) => sdkPluginSlug(name))
+      )
+    } catch {}
+    const bySlug = new Map(rows.map((row) => [row.slug, row]))
+
+    return [...manifests].map(([name, manifest]: [string, any]) => {
+      const slug = sdkPluginSlug(name)
+      const row = bySlug.get(slug)
+      const pages: any[] = manifest?.pages ?? []
+      return {
+        slug,
+        name,
+        description: manifest?.description ?? null,
+        version: String(manifest?.version ?? '0.0.0'),
+        author: manifest?.author ?? null,
+        authorUrl: manifest?.homepage ?? null,
+        homepage: manifest?.homepage ?? null,
+        requires: '',
+        mainFile: '',
+        isActive: row?.isActive ?? false,
+        activatedAt: row?.isActive ? (row.activatedAt?.toISO() ?? null) : null,
+        path: '',
+        source: 'composer',
+        sdk: true,
+        provides: {
+          menu_items: pages.filter((page) => page?.menu && typeof page.menu === 'object').length,
+          widgets: (manifest?.widgets ?? []).length,
+          page_components: (manifest?.components ?? []).length,
+        },
+      } as PluginInfo
+    })
+  }
+
+  private sdkBridge(): any {
+    const bridge = (globalThis as any).__escalated_pluginBridge
+    return bridge?.isBooted?.() ? bridge : null
+  }
+
+  private sdkManifests(): Map<string, any> {
+    return this.sdkBridge()?.getManifests?.() ?? new Map()
+  }
+
+  /** The SDK plugin name behind a slug, or null. */
+  private sdkPluginName(slug: string): string | null {
+    for (const name of this.sdkManifests().keys()) {
+      if (sdkPluginSlug(name) === slug) return name
+    }
+    return null
+  }
+
+  private async nativePluginName(slug: string): Promise<string> {
+    const path = await this.resolvePluginPath(slug)
+    try {
+      const manifest = path ? JSON.parse(readFileSync(join(path, 'plugin.json'), 'utf-8')) : null
+      if (typeof manifest?.name === 'string') return manifest.name
+    } catch {}
+    return slug
+  }
+
+  /**
+   * Fire a lifecycle action (`plugin.activated` and so on) with
+   * `{plugin, slug}` to active native and SDK plugins. A plugin that throws
+   * is logged and never undoes the transition.
+   */
+  private async fireLifecycle(hook: string, slug: string, sdkName: string | null) {
+    const data = { plugin: sdkName ?? (await this.nativePluginName(slug)), slug }
+    try {
+      await this.hookManager?.doAction(hook, data)
+    } catch (err) {
+      console.error(`[Escalated] plugin action "${hook}" failed:`, err)
+    }
+    try {
+      await this.sdkBridge()?.dispatchAction(hook, data)
+    } catch (err) {
+      console.error(`[Escalated] SDK plugin action "${hook}" failed:`, err)
+    }
   }
 
   /**
@@ -185,13 +293,19 @@ export default class PluginService {
   }
 
   /**
-   * Activate a plugin: create/update DB record, load the plugin, fire hooks.
+   * Activate a plugin (domain-model/plugin-contract.md, Lifecycle): record it
+   * active, let it set itself up (native: load it and fire plugin_activated;
+   * SDK: its onActivate), then fire `plugin.activated`. Activating an active
+   * plugin does nothing. Throws UnknownPluginError for an unknown slug.
    */
   async activatePlugin(slug: string): Promise<boolean> {
+    const sdkName = this.sdkPluginName(slug)
+    if (sdkName) return this.activateSdkPlugin(slug, sdkName)
+
     // Verify plugin directory and manifest exist (check both local and npm sources)
     const pluginPath = await this.resolvePluginPath(slug)
     if (!pluginPath || !existsSync(join(pluginPath, 'plugin.json'))) {
-      throw new Error(`Plugin "${slug}" not found or missing plugin.json`)
+      throw new UnknownPluginError(slug)
     }
 
     let plugin = await Plugin.query().where('slug', slug).first()
@@ -216,22 +330,52 @@ export default class PluginService {
       // Fire activation hooks
       await this.hookManager.doAction('plugin_activated', slug)
       await this.hookManager.doAction(`plugin_activated_${slug}`)
+      await this.fireLifecycle('plugin.activated', slug, null)
     }
 
     return true
   }
 
+  private async activateSdkPlugin(slug: string, name: string): Promise<boolean> {
+    const { DateTime } = await import('luxon')
+    let plugin = await Plugin.query().where('slug', slug).first()
+    if (plugin?.isActive) return true
+
+    plugin ??= new Plugin()
+    plugin.slug = slug
+    plugin.isActive = true
+    plugin.activatedAt = DateTime.now()
+    plugin.deactivatedAt = null
+    await plugin.save()
+
+    await this.sdkBridge()?.activate(name)
+    await this.fireLifecycle('plugin.activated', slug, name)
+    return true
+  }
+
   /**
-   * Deactivate a plugin: fire hooks, then update the DB record.
+   * Deactivate a plugin: fire `plugin.deactivated` and let it clean up while
+   * it is still active, then record it inactive. Throws UnknownPluginError
+   * for an unknown slug.
    */
   async deactivatePlugin(slug: string): Promise<boolean> {
+    const sdkName = this.sdkPluginName(slug)
     const plugin = await Plugin.query().where('slug', slug).first()
+    if (!plugin && !sdkName && !(await this.resolvePluginPath(slug))) {
+      throw new UnknownPluginError(slug)
+    }
 
-    if (plugin && plugin.isActive) {
+    if (plugin && plugin.isActive && sdkName) {
+      await this.fireLifecycle('plugin.deactivated', slug, sdkName)
+      await this.sdkBridge()?.deactivate(sdkName)
+    } else if (plugin && plugin.isActive) {
+      await this.fireLifecycle('plugin.deactivated', slug, null)
       // Fire deactivation hooks BEFORE deactivating
       await this.hookManager.doAction('plugin_deactivated', slug)
       await this.hookManager.doAction(`plugin_deactivated_${slug}`)
+    }
 
+    if (plugin && plugin.isActive) {
       plugin.isActive = false
       const { DateTime: LuxonDt } = await import('luxon')
       plugin.deactivatedAt = LuxonDt.now()
@@ -249,7 +393,11 @@ export default class PluginService {
     const allPlugins = await this.getAllPlugins()
     const pluginData = allPlugins.find((p) => p.slug === slug)
     if (pluginData && pluginData.source === 'composer') {
-      throw new Error('npm plugins cannot be deleted. Remove the package via npm instead.')
+      throw new Error(
+        pluginData.sdk
+          ? 'SDK plugins are installed with npm. Remove the package with npm instead.'
+          : 'npm plugins cannot be deleted. Remove the package via npm instead.'
+      )
     }
 
     const pluginPath = join(this.pluginsPath, slug)
@@ -266,6 +414,7 @@ export default class PluginService {
     }
 
     // Fire uninstall hooks
+    await this.fireLifecycle('plugin.uninstalling', slug, null)
     await this.hookManager.doAction('plugin_uninstalling', slug)
     await this.hookManager.doAction(`plugin_uninstalling_${slug}`)
 

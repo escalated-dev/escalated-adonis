@@ -9,7 +9,8 @@
 */
 
 import type { HttpContext } from '@adonisjs/core/http'
-import PluginService from '../services/plugin_service.js'
+import PluginService, { UnknownPluginError } from '../services/plugin_service.js'
+import type { PluginInfo } from '../types.js'
 import type HookManager from '../support/hook_manager.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { redirectToRoute } from '../support/routing.js'
@@ -28,8 +29,43 @@ export default class AdminPluginsController {
     const plugins = await pluginService.getAllPlugins()
 
     return getRenderer().render(ctx, 'Escalated/Admin/Plugins/Index', {
-      plugins,
+      plugins: plugins.map((plugin) => this.pluginObject(plugin)),
+      can_upload: true,
     })
+  }
+
+  /** The plugin contract's plugin object (snake_case, as the page reads it). */
+  protected pluginObject(plugin: PluginInfo) {
+    return {
+      slug: plugin.slug,
+      name: plugin.name,
+      description: plugin.description ?? null,
+      version: plugin.version,
+      author: plugin.author ?? null,
+      author_url: plugin.authorUrl || null,
+      homepage: plugin.homepage ?? (plugin.authorUrl || null),
+      is_active: plugin.isActive,
+      activated_at: plugin.activatedAt,
+      source: plugin.source,
+      ...(plugin.provides ? { provides: plugin.provides } : {}),
+    }
+  }
+
+  /** Plugin transitions answer with a 303 to the index (the Inertia protocol). */
+  protected toIndex(ctx: HttpContext) {
+    const redirect = ctx.response.redirect() as unknown as {
+      status(code: number): { toRoute(name: string): void }
+    }
+    return redirect.status(303).toRoute('escalated.admin.plugins.index')
+  }
+
+  /** An unknown slug: an `error` flash, or a 404 for a JSON request. */
+  protected unknown(ctx: HttpContext, error: UnknownPluginError) {
+    if (!ctx.request.header('x-inertia') && ctx.request.accepts(['html', 'json']) === 'json') {
+      return ctx.response.notFound({ error: error.message })
+    }
+    ctx.session.flash('error', error.message)
+    return this.toIndex(ctx)
   }
 
   /**
@@ -71,11 +107,12 @@ export default class AdminPluginsController {
 
       ctx.session.flash('success', 'Plugin activated successfully.')
     } catch (error: any) {
+      if (error instanceof UnknownPluginError) return this.unknown(ctx, error)
       console.error('[Escalated] Plugin activation failed:', error)
       ctx.session.flash('error', `Failed to activate plugin: ${error.message}`)
     }
 
-    return ctx.response.redirect().back()
+    return this.toIndex(ctx)
   }
 
   /**
@@ -90,11 +127,12 @@ export default class AdminPluginsController {
 
       ctx.session.flash('success', 'Plugin deactivated successfully.')
     } catch (error: any) {
+      if (error instanceof UnknownPluginError) return this.unknown(ctx, error)
       console.error('[Escalated] Plugin deactivation failed:', error)
       ctx.session.flash('error', `Failed to deactivate plugin: ${error.message}`)
     }
 
-    return ctx.response.redirect().back()
+    return this.toIndex(ctx)
   }
 
   /**

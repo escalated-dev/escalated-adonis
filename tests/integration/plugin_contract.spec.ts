@@ -1,6 +1,7 @@
 import { test } from '@japa/runner'
 import { InertiaClient, testApp, type TestApp } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
+import { activateSdkPlugins } from './helpers/plugins.js'
 
 /*
 |--------------------------------------------------------------------------
@@ -79,7 +80,8 @@ test.group('Plugin contract', (group) => {
   }
 
   /** A stand-in for the in-process SDK bridge. */
-  function fakeBridge(manifests: Map<string, any> = new Map(), throws = false) {
+  async function fakeBridge(manifests: Map<string, any> = new Map(), throws = false) {
+    await activateSdkPlugins(...manifests.keys())
     const calls: Array<[string, any]> = []
     const bridge = {
       isBooted: () => true,
@@ -169,7 +171,7 @@ test.group('Plugin contract', (group) => {
     const empty = await escalatedSharedData({ auth: { user: TEST_USERS.admin } })
     assert.deepEqual(empty.plugins, {})
 
-    const bridge = fakeBridge(
+    const bridge = await fakeBridge(
       new Map([
         [
           '@acme/plugin-crm',
@@ -235,7 +237,7 @@ test.group('Plugin contract', (group) => {
     cleanup,
   }) => {
     const { seen, stop } = await listen(['ticket.created', 'ticket_created'])
-    const bridge = fakeBridge()
+    const bridge = await fakeBridge()
     cleanup(() => {
       stop()
       bridge.restore()
@@ -308,7 +310,7 @@ test.group('Plugin contract', (group) => {
       throw new Error('plugin broke')
     }
     manager.addAction('ticket.created', failing)
-    const bridge = fakeBridge(new Map(), true)
+    const bridge = await fakeBridge(new Map(), true)
     cleanup(() => {
       manager.removeAction('ticket.created', failing)
       bridge.restore()
