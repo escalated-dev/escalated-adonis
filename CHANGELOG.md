@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.10] - 2026-10-30
+
 ### Upgrading
 - **An Inertia visit to an Escalated route that ends in 403, 404, 419, 429, 500 or 503 now gets the shared `Escalated/Error` page** (props `status` and a translated generic `message`, as Rails and Laravel send them) instead of the host's error body or Escalated's own `{ error }` refusal, which the Inertia client could only show in a modal. It is router middleware the package adds while the UI is enabled; it answers only requests with `X-Inertia` on Escalated's screens (routes named `escalated.*`, except the API, widget, inbound and SSO routes), and passes everything else through: full page loads, JSON and API clients, host routes and other statuses (validation errors, 401s) still reach the host's exception handler. An error's or a refusal's own text never reaches the page (`errors.*` in the lang files). While the app runs in development a 500 is left to the host's handler and its debug page; a 500 the page answers is still logged through `ctx.logger`. A CSRF refusal from `@adonisjs/shield` comes from the host's own router middleware, before this one, and is unchanged. Permission refusals on Inertia visits no longer carry `{ error, permission }`; JSON and API requests still do.
 
