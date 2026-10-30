@@ -236,6 +236,23 @@ async function boot() {
         async () => ({ default: CsrfStandIn }) as any,
       ])
 
+      // Stand-ins for failures the suite cannot otherwise provoke on a real
+      // Escalated route (named `escalated.*` like the package's own), and a
+      // host route, for the Escalated/Error page specs.
+      router
+        .get('/support/__probe/:status', async (ctx) => {
+          const status = Number(ctx.params.status)
+          if (status === 500) throw new Error('relation escalated_secret_table does not exist')
+          if (ctx.request.input('respond')) {
+            return ctx.response.status(status).json({ error: 'upstream detail' })
+          }
+          throw Object.assign(new Error('upstream detail'), { status })
+        })
+        .as('escalated.__probe')
+      router
+        .get('/__test/host-missing', async (ctx) => ctx.response.notFound({ error: 'host page' }))
+        .as('host.missing')
+
       // The host's sign-in and sign-out. Its session guard (@adonisjs/auth)
       // emits these events with the request's context; Escalated listens to
       // them, so every new login has to pass the two-factor challenge again.

@@ -55,9 +55,8 @@ const NOT_YET_RENDERED = [
   // Not rendered by escalated-laravel either: a static page with no route.
   'Escalated/Admin/Settings/Sandbox',
   // Not rendered by escalated-laravel either: the builder is part of
-  // Workflows/Form, and errors render through the host.
+  // Workflows/Form.
   'Escalated/Admin/Workflows/Builder',
-  'Escalated/Error',
 ]
 
 const PAGE_NAME = /'(Escalated\/[A-Za-z0-9/_]+)'/g

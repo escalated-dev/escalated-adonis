@@ -58,6 +58,15 @@ test.group('Roles & permissions', (group) => {
     return new InertiaClient(running.baseUrl, { user })
   }
 
+  /** An Inertia visit refused for a missing permission gets the shared Error page. */
+  function assertErrorPage(assert: any, visit: { body: any }, status: number) {
+    assert.equal(visit.body.component, 'Escalated/Error', JSON.stringify(visit.body))
+    assert.deepEqual(visit.body.props, {
+      status,
+      message: 'You are not authorized to perform this action.',
+    })
+  }
+
   function enforce() {
     setAccess({ rolesPermissions: true })
   }
@@ -284,7 +293,7 @@ test.group('Roles & permissions', (group) => {
       data: { name: 'Support lead', permissions: [] },
     })
     assert.equal(store.status, 403, JSON.stringify(store.body))
-    assert.equal(store.body.permission, 'role.manage')
+    assertErrorPage(assert, store, 403)
 
     const data = await shared(TEST_USERS.admin)
     assert.isTrue(data.features.roles_permissions)
@@ -328,7 +337,7 @@ test.group('Roles & permissions', (group) => {
       data: { name: 'Needs manage' },
     })
     assert.equal(write.status, 403, JSON.stringify(write.body))
-    assert.equal(write.body.permission, 'tag.manage')
+    assertErrorPage(assert, write, 403)
 
     await giveRoleWith(TEST_USERS.admin, ['tag.manage'])
     const allowed = await as(TEST_USERS.admin).visit('POST', `${ADMIN}/tags`, {
@@ -366,7 +375,7 @@ test.group('Roles & permissions', (group) => {
         referer,
       })
       assert.equal(visit.status, 403, `${path}: ${JSON.stringify(visit.body)}`)
-      assert.equal(visit.body.permission, permission)
+      assertErrorPage(assert, visit, 403)
     }
 
     const bulkDelete = await agent.visit('POST', `${AGENT}/tickets/bulk`, {
@@ -422,7 +431,7 @@ test.group('Roles & permissions', (group) => {
         { data: { status }, referer }
       )
       assert.equal(visit.status, 403, `${status}: ${JSON.stringify(visit.body)}`)
-      assert.equal(visit.body.permission, 'ticket.close')
+      assertErrorPage(assert, visit, 403)
     }
 
     await giveRoleWith(TEST_USERS.agent, ['ticket.close'])
@@ -456,7 +465,7 @@ test.group('Roles & permissions', (group) => {
     ] as const) {
       const visit = await bulk(data)
       assert.equal(visit.status, 403, `${JSON.stringify(data)}: ${JSON.stringify(visit.body)}`)
-      assert.equal(visit.body.permission, permission)
+      assertErrorPage(assert, visit, 403)
     }
 
     const after = await running.db.from('escalated_tickets').where('id', ticket.id).first()
@@ -643,7 +652,7 @@ test.group('Roles & permissions', (group) => {
       { data: { role_ids: [await roleId('admin')] } }
     )
     assert.equal(visit.status, 403, JSON.stringify(visit.body))
-    assert.equal(visit.body.permission, 'role.manage')
+    assertErrorPage(assert, visit, 403)
   })
 
   test('does not let a role manager remove their own role management', async ({ assert }) => {

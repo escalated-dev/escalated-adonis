@@ -53,6 +53,14 @@
     "tag_deleted": "Etiket silindi.",
     "settings_updated": "Ayarlar guncellendi."
   },
+  "errors": {
+    "403": "Bu işlemi gerçekleştirme yetkiniz yok.",
+    "404": "İstenen kaynak bulunamadı.",
+    "419": "Oturumunuzun süresi doldu. Sayfayı yenileyip tekrar deneyin.",
+    "429": "Çok fazla istek. Biraz bekleyip tekrar deneyin.",
+    "500": "Bizim tarafımızda bir sorun oluştu.",
+    "503": "Hizmet geçici olarak kullanılamıyor. Kısa süre sonra tekrar deneyin."
+  },
   "middleware": {
     "not_admin": "Yonetici yetkisi yok.",
     "not_agent": "Temsilci yetkisi yok."

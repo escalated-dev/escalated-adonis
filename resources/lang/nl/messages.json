@@ -53,6 +53,14 @@
     "tag_deleted": "Tag verwijderd.",
     "settings_updated": "Instellingen bijgewerkt."
   },
+  "errors": {
+    "403": "U bent niet gemachtigd om deze actie uit te voeren.",
+    "404": "De gevraagde bron is niet gevonden.",
+    "419": "Uw sessie is verlopen. Vernieuw de pagina en probeer het opnieuw.",
+    "429": "Te veel verzoeken. Wacht even en probeer het opnieuw.",
+    "500": "Er is aan onze kant iets misgegaan.",
+    "503": "De dienst is tijdelijk niet beschikbaar. Probeer het straks opnieuw."
+  },
   "middleware": {
     "not_admin": "Niet geautoriseerd als beheerder.",
     "not_agent": "Niet geautoriseerd als medewerker."

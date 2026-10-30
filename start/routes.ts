@@ -132,6 +132,11 @@ export async function registerRoutes() {
   // Only register Inertia UI routes when ui.enabled is true (default)
   if (isUiEnabled()) {
     await registerUiRoutes(config)
+
+    // An Inertia visit to an Escalated route that ends in 403, 404, 419, 429,
+    // 500 or 503 gets the shared Escalated/Error page. Router middleware, so it
+    // wraps every route's own middleware; it passes anything else through.
+    router.use([() => import('../src/middleware/inertia_error_page.js')])
   }
 }
 
