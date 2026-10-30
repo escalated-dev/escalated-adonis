@@ -393,6 +393,159 @@ test.group('Plugin contract', (group) => {
     await assert.rejects(() => ctx.replies.query({ body: 'note' }), /cannot filter/)
   })
 
+  // ctx writes take only the contract's fields: any other key is an error,
+  // never an attribute, so a plugin cannot name an author, a requester, an
+  // assignee or a reply's flags.
+
+  test('ctx.replies.create writes as the acting user, or a note with is_internal', async ({
+    assert,
+  }) => {
+    const ticket = await openTicket('Plugin reply')
+    const { ctx } = await context()
+    const { actingAs } = await import('../../src/bridge/native_context.js')
+    const { default: Reply } = await import('../../src/models/reply.js')
+
+    const reply = await actingAs(TEST_USERS.agent, () =>
+      ctx.replies.create({ ticket_id: ticket.id, body: 'Synced' })
+    )
+    const note = await ctx.replies.create({
+      ticket_id: ticket.id,
+      body: 'Inner',
+      is_internal: true,
+    })
+
+    const replyRow = await Reply.findOrFail(reply.id)
+    const noteRow = await Reply.findOrFail(note.id)
+    assert.equal(replyRow.ticketId, ticket.id)
+    assert.isFalse(Boolean(replyRow.isInternalNote))
+    assert.equal(replyRow.type, 'reply')
+    assert.equal(Number(replyRow.authorId), TEST_USERS.agent.id)
+    assert.equal(replyRow.authorType, 'User')
+    assert.isTrue(Boolean(noteRow.isInternalNote))
+    assert.equal(noteRow.type, 'note')
+    assert.isNull(noteRow.authorId)
+  })
+
+  test('ctx.replies.create rejects fields outside the contract', async ({ assert }) => {
+    const ticket = await openTicket('Plugin reply forged')
+    const { ctx } = await context()
+    const { default: Reply } = await import('../../src/models/reply.js')
+    const forged: Record<string, unknown> = {
+      author_id: 1,
+      authorId: 1,
+      author_type: 'User',
+      authorType: 'User',
+      is_internal_note: true,
+      isInternalNote: true,
+      type: 'system',
+      is_pinned: true,
+      metadata: { x: 1 },
+      id: 99999,
+    }
+
+    for (const [key, value] of Object.entries(forged)) {
+      await assert.rejects(
+        () => ctx.replies.create({ ticket_id: ticket.id, body: 'x', [key]: value }),
+        /does not accept/
+      )
+    }
+    await assert.rejects(() => ctx.replies.create({ body: 'x' }), /ticket_id/)
+    await assert.rejects(() => ctx.replies.create({ ticket_id: 99999999, body: 'x' }), /ticket_id/)
+    await assert.rejects(() => ctx.replies.create({ ticket_id: ticket.id, body: ' ' }), /body/)
+    const rows = await Reply.query().where('ticket_id', ticket.id)
+    assert.lengthOf(rows, 0)
+  })
+
+  test('ctx.tickets.create takes the contract fields and aliases only', async ({ assert }) => {
+    const { ctx } = await context()
+    const { default: Ticket } = await import('../../src/models/ticket.js')
+    const { default: Contact } = await import('../../src/models/contact.js')
+
+    const created = await ctx.tickets.create({
+      title: `From Slack ${Date.now()}`,
+      description: 'Help',
+      priority: 'high',
+      metadata: { slack_ts: '1.2' },
+      requester_email: 'Pat@Example.com',
+      requester_name: 'Pat',
+    })
+
+    const row = await Ticket.findOrFail(created.id)
+    assert.match(row.subject, /^From Slack/)
+    assert.equal(row.description, 'Help')
+    assert.equal(row.priority, 'high')
+    assert.equal(row.channel, 'api')
+    assert.deepEqual(row.metadata, { slack_ts: '1.2' })
+    assert.isNull(row.requesterId)
+    assert.isNull(row.assignedTo)
+    const contact = await Contact.findOrFail(row.contactId!)
+    assert.equal(contact.email, 'pat@example.com')
+
+    const total = async () => {
+      const [counted] = await Ticket.query().count('* as total')
+      return counted.$extras.total
+    }
+    const before = await total()
+    for (const [key, value] of Object.entries({
+      requester_id: 1,
+      requesterId: 1,
+      requester_type: 'User',
+      assigned_to: 2,
+      assignedTo: 2,
+      reference: 'ESC-1',
+      guest_token: 'x',
+      sla_first_response_breached: true,
+    })) {
+      await assert.rejects(
+        () => ctx.tickets.create({ subject: 'S', [key]: value }),
+        /does not accept/
+      )
+    }
+    assert.equal(await total(), before)
+  })
+
+  test('ctx.tickets.update takes the contract fields only', async ({ assert }) => {
+    const ticket = await openTicket('Original', { priority: 'low' })
+    const { ctx } = await context()
+    const { default: Ticket } = await import('../../src/models/ticket.js')
+
+    for (const [key, value] of Object.entries({
+      assigned_to: TEST_USERS.agent.id,
+      assignedTo: TEST_USERS.agent.id,
+      requester_id: 1,
+      channel: 'email',
+      requester_email: 'a@b.c',
+      resolved_at: '2026-01-01',
+    })) {
+      await assert.rejects(
+        () => ctx.tickets.update(ticket.id, { subject: 'Changed', [key]: value }),
+        /does not accept/
+      )
+    }
+    const unchanged = await Ticket.findOrFail(ticket.id)
+    assert.equal(unchanged.subject, 'Original')
+
+    await ctx.tickets.update(ticket.id, { title: 'Renamed', body: 'New body', priority: 'urgent' })
+    const fresh = await Ticket.findOrFail(ticket.id)
+    assert.equal(fresh.subject, 'Renamed')
+    assert.equal(fresh.description, 'New body')
+    assert.equal(fresh.priority, 'urgent')
+    assert.isNull(fresh.assignedTo)
+  })
+
+  test('ctx.contacts.create takes name and email only', async ({ assert }) => {
+    const { ctx } = await context()
+
+    await assert.rejects(
+      () => ctx.contacts.create({ name: 'Eve', email: 'eve@example.com', isAdmin: true }),
+      /does not accept/
+    )
+    await assert.rejects(
+      () => ctx.contacts.create({ name: 'Eve', email: 'eve@example.com', role: 'admin' }),
+      /does not accept/
+    )
+  })
+
   test('ctx.emit drops names that impersonate a canonical or lifecycle event', async ({
     assert,
   }) => {
