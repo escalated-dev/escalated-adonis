@@ -286,6 +286,21 @@ a new install), every SDK plugin installed at that moment is recorded active,
 because earlier versions ran every SDK plugin. Plugins installed after that
 start inactive.
 
+### Endpoints and webhooks (SDK plugins)
+
+An active SDK plugin's manifest endpoints answer at
+`{METHOD} /{prefix}/api/plugins/{slug}{path}` behind the admin middleware,
+and its webhooks at `{METHOD} /{prefix}/webhooks/plugins/{slug}{path}` with no
+authentication (the plugin checks the sender), as in the plugin contract. With
+the default prefix, `@acme/plugin-crm`'s `POST /inbound` webhook is
+`POST /support/webhooks/plugins/acme--plugin-crm/inbound`. Path parameters
+(`/contacts/:id`) reach the handler as `params`. The `Cookie`,
+`Authorization`, `X-XSRF-TOKEN`, `X-CSRF-TOKEN` and `Proxy-*` headers are
+removed first. An endpoint runs as the signed-in user, a webhook as nobody. A
+handler that throws answers 500 with a generic message; the error is logged.
+Exempt the webhook paths from CSRF in your shield config if a sender posts to
+them.
+
 ### Cron schedules and widget badges (SDK plugins)
 
 An SDK plugin's `cron` keys are five-field cron expressions (`minute hour
