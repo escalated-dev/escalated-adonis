@@ -378,8 +378,14 @@ export default class EscalatedProvider {
       const emitter = await this.app.container.make('emitter')
       const { ESCALATED_EVENT_WEBHOOK_MAP } = await import('../src/support/webhook_events.js')
       const { pluginEventPayload } = await import('../src/support/plugin_events.js')
+      const { guardPluginAction } = await import('../src/support/plugin_action_guard.js')
 
-      const deliver = async (name: string, data: unknown) => {
+      // A plugin's own ctx write raises events while it handles one; the same
+      // action is not handed back to plugins (plugin_action_guard).
+      const deliver = (name: string, data: unknown) =>
+        guardPluginAction(name, () => deliverNow(name, data))
+
+      const deliverNow = async (name: string, data: unknown) => {
         const payload = await pluginEventPayload(name, data)
         if (!payload) return
 
