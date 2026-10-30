@@ -41,6 +41,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import PluginStoreRecord from '../models/plugin_store_record.js'
 import { resolveUserModel } from '../support/user_model.js'
 import { isReservedHook } from '../support/plugin_events.js'
+import { guardPluginAction } from '../support/plugin_action_guard.js'
 
 /**
  * The user a plugin call is made for: the viewer while a widget badge is
@@ -60,6 +61,16 @@ export function actingAs<T>(user: any, fn: () => Promise<T>): Promise<T> {
       : null
   if (acting) actingTypes.set(acting, String(user.constructor?.name ?? 'User'))
   return actingUser.run(acting, fn)
+}
+
+/**
+ * The acting user as TicketService takes an actor (`id` and the model type
+ * as `constructor.name`), or null when the call is made for nobody.
+ */
+function actingActor(): { id: number; constructor: { name: string } } | null {
+  const user = actingUser.getStore() ?? null
+  if (!user) return null
+  return { id: user.id as number, constructor: { name: actingTypes.get(user) ?? 'User' } }
 }
 
 /**
@@ -231,7 +242,7 @@ export default class NativeContext implements PluginContext {
       return
     }
     const dispatcher = this.getDispatcher()
-    await dispatcher.dispatchAction(hook, data)
+    await guardPluginAction(hook, () => dispatcher.dispatchAction(hook, data))
   }
 
   async currentUser(): Promise<User | null> {
@@ -580,19 +591,19 @@ export default class NativeContext implements PluginContext {
           }
         }
 
-        const row = await TicketModel.create({
-          reference: await TicketModel.generateReference(),
-          description: '',
-          status: 'open',
-          priority: 'medium',
-          ticketType: 'question',
-          slaFirstResponseBreached: false,
-          slaResolutionBreached: false,
-          ...attributes,
-          channel: optionalText(data, 'channel', method) ?? 'api',
-          contactId,
-        } as any)
-        return NativeContext.serializeTicket(row)
+        // Through the ticket service, like a ticket opened over the API: the
+        // opening activity, SLA, ticket.created, workflows and webhooks.
+        const { default: TicketService } = await import('../services/ticket_service.js')
+        const row = await new TicketService().createForSystem(
+          {
+            ...attributes,
+            subject: attributes.subject,
+            channel: optionalText(data, 'channel', method) ?? 'api',
+            contactId,
+          },
+          actingActor() ?? undefined
+        )
+        return NativeContext.serializeTicket(await TicketModel.findOrFail(row.id))
       },
 
       async update(id, input): Promise<Ticket> {
@@ -601,9 +612,8 @@ export default class NativeContext implements PluginContext {
         const attributes = await ticketAttributes(data, method)
         const { default: TicketModel } = await import('../models/ticket.js')
         const row = await TicketModel.findOrFail(id)
-        row.merge(attributes as any)
-        await row.save()
-        return NativeContext.serializeTicket(await row.refresh())
+        await NativeContext.updateThroughService(row, attributes, actingActor() ?? undefined)
+        return NativeContext.serializeTicket(await TicketModel.findOrFail(row.id))
       },
     }
   }
@@ -647,18 +657,15 @@ export default class NativeContext implements PluginContext {
           data.is_internal === true || data.is_internal === 1 || data.is_internal === 'true'
 
         // The author is the acting user (the signed-in user of the request
-        // the plugin is serving), or nobody: a plugin never names it.
-        const author = actingUser.getStore() ?? null
-        const { default: ReplyModel } = await import('../models/reply.js')
-        const row = await ReplyModel.create({
-          ticketId: ticket.id,
-          body,
-          isInternalNote: internal,
-          isPinned: false,
-          type: internal ? 'note' : 'reply',
-          authorId: author ? author.id : null,
-          authorType: author ? (actingTypes.get(author) ?? 'User') : null,
-        } as any)
+        // the plugin is serving), or nobody: a plugin never names it. Through
+        // the ticket service, like a reply over the API: activity log,
+        // reply.created / note.created, workflows and webhooks.
+        const { default: TicketService } = await import('../services/ticket_service.js')
+        const service = new TicketService()
+        const author = actingActor()
+        const row = internal
+          ? await service.addNote(ticket, author, body)
+          : await service.reply(ticket, author, body)
         return NativeContext.serializeReply(row)
       },
     }
@@ -759,6 +766,67 @@ export default class NativeContext implements PluginContext {
         return row ? { id: row.id, name: row.name ?? '', email: row.email ?? '' } : null
       },
     }
+  }
+
+  /**
+   * ctx.tickets.update through TicketService, each change the way the API
+   * makes it, so it is logged and announced (ticket.updated,
+   * ticket.priority_changed, ticket.department_changed,
+   * ticket.status_changed). A status change the transitions do not allow is
+   * refused before anything is written.
+   */
+  private static async updateThroughService(
+    row: any,
+    attributes: Record<string, any>,
+    causer: any
+  ): Promise<void> {
+    const { default: TicketService } = await import('../services/ticket_service.js')
+    const { default: CustomStatus } = await import('../models/custom_status.js')
+    const { canTransitionTo } = await import('../types.js')
+    const service = new TicketService()
+
+    let moveTo: { status: string; custom: any } | null = null
+    if (attributes.status !== undefined) {
+      const target = await CustomStatus.resolveTarget(attributes.status)
+      const customChanges = (target.custom?.id ?? null) !== (row.ticketStatusId ?? null)
+      if (target.status !== row.status || customChanges) {
+        if (target.status !== row.status && !canTransitionTo(row.status, target.status as any)) {
+          throw new Error(`Cannot transition from ${row.status} to ${target.status}`)
+        }
+        moveTo = target
+      }
+    }
+
+    // Fields TicketService.update does not take: written here, announced by
+    // the same ticket.updated.
+    const direct: Record<string, any> = {}
+    if (attributes.ticketType !== undefined && attributes.ticketType !== row.ticketType) {
+      direct.ticketType = attributes.ticketType
+    }
+    if (attributes.departmentId === null && row.departmentId !== null) direct.departmentId = null
+    const details: Record<string, any> = {}
+    for (const key of ['subject', 'description', 'metadata']) {
+      if (attributes[key] !== undefined) details[key] = attributes[key]
+    }
+    if (Object.keys(direct).length > 0) {
+      row.merge(direct)
+      await row.save()
+    }
+    if (Object.keys(details).length > 0 || Object.keys(direct).length > 0) {
+      await service.update(row, details)
+    }
+
+    if (attributes.priority !== undefined && attributes.priority !== row.priority) {
+      await service.changePriority(row, attributes.priority, causer)
+    }
+    if (
+      attributes.departmentId !== undefined &&
+      attributes.departmentId !== null &&
+      attributes.departmentId !== row.departmentId
+    ) {
+      await service.changeDepartment(row, attributes.departmentId, causer)
+    }
+    if (moveTo) await service.changeStatus(row, attributes.status, causer)
   }
 
   // ---------------------------------------------------------------------------

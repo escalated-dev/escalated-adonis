@@ -95,6 +95,68 @@ export default class TicketService {
   }
 
   /**
+   * Open a ticket for a system caller (an SDK or native plugin) whose
+   * requester is a contact or nobody, never a user it names. The same
+   * bookkeeping as `create()`: default priority and type, the default SLA,
+   * the opening activity by `causer` and TICKET_CREATED (notifications,
+   * webhooks, workflows, plugins). A status other than open is reached
+   * through `changeStatus()`, so it is checked, logged and announced like any
+   * status change; one open cannot move to is refused before anything is
+   * written.
+   */
+  async createForSystem(
+    data: {
+      subject: string
+      description?: string
+      priority?: string
+      status?: string
+      ticketType?: string
+      channel?: string
+      departmentId?: number | null
+      metadata?: Record<string, any> | null
+      contactId?: number | null
+    },
+    causer?: any
+  ): Promise<Ticket> {
+    const target = data.status !== undefined ? await CustomStatus.resolveTarget(data.status) : null
+    const moves = target !== null && (target.status !== 'open' || target.custom !== null)
+    if (target && target.status !== 'open' && !canTransitionTo('open', target.status)) {
+      throw new Error(`A new ticket cannot be ${String(data.status)}`)
+    }
+
+    const { getConfig } = await import('../helpers/config.js')
+    const config = getConfig()
+    const ticket = await Ticket.create({
+      reference: await Ticket.generateReference(),
+      requesterType: null,
+      requesterId: null,
+      contactId: data.contactId ?? null,
+      subject: data.subject,
+      description: data.description ?? '',
+      status: 'open' as TicketStatus,
+      priority: (data.priority || config.defaultPriority || 'medium') as TicketPriority,
+      ticketType: Ticket.TYPES.includes(data.ticketType as any) ? data.ticketType! : 'question',
+      channel: data.channel || 'api',
+      departmentId: data.departmentId ?? null,
+      metadata: data.metadata ?? null,
+      slaFirstResponseBreached: false,
+      slaResolutionBreached: false,
+    } as any)
+
+    if (config.sla?.enabled && !ticket.slaPolicyId)
+      await new SlaService().attachDefaultPolicy(ticket)
+
+    await this.logActivity(ticket, 'status_changed', causer, { new_status: 'open' })
+
+    if (!ImportContext.isImporting()) {
+      await emitter.emit(ESCALATED_EVENTS.TICKET_CREATED, { ticket })
+    }
+
+    if (moves) return this.changeStatus(await ticket.refresh(), data.status!, causer)
+    return ticket.refresh()
+  }
+
+  /**
    * Create a ticket from a guest: the guest form and the widget.
    *
    * Applies the admin's guest policy, dedupes the submitter into a Contact,
@@ -304,15 +366,15 @@ export default class TicketService {
    */
   async reply(
     ticket: Ticket,
-    author: { id: number; constructor: { name: string } },
+    author: { id: number; constructor: { name: string } } | null,
     body: string,
     attachments: any[] = []
   ): Promise<Reply> {
     await assertTicketAccess(ticket)
     const reply = await Reply.create({
       ticketId: ticket.id,
-      authorType: author.constructor.name,
-      authorId: author.id,
+      authorType: author?.constructor.name ?? null,
+      authorId: author?.id ?? null,
       body,
       isInternalNote: false,
       isPinned: false,
@@ -323,10 +385,10 @@ export default class TicketService {
       await this.attachmentService.storeMany('Reply', reply.id, attachments)
     }
 
-    await this.logActivity(ticket, 'replied', author)
+    await this.logActivity(ticket, 'replied', author ?? undefined)
 
     if (!ImportContext.isImporting()) {
-      const followerUserIds = await ticket.followerUserIds(author.id)
+      const followerUserIds = await ticket.followerUserIds(author?.id)
       await emitter.emit(ESCALATED_EVENTS.REPLY_CREATED, { reply, followerUserIds })
     }
 
@@ -338,15 +400,15 @@ export default class TicketService {
    */
   async addNote(
     ticket: Ticket,
-    author: { id: number; constructor: { name: string } },
+    author: { id: number; constructor: { name: string } } | null,
     body: string,
     attachments: any[] = []
   ): Promise<Reply> {
     await assertTicketAccess(ticket)
     const reply = await Reply.create({
       ticketId: ticket.id,
-      authorType: author.constructor.name,
-      authorId: author.id,
+      authorType: author?.constructor.name ?? null,
+      authorId: author?.id ?? null,
       body,
       isInternalNote: true,
       isPinned: false,
@@ -357,7 +419,7 @@ export default class TicketService {
       await this.attachmentService.storeMany('Reply', reply.id, attachments)
     }
 
-    await this.logActivity(ticket, 'note_added', author)
+    await this.logActivity(ticket, 'note_added', author ?? undefined)
 
     if (!ImportContext.isImporting()) {
       await emitter.emit(ESCALATED_EVENTS.INTERNAL_NOTE_ADDED, { reply })
