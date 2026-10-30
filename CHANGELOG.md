@@ -2,12 +2,7 @@
 
 ## [Unreleased]
 
-### Fixed
-- **Admin > Users roles picker validation now answers like escalated-laravel.**
-  A bad `role_ids` on `PUT /support/admin/users/:user/roles` used to answer a
-  JSON 422, which the shared screen cannot show; it now goes back to the screen
-  with the error on `role_ids` or `role_ids.N` and Laravel's wording (present,
-  array, integer, existing role).
+## [0.7.8] - 2026-10-30
 
 ### Upgrading
 - **SDK plugin endpoints and webhooks moved to the plugin contract's paths**, the ones escalated-laravel and escalated-rails use: endpoints from `{prefix}/plugins/{slug}/api/{path}` to `{prefix}/api/plugins/{slug}/{path}`, webhooks from `{prefix}/plugins/{slug}/webhooks/{path}` to `{prefix}/webhooks/plugins/{slug}/{path}` (so `@acme/plugin-crm`'s `/inbound` webhook is now `POST /support/webhooks/plugins/acme--plugin-crm/inbound`). The old URLs are 404. **Update every webhook URL you registered with a third party** (Slack, Stripe, a CRM) for an SDK plugin, and any CSRF exemption you added for the old webhook path. Inactive plugins still answer 404. A plugin no longer sees the `Cookie`, `Authorization`, `X-XSRF-TOKEN`, `X-CSRF-TOKEN` or `Proxy-*` headers; an endpoint runs as the signed-in user (`ctx.currentUser()`, the actor of its `ctx` writes) and a webhook as nobody; and a handler that throws answers 500 with a generic message instead of the error.
@@ -102,6 +97,13 @@
   `assigned_to`. Replies: `ticket_id`, `is_internal`, `type`. Any other key,
   or a non-scalar value, throws instead of becoming a column name. Results are
   capped at 500 rows.
+
+### Fixed
+- **Admin > Users roles picker validation now answers like escalated-laravel.**
+  A bad `role_ids` on `PUT /support/admin/users/:user/roles` used to answer a
+  JSON 422, which the shared screen cannot show; it now goes back to the screen
+  with the error on `role_ids` or `role_ids.N` and Laravel's wording (present,
+  array, integer, existing role).
 
 ### Added
 - **SDK plugins on Admin > Plugins**: listed by slug with `name`, `version`, `description`, `is_active`, `activated_at`, `source: composer` and `provides` counts, activated and deactivated there (`PluginBridge.activate()` / `deactivate()`); uninstalling is refused (npm manages them).
