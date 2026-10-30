@@ -49,13 +49,108 @@ import { isReservedHook } from '../support/plugin_events.js'
  */
 const actingUser = new AsyncLocalStorage<User | null>()
 
+/** The model type of each acting user, the `author_type` of what it writes. */
+const actingTypes = new WeakMap<User, string>()
+
 /** Runs `fn` with `user` (an authenticated host user, or null) as the acting user. */
 export function actingAs<T>(user: any, fn: () => Promise<T>): Promise<T> {
   const acting: User | null =
     user && user.id !== undefined && user.id !== null
       ? { id: user.id, name: String(user.name ?? ''), email: String(user.email ?? '') }
       : null
+  if (acting) actingTypes.set(acting, String(user.constructor?.name ?? 'User'))
   return actingUser.run(acting, fn)
+}
+
+/**
+ * The fields each ctx write takes (domain-model/plugin-contract.md). title
+ * and body are the SDK's names for subject and description. Any other key is
+ * an error, never an attribute: a plugin never names an author, a requester,
+ * an assignee or a reply's flags.
+ */
+const TICKET_UPDATE_FIELDS = [
+  'subject',
+  'title',
+  'body',
+  'description',
+  'priority',
+  'status',
+  'department_id',
+  'ticket_type',
+  'metadata',
+]
+const TICKET_CREATE_FIELDS = [
+  ...TICKET_UPDATE_FIELDS,
+  'channel',
+  'contact_id',
+  'requester_email',
+  'requester_name',
+]
+const REPLY_CREATE_FIELDS = ['ticket_id', 'body', 'is_internal']
+const CONTACT_CREATE_FIELDS = ['name', 'email']
+
+const PRIORITIES = ['low', 'medium', 'high', 'urgent', 'critical']
+
+/** The plugin's data, refused when it holds a key outside `allowed`. */
+function contractFields(data: unknown, allowed: string[], method: string): Record<string, any> {
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error(`${method} requires a data object`)
+  }
+  const unknown = Object.keys(data).filter((key) => !allowed.includes(key))
+  if (unknown.length > 0) throw new Error(`${method} does not accept: ${unknown.join(', ')}`)
+  return data as Record<string, any>
+}
+
+/** A trimmed, non-empty string, or undefined when absent or blank. */
+function optionalText(data: Record<string, any>, key: string, method: string): string | undefined {
+  const value = data[key]
+  if (value === undefined || value === null) return undefined
+  if (typeof value !== 'string' && typeof value !== 'number') {
+    throw new Error(`${method}: ${key} must be a string`)
+  }
+  const text = String(value).trim()
+  return text === '' ? undefined : text
+}
+
+/** Ticket attributes from the contract fields a plugin sent. */
+async function ticketAttributes(data: Record<string, any>, method: string) {
+  const attributes: Record<string, any> = {}
+  const subject = optionalText(data, 'subject', method) ?? optionalText(data, 'title', method)
+  if (subject !== undefined) attributes.subject = subject
+  if ('description' in data || 'body' in data) {
+    const description = data.description ?? data.body ?? ''
+    if (typeof description !== 'string') throw new Error(`${method}: description must be a string`)
+    attributes.description = description
+  }
+  const priority = optionalText(data, 'priority', method)
+  if (priority !== undefined) {
+    if (!PRIORITIES.includes(priority)) throw new Error(`${method}: unknown priority "${priority}"`)
+    attributes.priority = priority
+  }
+  const status = optionalText(data, 'status', method)
+  if (status !== undefined) attributes.status = status
+  if ('department_id' in data) {
+    if (data.department_id === null) {
+      attributes.departmentId = null
+    } else {
+      const { default: Department } = await import('../models/department.js')
+      const department = await Department.find(Number(data.department_id))
+      if (!department) throw new Error(`${method}: no such department`)
+      attributes.departmentId = department.id
+    }
+  }
+  const ticketType = optionalText(data, 'ticket_type', method)
+  if (ticketType !== undefined) attributes.ticketType = ticketType
+  if ('metadata' in data) {
+    if (
+      data.metadata !== null &&
+      (typeof data.metadata !== 'object' || Array.isArray(data.metadata))
+    ) {
+      throw new Error(`${method}: metadata must be an object`)
+    }
+    attributes.metadata = data.metadata
+  }
+  return attributes
 }
 
 /**
@@ -459,17 +554,54 @@ export default class NativeContext implements PluginContext {
         return rows.map(NativeContext.serializeTicket)
       },
 
-      async create(data): Promise<Ticket> {
+      async create(input): Promise<Ticket> {
+        const method = 'ctx.tickets.create'
+        const data = contractFields(input, TICKET_CREATE_FIELDS, method)
+        const attributes = await ticketAttributes(data, method)
+        if (!attributes.subject) throw new Error(`${method} requires subject`)
         const { default: TicketModel } = await import('../models/ticket.js')
-        const reference = await TicketModel.generateReference()
-        const row = await TicketModel.create({ reference, ...data } as any)
+        const { default: Contact } = await import('../models/contact.js')
+
+        // The requester is a contact, never a user id the plugin names.
+        let contactId: number | null = null
+        if (data.contact_id !== undefined && data.contact_id !== null) {
+          const contact = await Contact.find(Number(data.contact_id))
+          if (!contact) throw new Error(`${method}: no such contact`)
+          contactId = contact.id
+        } else {
+          const email = optionalText(data, 'requester_email', method)
+          if (email !== undefined) {
+            if (!/^[^\s@]+@[^\s@]+$/.test(email)) {
+              throw new Error(`${method}: requester_email is not an email address`)
+            }
+            const name = optionalText(data, 'requester_name', method) ?? null
+            const contact = await Contact.findOrCreateByEmail(email, name)
+            contactId = contact.id
+          }
+        }
+
+        const row = await TicketModel.create({
+          reference: await TicketModel.generateReference(),
+          description: '',
+          status: 'open',
+          priority: 'medium',
+          ticketType: 'question',
+          slaFirstResponseBreached: false,
+          slaResolutionBreached: false,
+          ...attributes,
+          channel: optionalText(data, 'channel', method) ?? 'api',
+          contactId,
+        } as any)
         return NativeContext.serializeTicket(row)
       },
 
-      async update(id, data): Promise<Ticket> {
+      async update(id, input): Promise<Ticket> {
+        const method = 'ctx.tickets.update'
+        const data = contractFields(input, TICKET_UPDATE_FIELDS, method)
+        const attributes = await ticketAttributes(data, method)
         const { default: TicketModel } = await import('../models/ticket.js')
         const row = await TicketModel.findOrFail(id)
-        row.merge(data as any)
+        row.merge(attributes as any)
         await row.save()
         return NativeContext.serializeTicket(await row.refresh())
       },
@@ -502,9 +634,31 @@ export default class NativeContext implements PluginContext {
         return rows.map(NativeContext.serializeReply)
       },
 
-      async create(data): Promise<Reply> {
+      async create(input): Promise<Reply> {
+        const method = 'ctx.replies.create'
+        const data = contractFields(input, REPLY_CREATE_FIELDS, method)
+        const { default: TicketModel } = await import('../models/ticket.js')
+        const ticketId = Number(data.ticket_id)
+        const ticket = Number.isInteger(ticketId) ? await TicketModel.find(ticketId) : null
+        if (!ticket) throw new Error(`${method} requires an existing ticket_id`)
+        const body = optionalText(data, 'body', method)
+        if (body === undefined) throw new Error(`${method} requires body`)
+        const internal =
+          data.is_internal === true || data.is_internal === 1 || data.is_internal === 'true'
+
+        // The author is the acting user (the signed-in user of the request
+        // the plugin is serving), or nobody: a plugin never names it.
+        const author = actingUser.getStore() ?? null
         const { default: ReplyModel } = await import('../models/reply.js')
-        const row = await ReplyModel.create(data as any)
+        const row = await ReplyModel.create({
+          ticketId: ticket.id,
+          body,
+          isInternalNote: internal,
+          isPinned: false,
+          type: internal ? 'note' : 'reply',
+          authorId: author ? author.id : null,
+          authorType: author ? (actingTypes.get(author) ?? 'User') : null,
+        } as any)
         return NativeContext.serializeReply(row)
       },
     }
@@ -530,9 +684,10 @@ export default class NativeContext implements PluginContext {
         return row ? { id: row.id, name: row.name ?? '', email: row.email ?? '' } : null
       },
 
-      async create(data): Promise<Contact> {
+      async create(input): Promise<Contact> {
+        const data = contractFields(input, CONTACT_CREATE_FIELDS, 'ctx.contacts.create')
         const Model = await getModel()
-        const row = await Model.create(data)
+        const row = await Model.create({ name: data.name, email: data.email })
         return { id: row.id, name: row.name ?? '', email: row.email ?? '' }
       },
     }
