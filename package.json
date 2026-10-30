@@ -96,7 +96,7 @@
     "@adonisjs/session": "^8.1.0",
     "@adonisjs/transmit": "^3.0.2",
     "@adonisjs/vite": "^6.0.3",
-    "@escalated-dev/escalated": "0.12.0",
+    "@escalated-dev/escalated": "0.12.6",
     "@japa/assert": "^4.2.0",
     "@japa/runner": "^5.4.0",
     "@types/luxon": "^3.7.6",
