@@ -187,6 +187,12 @@ fails the request.
 
 ### Plugin Lifecycle
 
+Every plugin, native or SDK, also gets the plugin contract's lifecycle actions
+with `{ plugin: <name>, slug: <slug> }`: `plugin.activated` after activation,
+`plugin.deactivated` before deactivation, and `plugin.uninstalling` before
+deletion. A callback that throws is logged and does not undo the change.
+Native plugins also get the hooks below; SDK plugins only the dotted ones.
+
 | Hook | Args | When |
 |------|------|------|
 | `plugin_loaded` | `slug, manifest` | Plugin file is loaded |
@@ -258,6 +264,27 @@ escalated_addPageComponent(
   }
 )
 ```
+
+### SDK plugin activation
+
+SDK plugins (`definePlugin()` packages named `@escalated-dev/plugin-*` or
+`escalated-plugin-*`) are listed on **Admin > Plugins** with the native ones,
+under a slug made from the package name (`@escalated-dev/plugin-slack` is
+`escalated-dev--plugin-slack`), with the **composer** badge: npm manages them,
+so they cannot be deleted from the UI.
+
+An SDK plugin is inactive until an admin activates it. Activating records it
+in `escalated_plugins`, calls its `onActivate`, then fires
+`plugin.activated`; deactivating fires `plugin.deactivated` and calls
+`onDeactivate` while it is still active, then records it inactive.
+`onActivate` and `onDeactivate` no longer run when the app boots or stops. An
+inactive SDK plugin gets no hooks, cron or badges, adds no menus, widgets or
+slots, and its pages, endpoints and webhooks answer 404.
+
+The first time the app sees SDK plugins (the first boot after upgrading, or on
+a new install), every SDK plugin installed at that moment is recorded active,
+because earlier versions ran every SDK plugin. Plugins installed after that
+start inactive.
 
 ### Cron schedules and widget badges (SDK plugins)
 

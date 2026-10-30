@@ -43,6 +43,11 @@ function manifest(overrides: Partial<PluginManifest> = {}): PluginManifest {
 
 class BridgeStandIn {
   calls: Array<{ plugin: string; method: string; path: string }> = []
+  active = true
+
+  async isActive() {
+    return this.active
+  }
 
   async callEndpoint(plugin: string, method: string, path: string) {
     this.calls.push({ plugin, method, path })
@@ -60,14 +65,17 @@ async function registered(bridge: BridgeStandIn, plugin: PluginManifest) {
 }
 
 async function run(route: any) {
-  const rendered: { component?: string; props?: any } = {}
+  const rendered: { component?: string; props?: any; status?: number; body?: any } = {}
   const ctx: any = {
     params: {},
     request: { qs: () => ({}), headers: () => ({}), body: () => ({}) },
     inertia: {
       render: (component: string, props: any) => Object.assign(rendered, { component, props }),
     },
-    response: { json: (body: any) => body },
+    response: {
+      json: (body: any) => body,
+      notFound: (body: any) => Object.assign(rendered, { status: 404, body }),
+    },
   }
   await route.handler(ctx)
   return rendered
@@ -154,6 +162,23 @@ test.group('Plugin pages', (group) => {
       layout: 'admin',
       props: {},
     })
+  })
+
+  test("an inactive plugin's page is a 404 and asks the plugin nothing", async ({ assert }) => {
+    const bridge = new BridgeStandIn()
+    bridge.active = false
+    const router = await registered(bridge, manifest())
+
+    const settings = router.match(
+      '/support/admin/plugins/acme--escalated-plugin-crm/settings',
+      'GET',
+      true
+    )
+    const rendered = await run(settings!.route)
+
+    assert.equal(rendered.status, 404)
+    assert.isUndefined(rendered.component)
+    assert.deepEqual(bridge.calls, [])
   })
 
   test('a plugin without pages registers no page routes', async ({ assert }) => {

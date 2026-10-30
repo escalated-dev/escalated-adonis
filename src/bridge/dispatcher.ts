@@ -39,8 +39,9 @@ export default class Dispatcher {
    * by individual handlers are caught and logged so one bad plugin cannot
    * prevent subsequent handlers from running.
    */
-  async dispatchAction(hook: string, event: unknown): Promise<void> {
+  async dispatchAction(hook: string, event: unknown, only?: Set<string>): Promise<void> {
     for (const { plugin, context } of this.plugins) {
+      if (only && !only.has(plugin.name)) continue
       const handler = plugin.actions?.[hook]
       if (!handler) continue
 
@@ -65,12 +66,13 @@ export default class Dispatcher {
    * On error the current value is left unchanged and execution continues
    * with the next handler.
    */
-  async applyFilter<T = unknown>(hook: string, value: T): Promise<T> {
+  async applyFilter<T = unknown>(hook: string, value: T, only?: Set<string>): Promise<T> {
     // Collect all handlers for this hook with their priorities
     type Entry = { priority: number; plugin: ResolvedPlugin; context: PluginContext }
     const entries: Entry[] = []
 
     for (const { plugin, context } of this.plugins) {
+      if (only && !only.has(plugin.name)) continue
       const filterReg = plugin._normalizedFilters?.[hook]
       if (!filterReg) continue
       entries.push({ priority: filterReg.priority ?? 10, plugin, context })
@@ -188,6 +190,16 @@ export default class Dispatcher {
       )
     }
     return widget.badge(entry.context)
+  }
+
+  /**
+   * Call a plugin's onActivate / onDeactivate with its context. Throws when
+   * the plugin is unknown or the callback throws.
+   */
+  async lifecycle(pluginName: string, callback: 'onActivate' | 'onDeactivate'): Promise<void> {
+    const entry = this.findPlugin(pluginName)
+    const fn = (entry.plugin as any)[callback]
+    if (typeof fn === 'function') await fn(entry.context)
   }
 
   /**

@@ -2,6 +2,7 @@ import { test } from '@japa/runner'
 import { definePlugin } from '@escalated-dev/plugin-sdk'
 import { testApp, type TestApp } from './helpers/app.js'
 import { TEST_USERS } from './fixtures/user.js'
+import { activateSdkPlugins } from './helpers/plugins.js'
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,7 @@ test.group('Plugin cron and badges', (group) => {
     const bridge = new PluginBridge()
     await bridge.register(plugin)
     ;(bridge as any).booted = true
+    await activateSdkPlugins(plugin.name)
     const previous = (globalThis as any).__escalated_pluginBridge
     ;(globalThis as any).__escalated_pluginBridge = bridge
     return { bridge, restore: () => ((globalThis as any).__escalated_pluginBridge = previous) }

@@ -676,6 +676,10 @@ export interface PluginInfo {
   activatedAt: string | null
   path: string
   source: string
+  /** SDK plugins (definePlugin()) loaded by the bridge. */
+  sdk?: boolean
+  homepage?: string | null
+  provides?: { menu_items: number; widgets: number; page_components: number }
 }
 
 /**

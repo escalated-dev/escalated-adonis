@@ -12,6 +12,7 @@ import type { EscalatedConfig } from '../types.js'
 import { pluginSlug } from './plugin_events.js'
 import { sharedAccessFeatures } from './access_features.js'
 import { sharedPermissions } from './permissions.js'
+import { activeSdkPluginNames } from '../bridge/sdk_plugin_activation.js'
 
 type Allows = (ability: unknown) => boolean
 
@@ -92,8 +93,11 @@ export async function pluginExtensions(options: {
   const manifests: Map<string, any> = bridge?.isBooted?.()
     ? (bridge.getManifests?.() ?? new Map())
     : new Map()
+  // Inactive plugins add nothing.
+  const active = new Set(await activeSdkPluginNames(manifests.keys()))
 
   for (const [name, manifest] of manifests) {
+    if (!active.has(name)) continue
     const slug = pluginSlug(name)
 
     for (const page of manifest?.pages ?? []) {

@@ -12,8 +12,9 @@
 | 1. boot()      — Called from EscalatedProvider.boot().
 |                  Scans node_modules for @escalated-dev/plugin-* packages
 |                  that export a ResolvedPlugin (created with definePlugin()).
-|                  Each plugin is imported, a NativeContext is built for it,
-|                  and the plugin's onActivate hook is called.
+|                  Each plugin is imported and a NativeContext is built for
+|                  it. Its onActivate runs when an admin activates it.
+|                  Only active plugins (escalated_plugins) are dispatched to.
 | 2. dispatchAction() / applyFilter()
 |                — Forwarded to the Dispatcher which calls handlers directly.
 | 3. callEndpoint() / callWebhook()
@@ -31,6 +32,11 @@ import Dispatcher from './dispatcher.js'
 import NativeContext, { actingAs } from './native_context.js'
 import RouteRegistrar from './route_registrar.js'
 import { cronDue } from '../support/plugin_cron.js'
+import {
+  activeSdkPluginNames,
+  isSdkPluginActive,
+  recordInstalledSdkPlugins,
+} from './sdk_plugin_activation.js'
 
 /** domain-model/plugin-contract.md: cron runs under the action timeout, badges the filter one. */
 const CRON_TIMEOUT_MS = 30_000
@@ -71,6 +77,7 @@ export default class PluginBridge {
 
     try {
       await this.loadInstalledPlugins()
+      await recordInstalledSdkPlugins([...this.manifests.keys()])
       await this.registerRoutes()
       this.booted = true
 
@@ -88,7 +95,40 @@ export default class PluginBridge {
    */
   async dispatchAction(hook: string, event: unknown): Promise<void> {
     if (!this.booted) return
-    await this.dispatcher.dispatchAction(hook, event)
+    const active = await this.activeNames()
+    if (active.size === 0) return
+    await this.dispatcher.dispatchAction(hook, event, active)
+  }
+
+  /** The names of the active SDK plugins. */
+  async activeNames(): Promise<Set<string>> {
+    return new Set(await activeSdkPluginNames(this.manifests.keys()))
+  }
+
+  /** Whether a loaded SDK plugin is active. */
+  async isActive(pluginName: string): Promise<boolean> {
+    return this.manifests.has(pluginName) && (await isSdkPluginActive(pluginName))
+  }
+
+  /**
+   * Call a plugin's onActivate (after it is recorded active) or onDeactivate
+   * (while it still is). A throwing callback is logged, never thrown: it does
+   * not undo the transition.
+   */
+  async activate(pluginName: string): Promise<void> {
+    await this.lifecycle(pluginName, 'onActivate')
+  }
+
+  async deactivate(pluginName: string): Promise<void> {
+    await this.lifecycle(pluginName, 'onDeactivate')
+  }
+
+  private async lifecycle(pluginName: string, callback: 'onActivate' | 'onDeactivate') {
+    try {
+      await this.dispatcher.lifecycle(pluginName, callback)
+    } catch (err) {
+      console.error(`[Escalated Bridge] ${callback} failed for plugin "${pluginName}":`, err)
+    }
   }
 
   /**
@@ -97,7 +137,9 @@ export default class PluginBridge {
    */
   async applyFilter<T = unknown>(hook: string, value: T): Promise<T> {
     if (!this.booted) return value
-    return this.dispatcher.applyFilter(hook, value)
+    const active = await this.activeNames()
+    if (active.size === 0) return value
+    return this.dispatcher.applyFilter(hook, value, active)
   }
 
   /**
@@ -114,6 +156,7 @@ export default class PluginBridge {
       headers?: Record<string, string>
     }
   ): Promise<unknown> {
+    await this.assertActive(pluginName)
     return this.dispatcher.callEndpoint(pluginName, method, path, req)
   }
 
@@ -131,7 +174,15 @@ export default class PluginBridge {
       headers?: Record<string, string>
     }
   ): Promise<unknown> {
+    await this.assertActive(pluginName)
     return this.dispatcher.callWebhook(pluginName, method, path, req)
+  }
+
+  /** An inactive plugin's endpoints, webhooks and pages do not exist. */
+  private async assertActive(pluginName: string): Promise<void> {
+    if (!(await this.isActive(pluginName))) {
+      throw Object.assign(new Error(`Plugin "${pluginName}" is not active`), { status: 404 })
+    }
   }
 
   /**
@@ -143,7 +194,10 @@ export default class PluginBridge {
   async runDueCron(at: Date): Promise<number> {
     if (!this.booted) return 0
     let ran = 0
+    // Inactive plugins run no cron.
+    const active = await this.activeNames()
     for (const [name, manifest] of this.manifests) {
+      if (!active.has(name)) continue
       for (const schedule of manifest.cronSchedules ?? []) {
         let due: boolean
         try {
@@ -183,6 +237,7 @@ export default class PluginBridge {
     viewer: unknown
   ): Promise<number | string | null> {
     try {
+      if (!(await this.isActive(pluginName))) return null
       const answer = await actingAs(viewer, () =>
         withTimeout(
           this.dispatcher.badge(pluginName, component),
@@ -209,14 +264,6 @@ export default class PluginBridge {
     const context = new NativeContext(resolved.name, () => this.dispatcher)
     this.dispatcher.register(resolved, context)
     this.manifests.set(resolved.name, resolved.toManifest())
-
-    if (typeof resolved.onActivate === 'function') {
-      try {
-        await resolved.onActivate(context)
-      } catch (err) {
-        console.error(`[Escalated Bridge] onActivate failed for plugin "${resolved.name}":`, err)
-      }
-    }
   }
 
   /**
@@ -358,24 +405,12 @@ export default class PluginBridge {
   // ---------------------------------------------------------------------------
 
   /**
-   * Call onDeactivate on all plugins and clear the dispatcher.
-   * Called from EscalatedProvider.shutdown().
+   * Clear the dispatcher. Called from EscalatedProvider.shutdown(). Stopping
+   * the process is not deactivation: onDeactivate runs only when an admin
+   * deactivates a plugin.
    */
   async shutdown(): Promise<void> {
     if (!this.booted) return
-
-    for (const [name] of this.manifests) {
-      const entry = (this.dispatcher as any).plugins?.find((e: any) => e.plugin.name === name)
-      if (!entry) continue
-
-      if (typeof entry.plugin.onDeactivate === 'function') {
-        try {
-          await entry.plugin.onDeactivate(entry.context)
-        } catch (err) {
-          console.error(`[Escalated Bridge] onDeactivate failed for plugin "${name}":`, err)
-        }
-      }
-    }
 
     this.dispatcher.clear()
     this.manifests.clear()
