@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Admin > Users roles picker validation now answers like escalated-laravel.**
+  A bad `role_ids` on `PUT /support/admin/users/:user/roles` used to answer a
+  JSON 422, which the shared screen cannot show; it now goes back to the screen
+  with the error on `role_ids` or `role_ids.N` and Laravel's wording (present,
+  array, integer, existing role).
+
 ### Upgrading
 - **SDK plugins can now be activated and deactivated, and only active ones run** (plugin contract, Lifecycle). Before, every SDK plugin the bridge loaded got every hook, cron schedule and badge, and its pages, endpoints, webhooks, menus and widgets were live, with no way to switch it off. The first time the app boots after upgrading, every SDK plugin installed at that moment is recorded active in `escalated_plugins`, so nothing that ran before stops. SDK plugins installed afterwards start inactive: activate them on **Admin > Plugins**. No migration is needed. Inactive SDK plugins get no hooks, cron or badges, add no menus, widgets or slots, and answer 404 on their pages, endpoints and webhooks.
 - An SDK plugin's `onActivate` now runs when an admin activates it and `onDeactivate` when an admin deactivates it, as the plugin contract says; they no longer run on every boot and shutdown. Plugins that set up in-memory state in `onActivate` should do it at import time instead.

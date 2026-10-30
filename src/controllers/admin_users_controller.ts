@@ -104,22 +104,38 @@ export default class AdminUsersController {
   async updateRoles(ctx: HttpContext) {
     const { request, response, session, params } = ctx
 
-    const raw = request.input('role_ids')
+    // Laravel's rules (`role_ids` present|array, each integer|exists), and
+    // its answer to a failed form visit: back, with the errors by key.
+    const raw = request.all().role_ids
+    const invalid = (errors: Record<string, string>) => {
+      session.flash('errors', errors)
+      return response.redirect().back()
+    }
+    if (raw === undefined || raw === null) {
+      return invalid({ role_ids: 'The role ids field must be present.' })
+    }
     if (!Array.isArray(raw)) {
-      return response.unprocessableEntity({
-        errors: { role_ids: ['The role_ids field must be a list.'] },
+      return invalid({ role_ids: 'The role ids field must be an array.' })
+    }
+    const badType = raw.findIndex(
+      (id: unknown) =>
+        !(typeof id === 'number' && Number.isInteger(id)) &&
+        !(typeof id === 'string' && /^-?\d+$/.test(id))
+    )
+    if (badType !== -1) {
+      return invalid({
+        [`role_ids.${badType}`]: `The role_ids.${badType} field must be an integer.`,
       })
     }
     const roleIds = [...new Set(raw.map((id: unknown) => Number(id)))]
-    if (roleIds.some((id) => !Number.isInteger(id) || id <= 0)) {
-      return response.unprocessableEntity({ errors: { role_ids: ['Unknown role.'] } })
-    }
 
     const roles = roleIds.length
       ? await Role.query().whereIn('id', roleIds).preload('permissions')
       : []
-    if (roles.length !== roleIds.length) {
-      return response.unprocessableEntity({ errors: { role_ids: ['Unknown role.'] } })
+    const found = new Set(roles.map((role) => Number(role.id)))
+    const unknown = raw.findIndex((id: unknown) => !found.has(Number(id)))
+    if (unknown !== -1) {
+      return invalid({ [`role_ids.${unknown}`]: `The selected role_ids.${unknown} is invalid.` })
     }
 
     const target = await findHostUser(params.user)
