@@ -162,6 +162,25 @@
       "filePath": "dispatch_newsletters_command.js"
     },
     {
+      "commandName": "escalated:plugins:cron",
+      "description": "Run the due cron schedules of SDK plugins",
+      "help": ["Run every minute, from cron or a scheduler:", "  node ace escalated:plugins:cron"],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [
+        {
+          "name": "at",
+          "flagName": "at",
+          "required": false,
+          "type": "string",
+          "description": "The minute to run, as an ISO 8601 time (default: now)"
+        }
+      ],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "run_plugin_cron_command.js"
+    },
+    {
       "commandName": "escalated:purge-expired",
       "description": "Purge expired data based on the configured retention policies",
       "help": [

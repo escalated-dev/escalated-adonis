@@ -37,9 +37,26 @@ import type {
   Agent,
   User,
 } from '@escalated-dev/plugin-sdk'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import PluginStoreRecord from '../models/plugin_store_record.js'
 import { resolveUserModel } from '../support/user_model.js'
 import { isReservedHook } from '../support/plugin_events.js'
+
+/**
+ * The user a plugin call is made for: the viewer while a widget badge is
+ * asked, nobody for a cron schedule (domain-model/plugin-contract.md).
+ * `ctx.currentUser()` answers with it.
+ */
+const actingUser = new AsyncLocalStorage<User | null>()
+
+/** Runs `fn` with `user` (an authenticated host user, or null) as the acting user. */
+export function actingAs<T>(user: any, fn: () => Promise<T>): Promise<T> {
+  const acting: User | null =
+    user && user.id !== undefined && user.id !== null
+      ? { id: user.id, name: String(user.name ?? ''), email: String(user.email ?? '') }
+      : null
+  return actingUser.run(acting, fn)
+}
 
 /**
  * ctx.tickets.query filter keys (plugin contract) and the column each reads.
@@ -123,10 +140,8 @@ export default class NativeContext implements PluginContext {
   }
 
   async currentUser(): Promise<User | null> {
-    // Current user is request-scoped; we return null at the context level.
-    // Individual controllers can pass the authenticated user into hook data
-    // if they need it.
-    return null
+    // The acting user of the call being served (see actingAs), else nobody.
+    return actingUser.getStore() ?? null
   }
 
   // ---------------------------------------------------------------------------

@@ -193,6 +193,7 @@ Time-based features only happen when their Ace command runs, so run these from c
 | --- | --- | --- |
 | `node ace escalated:check-sla` | every minute | Flags SLA breaches and emits `escalated:sla:breached`; emits `escalated:sla:warning` for targets due within `--warning-minutes` (default 30) |
 | `node ace escalated:wake-snoozed-tickets` | every minute | Wakes tickets whose snooze has ended |
+| `node ace escalated:plugins:cron` | every minute | Runs SDK plugins' due `cron` schedules |
 | `node ace escalated:run-escalations` | every 5 minutes | Applies escalation rules |
 | `node ace escalated:run-automations` | every 5 minutes | Applies automations |
 | `node ace escalated:close-idle-chats` | every 5 minutes | Closes chat sessions idle beyond the threshold |

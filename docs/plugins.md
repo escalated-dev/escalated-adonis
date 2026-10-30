@@ -259,6 +259,41 @@ escalated_addPageComponent(
 )
 ```
 
+### Cron schedules and widget badges (SDK plugins)
+
+An SDK plugin's `cron` keys are five-field cron expressions (`minute hour
+day-of-month month day-of-week`) evaluated in UTC; `@hourly`, `@daily`,
+`@weekly`, `@monthly` and `@yearly` work too. Run
+`node ace escalated:plugins:cron` every minute: it calls each due schedule of
+each loaded SDK plugin, as no user, within 30 s. A failing, slow or unreadable
+schedule is logged and skipped; the others still run.
+
+A widget with a `badge` function gets a live count: while the shared
+`escalated.plugins.dashboardWidgets` is built for a viewer, the function is
+called with `ctx.currentUser()` returning that viewer, within 5 s, and its
+answer (a number, a string or `null`) is the widget's `badge`. A failure or a
+timeout is `null`. Widgets without a badge function carry no `badge` key.
+
+```ts
+export default definePlugin({
+  name: '@acme/escalated-plugin-digest',
+  version: '1.0.0',
+  cron: {
+    '0 9 * * mon-fri': async (ctx) => ctx.log.info('weekday digest'),
+  },
+  widgets: [
+    {
+      component: 'MyQueue',
+      label: 'My queue',
+      badge: async (ctx) => {
+        const user = await ctx.currentUser()
+        return user ? (await ctx.tickets.query({ assigned_to: user.id })).length : null
+      },
+    },
+  ],
+})
+```
+
 ## Full Example: Slack Notifier Plugin
 
 ```
