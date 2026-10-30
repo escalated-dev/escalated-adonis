@@ -663,4 +663,77 @@ test.group('Roles & permissions', (group) => {
       [await roleId('admin')]
     )
   })
+
+  test("sends the roles and each user's role slugs on Admin > Users while on", async ({
+    assert,
+  }) => {
+    const off = await as(TEST_USERS.admin).visit('GET', `${ADMIN}/users`)
+    assert.equal(off.status, 200, JSON.stringify(off.body).slice(0, 600))
+    assert.notProperty(off.body.props, 'roles')
+
+    enforce()
+    await giveRole(TEST_USERS.admin, 'admin')
+    await giveRole(TEST_USERS.agent, 'light_agent')
+
+    const page = await as(TEST_USERS.admin).visit('GET', `${ADMIN}/users`)
+    assert.equal(page.status, 200)
+    const names = page.body.props.roles.map((role: any) => role.name)
+    assert.deepEqual(names, [...names].sort())
+    assert.sameMembers(Object.keys(page.body.props.roles[0]), ['id', 'name', 'slug'])
+    const rows = Object.fromEntries(
+      page.body.props.users.data.map((user: any) => [String(user.id), user.roles])
+    )
+    assert.deepEqual(rows[String(TEST_USERS.admin.id)], ['admin'])
+    assert.deepEqual(rows[String(TEST_USERS.agent.id)], ['light_agent'])
+  })
+
+  test("validates role_ids as Laravel's rules do, back to the screen with the errors", async ({
+    assert,
+  }) => {
+    enforce()
+    await giveRole(TEST_USERS.admin, 'admin')
+    await giveRole(TEST_USERS.agent, 'agent')
+    const client = as(TEST_USERS.admin)
+
+    const bodies: Array<[unknown, string]> = [
+      [{}, 'role_ids'],
+      [{ role_ids: 'admin' }, 'role_ids'],
+      [{ role_ids: ['x'] }, 'role_ids.0'],
+      [{ role_ids: [987654] }, 'role_ids.0'],
+    ]
+    for (const [data, key] of bodies) {
+      const visit = await client.visit('PUT', `${ADMIN}/users/${TEST_USERS.agent.id}/roles`, {
+        data,
+        referer: `${ADMIN}/users`,
+      })
+      assert.equal(visit.status, 302, JSON.stringify(visit.body))
+      const page = await client.visit('GET', `${ADMIN}/users`)
+      assert.deepEqual(Object.keys(page.body.flash?.errors ?? {}), [key], JSON.stringify(data))
+    }
+
+    const rows = await running.db.from('escalated_role_users').where('user_id', TEST_USERS.agent.id)
+    assert.deepEqual(
+      rows.map((row: any) => Number(row.role_id)),
+      [await roleId('agent')]
+    )
+  })
+
+  test('flashes "User updated." and 404s an unknown user', async ({ assert }) => {
+    enforce()
+    await giveRole(TEST_USERS.admin, 'admin')
+    const client = as(TEST_USERS.admin)
+
+    const saved = await client.visit('PUT', `${ADMIN}/users/${TEST_USERS.agent.id}/roles`, {
+      data: { role_ids: [] },
+      referer: `${ADMIN}/users`,
+    })
+    assert.equal(saved.status, 302)
+    const page = await client.visit('GET', `${ADMIN}/users`)
+    assert.equal(page.body.flash?.success, 'User updated.')
+
+    const missing = await client.visit('PUT', `${ADMIN}/users/987654/roles`, {
+      data: { role_ids: [] },
+    })
+    assert.equal(missing.status, 404)
+  })
 })

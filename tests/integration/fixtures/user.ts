@@ -36,9 +36,20 @@ export default class User implements TestUser {
     return allUsers().find((user) => String(user.id) === String(id)) ?? null
   }
 
+  /** Read by Admin > Users as the host's `is_admin` / `is_agent` columns. */
+  get isAdmin(): boolean {
+    return this.role === 'admin'
+  }
+
+  get isAgent(): boolean {
+    return this.role !== 'customer'
+  }
+
   /**
-   * The slice of a Lucid query SSO uses to match an email case-insensitively:
-   * `query().whereRaw('LOWER(email) = ?', [email]).first()`.
+   * The slices of a Lucid query Escalated uses: SSO matching an email
+   * case-insensitively (`query().whereRaw('LOWER(email) = ?', [email]).first()`)
+   * and Admin > Users listing a page of users
+   * (`query().where(...).orderBy(...).paginate(page, perPage)`, in id order).
    */
   static query() {
     let email = ''
@@ -47,8 +58,25 @@ export default class User implements TestUser {
         email = String(bindings[0] ?? '')
         return builder
       },
+      where() {
+        return builder
+      },
+      orderBy() {
+        return builder
+      },
       async first() {
         return allUsers().find((user) => user.email.toLowerCase() === email) ?? null
+      },
+      async paginate(page: number, perPage: number) {
+        const users = [...allUsers()].sort((a, b) => a.id - b.id)
+        const rows = users.slice((page - 1) * perPage, page * perPage)
+        return {
+          all: () => rows,
+          currentPage: page,
+          perPage,
+          total: users.length,
+          lastPage: Math.max(1, Math.ceil(users.length / perPage)),
+        }
       },
     }
     return builder
