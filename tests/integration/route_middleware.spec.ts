@@ -45,7 +45,8 @@ test.group('Route middleware', (group) => {
     const page = await as(TEST_USERS.agent).visit('GET', '/support/admin/automations/create')
 
     assert.equal(page.status, 403, JSON.stringify(page.body))
-    assert.isString(page.body.error)
+    assert.equal(page.body.component, 'Escalated/Error')
+    assert.equal(page.body.props.status, 403)
   })
 
   test('the host auth middleware named in config runs before the admin check', async ({
@@ -70,7 +71,8 @@ test.group('Route middleware', (group) => {
     const response = await as(TEST_USERS.customer).visit('GET', '/support/agent/chats/queue')
 
     assert.equal(response.status, 403, JSON.stringify(response.body))
-    assert.isString(response.body.error)
+    assert.equal(response.body.component, 'Escalated/Error')
+    assert.equal(response.body.props.status, 403)
   })
 
   test('a ticket route resolves its ticket before the controller runs', async ({ assert }) => {

@@ -53,6 +53,14 @@
     "tag_deleted": "\u00c9tiquette supprim\u00e9e.",
     "settings_updated": "Param\u00e8tres mis \u00e0 jour."
   },
+  "errors": {
+    "403": "Vous n'\u00eates pas autoris\u00e9 \u00e0 effectuer cette action.",
+    "404": "La ressource demand\u00e9e est introuvable.",
+    "419": "Votre session a expir\u00e9. Actualisez la page et r\u00e9essayez.",
+    "429": "Trop de requ\u00eates. Patientez un instant et r\u00e9essayez.",
+    "500": "Une erreur s'est produite de notre c\u00f4t\u00e9.",
+    "503": "Le service est temporairement indisponible. R\u00e9essayez sous peu."
+  },
   "middleware": {
     "not_admin": "Vous n'\u00eates pas autoris\u00e9 en tant qu'administrateur du support.",
     "not_agent": "Vous n'\u00eates pas autoris\u00e9 en tant qu'agent de support."

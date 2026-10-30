@@ -53,6 +53,14 @@
     "tag_deleted": "Tag usuniety.",
     "settings_updated": "Ustawienia zaktualizowane."
   },
+  "errors": {
+    "403": "Nie masz uprawnień do wykonania tej czynności.",
+    "404": "Nie znaleziono żądanego zasobu.",
+    "419": "Twoja sesja wygasła. Odśwież stronę i spróbuj ponownie.",
+    "429": "Zbyt wiele żądań. Poczekaj chwilę i spróbuj ponownie.",
+    "500": "Coś poszło nie tak po naszej stronie.",
+    "503": "Usługa jest tymczasowo niedostępna. Spróbuj ponownie za chwilę."
+  },
   "middleware": {
     "not_admin": "Brak uprawnien administratora.",
     "not_agent": "Brak uprawnien agenta."
