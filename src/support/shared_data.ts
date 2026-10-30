@@ -21,13 +21,16 @@ type Allows = (ability: unknown) => boolean
  * registered with the PluginUIService and from the SDK plugins' manifests.
  * Items whose permission or capability the viewer lacks are left out, and
  * admin menu items go to admins only. `{}` when there is nothing to show.
+ * An SDK widget with a `badge` function carries its answer as `badge`, asked
+ * as `viewer` (`null` when it fails).
  */
-export function pluginExtensions(options: {
+export async function pluginExtensions(options: {
   isAdmin: boolean
   permissions: string[]
   prefix: string
-}): Record<string, unknown> {
-  const { isAdmin, permissions, prefix } = options
+  viewer?: unknown
+}): Promise<Record<string, unknown>> {
+  const { isAdmin, permissions, prefix, viewer = null } = options
   const allows: Allows = (ability) =>
     ability === null ||
     ability === undefined ||
@@ -111,14 +114,21 @@ export function pluginExtensions(options: {
 
     for (const widget of manifest?.widgets ?? []) {
       if (!widget?.component || !allows(widget.capability)) continue
-      dashboardWidgets.push({
+      const item: Record<string, any> = {
         id: `${slug}.${widget.component}`,
         title: widget.label ?? null,
         component: widget.component,
         plugin: slug,
         position: widget.order ?? 100,
         width: widget.size ?? 'half',
-      })
+      }
+      if (widget.hasBadge === true) {
+        item.badge =
+          typeof bridge.widgetBadge === 'function'
+            ? await bridge.widgetBadge(name, widget.component, viewer)
+            : null
+      }
+      dashboardWidgets.push(item)
     }
 
     for (const item of manifest?.components ?? []) {
@@ -202,10 +212,11 @@ export async function escalatedSharedData(ctx: any): Promise<Record<string, any>
   }
 
   try {
-    data.plugins = pluginExtensions({
+    data.plugins = await pluginExtensions({
       isAdmin: Boolean(data.is_admin),
       permissions: Array.isArray(data.permissions) ? data.permissions : [],
       prefix: data.prefix,
+      viewer: user ?? null,
     })
   } catch {
     data.plugins = {}

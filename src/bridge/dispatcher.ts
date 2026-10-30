@@ -161,6 +161,36 @@ export default class Dispatcher {
   }
 
   /**
+   * Run one of a plugin's cron schedules (`cron[schedule](ctx)`). Throws when
+   * the plugin or schedule is unknown, or when the handler throws.
+   */
+  async runCron(pluginName: string, schedule: string): Promise<void> {
+    const entry = this.findPlugin(pluginName)
+    const handler = (entry.plugin as any).cron?.[schedule]
+    if (typeof handler !== 'function') {
+      throw new Error(`[Escalated Bridge] Cron "${schedule}" not found in plugin "${pluginName}"`)
+    }
+    await handler(entry.context)
+  }
+
+  /**
+   * Ask a plugin widget's `badge` function. Throws when the plugin or widget
+   * is unknown, has no badge function, or the function throws.
+   */
+  async badge(pluginName: string, component: string): Promise<unknown> {
+    const entry = this.findPlugin(pluginName)
+    const widget = ((entry.plugin as any).widgets ?? []).find(
+      (w: any) => w?.component === component
+    )
+    if (typeof widget?.badge !== 'function') {
+      throw new Error(
+        `[Escalated Bridge] Widget "${component}" in plugin "${pluginName}" has no badge`
+      )
+    }
+    return widget.badge(entry.context)
+  }
+
+  /**
    * Return the names of all registered plugins.
    */
   getPluginNames(): string[] {

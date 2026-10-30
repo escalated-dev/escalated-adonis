@@ -28,8 +28,21 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { ResolvedPlugin, PluginManifest } from '@escalated-dev/plugin-sdk'
 import Dispatcher from './dispatcher.js'
-import NativeContext from './native_context.js'
+import NativeContext, { actingAs } from './native_context.js'
 import RouteRegistrar from './route_registrar.js'
+import { cronDue } from '../support/plugin_cron.js'
+
+/** domain-model/plugin-contract.md: cron runs under the action timeout, badges the filter one. */
+const CRON_TIMEOUT_MS = 30_000
+const BADGE_TIMEOUT_MS = 5_000
+
+function withTimeout<T>(work: Promise<T>, ms: number, what: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${what} timed out after ${ms} ms`)), ms)
+  })
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timer))
+}
 
 export default class PluginBridge {
   private dispatcher: Dispatcher = new Dispatcher()
@@ -119,6 +132,91 @@ export default class PluginBridge {
     }
   ): Promise<unknown> {
     return this.dispatcher.callWebhook(pluginName, method, path, req)
+  }
+
+  /**
+   * Run every cron schedule of every loaded SDK plugin that is due in the
+   * minute of `at` (UTC), one after another, as no user, each within 30 s.
+   * A failing, slow or unreadable schedule is logged and never stops the
+   * others. Returns how many ran.
+   */
+  async runDueCron(at: Date): Promise<number> {
+    if (!this.booted) return 0
+    let ran = 0
+    for (const [name, manifest] of this.manifests) {
+      for (const schedule of manifest.cronSchedules ?? []) {
+        let due: boolean
+        try {
+          due = cronDue(schedule, at)
+        } catch (err) {
+          console.warn(
+            `[Escalated Bridge] ${name} cron "${schedule}" skipped:`,
+            (err as Error).message
+          )
+          continue
+        }
+        if (!due) continue
+        ran++
+        try {
+          await actingAs(null, () =>
+            withTimeout(
+              this.dispatcher.runCron(name, schedule),
+              CRON_TIMEOUT_MS,
+              `cron "${schedule}"`
+            )
+          )
+        } catch (err) {
+          console.error(`[Escalated Bridge] ${name} cron "${schedule}" failed:`, err)
+        }
+      }
+    }
+    return ran
+  }
+
+  /**
+   * A widget's badge, asked as `viewer` within 5 s: a number or a string, or
+   * null when the plugin fails, is slow or answers anything else.
+   */
+  async widgetBadge(
+    pluginName: string,
+    component: string,
+    viewer: unknown
+  ): Promise<number | string | null> {
+    try {
+      const answer = await actingAs(viewer, () =>
+        withTimeout(
+          this.dispatcher.badge(pluginName, component),
+          BADGE_TIMEOUT_MS,
+          `badge ${component}`
+        )
+      )
+      return typeof answer === 'number' || typeof answer === 'string' ? answer : null
+    } catch (err) {
+      console.warn(
+        `[Escalated Bridge] ${pluginName} badge ${component} failed:`,
+        (err as Error).message
+      )
+      return null
+    }
+  }
+
+  /**
+   * Register an SDK plugin object (what `definePlugin()` returns): build its
+   * context, add it to the dispatcher, keep its manifest and call
+   * onActivate(). Installed packages are registered this way at boot.
+   */
+  async register(resolved: ResolvedPlugin): Promise<void> {
+    const context = new NativeContext(resolved.name, () => this.dispatcher)
+    this.dispatcher.register(resolved, context)
+    this.manifests.set(resolved.name, resolved.toManifest())
+
+    if (typeof resolved.onActivate === 'function') {
+      try {
+        await resolved.onActivate(context)
+      } catch (err) {
+        console.error(`[Escalated Bridge] onActivate failed for plugin "${resolved.name}":`, err)
+      }
+    }
   }
 
   /**
@@ -240,23 +338,7 @@ export default class PluginBridge {
       return
     }
 
-    // Build this plugin's NativeContext
-    const context = new NativeContext(resolved.name, () => this.dispatcher)
-
-    // Register with the dispatcher
-    this.dispatcher.register(resolved, context)
-
-    // Store the manifest
-    this.manifests.set(resolved.name, resolved.toManifest())
-
-    // Call onActivate lifecycle hook
-    if (typeof resolved.onActivate === 'function') {
-      try {
-        await resolved.onActivate(context)
-      } catch (err) {
-        console.error(`[Escalated Bridge] onActivate failed for plugin "${resolved.name}":`, err)
-      }
-    }
+    await this.register(resolved)
 
     console.info(`[Escalated Bridge] Loaded plugin "${resolved.name}" v${resolved.version}`)
   }

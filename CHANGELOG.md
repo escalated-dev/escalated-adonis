@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Upgrading
+- **SDK plugin cron schedules run only if you schedule
+  `node ace escalated:plugins:cron` every minute** (cron, a process manager
+  or a scheduler package). Until then nothing changes: they never ran before.
 - **Roles & permissions is now an install-level switch, off by default**
   (`access.rolesPermissions` in `config/escalated.ts`, env
   `ESCALATED_ROLES_PERMISSIONS`; ADR 2026-10-29-configurable-access-features).
@@ -123,6 +126,16 @@
   The shared `escalated.two_factor_required` prop says so.
 - `node ace escalated:two-factor:reset <email or id>` clears a user's
   enrolment (lost device).
+- SDK plugin cron schedules (domain-model/plugin-contract.md, Cron):
+  `node ace escalated:plugins:cron` runs each five-field (UTC) `cron` schedule
+  of each loaded SDK plugin that is due that minute, as no user
+  (`ctx.currentUser()` is `null`), within 30 s each. A failing, slow or
+  unreadable schedule is logged and never stops the others. `--at <ISO time>`
+  runs a given minute.
+- SDK plugin widget badges (Badges): a widget with a `badge` function carries
+  its answer in `escalated.plugins.dashboardWidgets[].badge`, asked as the
+  viewer (`ctx.currentUser()` is the signed-in user) within 5 s; `null` when
+  it fails. Widgets without one carry no `badge` key.
 - **Roles & permissions are enforced when switched on.** Every admin, agent
   and staff API route needs its permission from the user's roles as well as
   the `isAdmin` / `isAgent` check (`enforceRoutePermissions` middleware, map in
