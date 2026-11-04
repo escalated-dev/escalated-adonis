@@ -59,7 +59,19 @@ export default class AgentTicketsController {
 
     const errors = listFilterErrors(requested)
     if (errors) {
-      return ctx.response.status(422).json({ message: 'The given data was invalid.', errors })
+      // escalated-laravel's $request->validate(): a JSON client gets a 422; a
+      // page visit goes back with the errors for the next page's `errors` prop
+      // (a raw 422 is what the Inertia client shows as an error modal).
+      if (!ctx.request.header('x-inertia') && ctx.request.accepts(['html', 'json']) === 'json') {
+        return ctx.response.status(422).json({ message: Object.values(errors)[0][0], errors })
+      }
+      ctx.session.flash(
+        'errors',
+        Object.fromEntries(Object.entries(errors).map(([field, messages]) => [field, messages[0]]))
+      )
+      // The referring page with its query (back() would drop the filters it
+      // was showing), else the list.
+      return ctx.response.redirect().toPath(ctx.request.getPreviousUrl([], ctx.request.url()))
     }
 
     const inbox = new AgentInbox(requireAuthUser(ctx.auth).id)
