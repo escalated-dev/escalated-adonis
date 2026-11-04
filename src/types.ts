@@ -205,6 +205,14 @@ export interface EscalatedConfig {
   targetedSlas?: boolean
   mode: 'self-hosted' | 'synced' | 'cloud'
 
+  /**
+   * The agent panel's rail counts, views and stat strip (the `inbox` prop on
+   * `Agent/TicketIndex` and `Agent/TicketShow`) are count queries per agent
+   * and queue, cached in memory per process for `cacheSeconds` (default 10);
+   * 0 recomputes them on every request.
+   */
+  agentInbox?: { cacheSeconds?: number }
+
   locale?: string
 
   /**

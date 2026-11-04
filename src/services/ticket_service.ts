@@ -23,6 +23,7 @@ import {
 } from '../types.js'
 import AttachmentService from './attachment_service.js'
 import ImportContext from '../support/import_context.js'
+import { applyListFilters } from '../support/ticket_list_filters.js'
 
 export default class TicketService {
   constructor(protected attachmentService: AttachmentService = new AttachmentService()) {}
@@ -555,97 +556,51 @@ export default class TicketService {
       .select('escalated_tickets.*')
       .select(
         db.rawQuery(
-          '(select max(r.created_at) from escalated_replies r where r.ticket_id = escalated_tickets.id and r.deleted_at is null) as last_reply_at'
+          '(select max(r.created_at) from escalated_replies r where r.ticket_id = escalated_tickets.id and r.deleted_at is null and r.is_internal_note = ?) as last_reply_at',
+          [false]
         )
       )
 
-    // If listing for a specific user (customer view)
-    if (forUser) {
-      query.where('requester_type', forUser.constructor.name).where('requester_id', forUser.id)
-    }
-
-    if (filters.status) {
-      // A custom status slug filters by the sub-status; anything else by the
-      // built-in column, as before. Not for a customer's own list: custom
-      // statuses are internal.
-      const customerList = forUser && !filters.following
-      const custom =
-        isBuiltInStatus(filters.status) || customerList
-          ? null
-          : await CustomStatus.query()
-              .where('slug', String(filters.status))
-              .where('is_system', false)
-              .first()
-      if (custom) {
-        query.where('ticket_status_id', custom.id)
-      } else {
-        query.where('status', filters.status)
-      }
-    }
-
-    if (filters.priority) {
-      query.where('priority', filters.priority)
-    }
-
-    if (filters.ticket_type) {
-      query.where('ticket_type', filters.ticket_type)
-    }
-
-    if (filters.assigned_to) {
-      query.where('assigned_to', filters.assigned_to)
-    }
-
-    if (filters.unassigned) {
-      query.whereNull('assigned_to')
-    }
-
-    if (filters.account_type !== undefined || filters.account_id !== undefined) {
-      accountCondition(query, { type: filters.account_type, id: filters.account_id })
-    }
-    if (filters.department_id) {
-      query.where('department_id', filters.department_id)
-    }
-
-    if (filters.search) {
-      query.where((q) => {
-        q.where('subject', 'like', `%${filters.search}%`)
-          .orWhere('reference', 'like', `%${filters.search}%`)
-          .orWhere('description', 'like', `%${filters.search}%`)
-      })
-    }
-
-    if (filters.sla_breached) {
-      query.where((q) => {
-        q.where('sla_first_response_breached', true).orWhere('sla_resolution_breached', true)
-      })
-    }
-
-    if (filters.tag_ids) {
-      query.whereHas('tags', (q) => {
-        q.whereIn('id', filters.tag_ids)
-      })
-    }
-
-    if (filters.following && forUser) {
-      const { default: lucidDb } = await import('@adonisjs/lucid/services/db')
-      const followerTicketIds = await lucidDb
-        .from('escalated_ticket_followers')
-        .where('user_id', forUser.id)
-        .select('ticket_id')
-      query.whereIn(
-        'id',
-        followerTicketIds.map((r: any) => r.ticket_id)
-      )
-    }
+    await applyListFilters(query, filters, forUser)
 
     const sortBy = ALLOWED_SORT_COLUMNS.includes(filters.sort_by ?? '')
       ? filters.sort_by
       : 'created_at'
     const sortDir = (filters.sort_dir ?? 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc'
 
-    query.orderBy(sortBy, sortDir as 'asc' | 'desc')
+    query.orderBy(sortBy, sortDir as 'asc' | 'desc').orderBy('id', sortDir as 'asc' | 'desc')
 
-    return query.paginate(1, filters.per_page ?? 15)
+    const page = Number.parseInt(String(filters.page ?? 1), 10)
+    const tickets = await query.paginate(page > 0 ? page : 1, filters.per_page ?? 15)
+    await this.attachLatestPublicReplies(tickets.all())
+    return tickets
+  }
+
+  /**
+   * Each ticket's latest public reply, as `latest_reply` on list rows (the
+   * list's one-line preview). Internal notes are never used. One query.
+   */
+  async attachLatestPublicReplies(tickets: Ticket[]) {
+    if (!tickets.length) return
+    const replies = await Reply.query()
+      .whereIn(
+        'ticket_id',
+        tickets.map((ticket) => ticket.id)
+      )
+      .where('is_internal_note', false)
+      .whereNull('deleted_at')
+      .orderBy('created_at', 'desc')
+      .orderBy('id', 'desc')
+    const latest = new Map<any, Reply>()
+    for (const reply of replies) {
+      if (!latest.has(reply.ticketId)) latest.set(reply.ticketId, reply)
+    }
+    for (const ticket of tickets) {
+      const reply = latest.get(ticket.id)
+      ticket.$latestReply = reply
+        ? { id: reply.id, body: reply.body, created_at: reply.createdAt?.toISO?.() ?? null }
+        : null
+    }
   }
 
   /**

@@ -150,6 +150,9 @@ export default class Ticket extends EscalatedBaseModel {
    */
   declare $customStatus?: CustomStatusSummary | null
 
+  /** The latest public reply, set by the ticket list (`latest_reply`). */
+  declare $latestReply?: { id: number; body: string; created_at: string | null } | null
+
   /** Set when this ticket was merged into another (TicketMergeService). */
   @column()
   declare mergedIntoId: number | null
@@ -308,6 +311,12 @@ export default class Ticket extends EscalatedBaseModel {
       return ts?.toISO?.() ?? ts?.toString() ?? null
     }
     return null
+  }
+
+  /** The latest public reply, on list rows only; never an internal note. */
+  @computed({ serializeAs: 'latest_reply' })
+  get latestReply(): { id: number; body: string; created_at: string | null } | null | undefined {
+    return this.$latestReply
   }
 
   @computed()
