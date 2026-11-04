@@ -26,8 +26,9 @@ const BUILT_IN_VIEW_IDS = [
   'waiting_on_customer',
   'recently_updated',
 ]
-// The manifest the frontend package publishes, at the version this repo depends on.
-const MANIFEST = createRequire(import.meta.url)('@escalated-dev/escalated/pages.json')
+// The shared frontend's current manifest (escalated-dev/escalated pages.json).
+// The published package does not declare the agent panel props yet.
+const MANIFEST = createRequire(import.meta.url)('./fixtures/escalated-pages.json')
 
 let seq = 0
 
@@ -586,9 +587,7 @@ test.group('Agent inbox props', (group) => {
         declared.filter((prop) => !(prop in response.body.props)),
         []
       )
-      // The published manifest does not list the optional agent panel props
-      // yet (frontend docs/agent-panel.md); they are sent all the same.
-      assert.includeMembers(Object.keys(response.body.props), ['inbox', 'queue'])
+      assert.includeMembers(declared, ['inbox', 'queue'])
     })
   }
 })

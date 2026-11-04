@@ -182,6 +182,19 @@ let installed = false
 export function installTicketAccess(): void {
   if (installed) return
   installed = true
+
+  // A model query's callback subquery (`where((group) => ...)`, `whereIn(col,
+  // (sub) => ...)`) starts out on the model's own table. Only a subquery that
+  // names its table with `from()` reads rows of its own; a where group is part
+  // of its parent, which is already restricted. Scoping a group again would add
+  // another group of the same kind, and so on without end.
+  const modelPrototype = ModelQueryBuilder.prototype as any
+  const originalFrom = modelPrototype.from
+  modelPrototype.from = function (...args: any[]) {
+    this.$escalatedExplicitFrom = true
+    return originalFrom.apply(this, args)
+  }
+
   for (const builder of [ModelQueryBuilder, DatabaseQueryBuilder]) {
     const prototype = builder.prototype as any
     const original = prototype.applyWhere
@@ -190,6 +203,7 @@ export function installTicketAccess(): void {
       const source = this.knexQuery._single.table
       if (!actor || typeof source !== 'string' || !source.startsWith('escalated_'))
         return original.call(this)
+      if (this.isChildQuery && !this.$escalatedExplicitFrom) return original.call(this)
       const [table, alias = table] = source.split(/\s+(?:as\s+)?/i)
       const saved = this.whereStack
       // Lucid consumes the first condition of grouped stacks while compiling.
