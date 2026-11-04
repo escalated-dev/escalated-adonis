@@ -82,6 +82,11 @@ export default class User implements TestUser {
     return builder
   }
 
+  /** Like Lucid's `all()`, in id order: the staff lists filter it to agents and admins. */
+  static async all(): Promise<User[]> {
+    return [...allUsers()].sort((a, b) => a.id - b.id)
+  }
+
   /** Like Lucid's `create()`: a new customer with the given email and name. */
   static async create(values: { email: string; name?: string; password?: string }) {
     const user = new User(100 + CREATED.length, 'customer')

@@ -46,6 +46,16 @@ import {
 /** Tickets whose next save sets a custom status on purpose (`applyStatusTarget`). */
 const KEEP_CUSTOM_STATUS = new WeakSet<object>()
 
+/** One of the requester's other tickets, as the agent ticket page lists them. */
+export type RequesterTicketSummary = {
+  id: number
+  reference: string
+  subject: string
+  status: string
+  created_at: string | null
+  updated_at: string | null
+}
+
 export default class Ticket extends EscalatedBaseModel {
   static table = 'escalated_tickets'
 
@@ -152,6 +162,9 @@ export default class Ticket extends EscalatedBaseModel {
 
   /** The latest public reply, set by the ticket list (`latest_reply`). */
   declare $latestReply?: { id: number; body: string; created_at: string | null } | null
+
+  /** The requester's other recent tickets, set by the agent ticket page (`requester_tickets`). */
+  declare $requesterTickets?: RequesterTicketSummary[]
 
   /** Set when this ticket was merged into another (TicketMergeService). */
   @column()
@@ -317,6 +330,12 @@ export default class Ticket extends EscalatedBaseModel {
   @computed({ serializeAs: 'latest_reply' })
   get latestReply(): { id: number; body: string; created_at: string | null } | null | undefined {
     return this.$latestReply
+  }
+
+  /** The requester's five most recent other tickets, on the agent ticket page only. */
+  @computed({ serializeAs: 'requester_tickets' })
+  get requesterTickets(): RequesterTicketSummary[] | undefined {
+    return this.$requesterTickets
   }
 
   @computed()

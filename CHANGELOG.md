@@ -7,6 +7,7 @@
 - **The staff ticket lists (`Agent/TicketIndex`, `Admin/Tickets/Index`) now leave snoozed tickets out**, as escalated-laravel's list does, so a list and the counts that label it agree. `snoozed=1` lists only snoozed tickets and `include_snoozed=1` lists both.
 - **A ticket list's `last_reply_at` now comes from the latest public reply.** It used to include internal notes, so a list (the customer's too) could show a note's time.
 - **The ticket list reads `page`.** It always returned the first page.
+- **The agent snooze route validates `snoozed_until`.** It must be present, a date (ISO-8601, or `yyyy-MM-dd HH:mm:ss`) and in the future; otherwise the visit goes back with `errors.snoozed_until` and the ticket is unchanged. A past time used to snooze the ticket until a moment already gone, and an invalid one only flashed `error`.
 
 ### Added
 - **`inbox` on `Escalated/Agent/TicketIndex` and `Escalated/Agent/TicketShow`** (not in cloud mode, where tickets are not stored locally): `{ counts: { mine, unassigned, all }, views: [{ id, name, count, filters }], stats: { open, urgent, sla_at_risk, resolved_today } }`. Every number is a count through the ticket list's own filters and the ticket visibility scope (department visibility, account scoping), so it is what the agent sees by opening that list.
@@ -17,6 +18,11 @@
 - New ticket list filters: `sla_at_risk=1` (unresolved, with an SLA breached or a first response still unsent or resolution due within 60 minutes), `resolved_today=1` (resolved since the start of today), `open=1` (not resolved or closed), `updated_within_hours=<1..8760>`, `assigned=me` and `view=<id>`. On the agent list, a malformed value sends a page visit (Inertia or browser) back to the referring page, query included (else the list), with the field errors flashed as `errors` for the next page, as escalated-laravel's `$request->validate()` does; a JSON client (`Accept: application/json`, no `X-Inertia`) gets a 422 with `message` and `errors`. A raw 422 is what the Inertia client shows as an error modal.
 - `latest_reply` (`{ id, body, created_at }`) on ticket list rows: the latest public reply, never an internal note, for the list's one-line preview (one extra query per page).
 - Translations for the queue and built-in view names (`agent_inbox.*`) in all 14 locales.
+- **`agents` on `Escalated/Agent/TicketShow`:** `[{ id, name }]`, the agents and admins (`authorization.isAgent` / `isAdmin`) the ticket can be assigned to, filtered by the ticket visibility scope (department visibility, account scoping), so the agent panel can reassign a ticket and not only take it. Older frontends ignore the prop.
+- **`requester_tickets` on the agent ticket page's `ticket`:** the requester's five most recent other tickets, newest first (`id`, `reference`, `subject`, `status`, `created_at`, `updated_at`), matched by the requester, or a guest ticket's email, and through the ticket visibility scope. The agent panel's customer panel lists them as previous conversations. `related_tickets` is unchanged and still means linked tickets.
+
+### Fixed
+- **An agent opening a ticket under department visibility or account scoping got a 500.** Loading the ticket's attachments added the visibility condition to its own where groups again and again until the stack ran out. A model subquery is now scoped only when it names its table with `from()`; a where group is part of its already restricted parent.
 
 ### Not sent
 - `is_unread` and `requester_online`: Escalated tracks no per-agent read state or customer presence, so the list rows carry neither. Live chat tickets are still marked through `is_live_chat`.

@@ -1,11 +1,10 @@
 import Ticket from '../../models/ticket.js'
-import { agentCanAccessTicket } from '../../support/ticket_access.js'
+import { staffUsers, staffWhoCanAccess, type StaffUser } from '../../support/assignable_agents.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import Department from '../../models/department.js'
 import Tag from '../../models/tag.js'
 import CannedResponse from '../../models/canned_response.js'
 import Macro from '../../models/macro.js'
-import { resolveUserModel } from '../../support/user_model.js'
 
 export default class ApiResourceController {
   /**
@@ -16,10 +15,7 @@ export default class ApiResourceController {
     const ticketId = ctx.request.input('ticket_id')
     if (ticketId) {
       const ticket = await Ticket.findOrFail(ticketId)
-      const eligibility = await Promise.all(
-        agents.map((agent) => agentCanAccessTicket(agent.id, ticket))
-      )
-      agents = agents.filter((_agent, index) => eligibility[index])
+      agents = await staffWhoCanAccess(ticket, agents)
     }
     return ctx.response.json({
       data: agents.map((a) => ({
@@ -112,31 +108,7 @@ export default class ApiResourceController {
   /**
    * Get all users who pass the agent or admin gate.
    */
-  protected async getAgents(): Promise<{ id: number; name: string; email: string }[]> {
-    const config = (globalThis as any).__escalated_config
-    try {
-      const UserModel = await resolveUserModel()
-      const users = await UserModel.all()
-
-      const agents: { id: number; name: string; email: string }[] = []
-      for (const user of users) {
-        const isAgent = config?.authorization?.isAgent
-          ? await config.authorization.isAgent(user)
-          : false
-        const isAdmin = config?.authorization?.isAdmin
-          ? await config.authorization.isAdmin(user)
-          : false
-        if (isAgent || isAdmin) {
-          agents.push({
-            id: user.id,
-            name: user.name ?? user.fullName ?? '',
-            email: user.email ?? '',
-          })
-        }
-      }
-      return agents
-    } catch {
-      return []
-    }
+  protected async getAgents(): Promise<StaffUser[]> {
+    return staffUsers()
   }
 }

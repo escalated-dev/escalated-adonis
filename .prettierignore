@@ -8,3 +8,5 @@ docker
 resources/views/newsletter_themes/
 # Vendored widget bundle from @escalated-dev/escalated.
 resources/widget/
+# Verbatim copy of the shared frontend's pages.json.
+tests/integration/fixtures/escalated-pages.json

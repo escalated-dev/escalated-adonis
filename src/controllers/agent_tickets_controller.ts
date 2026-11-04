@@ -22,6 +22,8 @@ import AgentInbox from '../services/agent_inbox.js'
 import { listFilterErrors } from '../support/ticket_list_filters.js'
 import emitter from '@adonisjs/core/services/emitter'
 import { ESCALATED_EVENTS } from '../events/index.js'
+import { assignableAgents } from '../support/assignable_agents.js'
+import type { RequesterTicketSummary } from '../models/ticket.js'
 
 export default class AgentTicketsController {
   protected ticketService = new TicketService()
@@ -164,6 +166,9 @@ export default class AgentTicketsController {
     // Load related tickets via split metadata
     const relatedTickets = await this.loadRelatedTickets(ticket)
 
+    ticket.$requesterTickets = await this.requesterTickets(ticket)
+    const agents = await assignableAgents(ticket)
+
     const subjects = await new TicketSubjectService().serializeForTicket(ticket)
 
     const inbox = new AgentInbox(userId)
@@ -175,6 +180,7 @@ export default class AgentTicketsController {
       departments,
       tags,
       cannedResponses,
+      agents,
       macros,
       is_following: isFollowing,
       followers_count: followersCount,
@@ -459,11 +465,11 @@ export default class AgentTicketsController {
     const user = ctx.auth.user!
     const { snoozed_until: snoozedUntil } = ctx.request.only(['snoozed_until'])
 
-    const { DateTime } = await import('luxon')
-    const until = DateTime.fromISO(snoozedUntil)
-
-    if (!until.isValid) {
-      ctx.session.flash('error', t('ticket.invalid_snooze_date'))
+    const until = await this.snoozeUntil(snoozedUntil)
+    if (!until) {
+      ctx.session.flash('errors', {
+        snoozed_until: 'The snooze time must be a date in the future.',
+      })
       return ctx.response.redirect().back()
     }
 
@@ -498,6 +504,51 @@ export default class AgentTicketsController {
 
     ctx.session.flash('success', t('ticket.split_success', { reference: newTicket.reference }))
     return ctx.response.redirect().back()
+  }
+
+  /**
+   * A snooze time: required, a date, and strictly in the future. Null otherwise.
+   */
+  protected async snoozeUntil(value: unknown) {
+    if (typeof value !== 'string' || value.trim() === '') return null
+    const { DateTime } = await import('luxon')
+    let until = DateTime.fromISO(value.trim())
+    if (!until.isValid) until = DateTime.fromSQL(value.trim())
+    if (!until.isValid || until.toMillis() <= Date.now()) return null
+    return until
+  }
+
+  /**
+   * The requester's five most recent other tickets, newest first, matched as
+   * the requester (or a guest's email) and through the ticket visibility scope
+   * the request runs under.
+   */
+  protected async requesterTickets(ticket: Ticket): Promise<RequesterTicketSummary[]> {
+    const query = Ticket.query().whereNot('id', ticket.id)
+
+    if (ticket.isGuest) {
+      if (!ticket.guestEmail) return []
+      query.where('guest_email', ticket.guestEmail)
+    } else if (ticket.requesterType && ticket.requesterId) {
+      query.where('requester_type', ticket.requesterType).where('requester_id', ticket.requesterId)
+    } else {
+      return []
+    }
+
+    const others = await query
+      .orderBy('created_at', 'desc')
+      .orderBy('id', 'desc')
+      .limit(5)
+      .select('id', 'reference', 'subject', 'status', 'created_at', 'updated_at')
+
+    return others.map((other) => ({
+      id: other.id,
+      reference: other.reference,
+      subject: other.subject,
+      status: String(other.status),
+      created_at: other.createdAt?.toISO() ?? null,
+      updated_at: other.updatedAt?.toISO() ?? null,
+    }))
   }
 
   /**
