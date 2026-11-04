@@ -445,15 +445,43 @@ test.group('Agent inbox props', (group) => {
     { updated_within_hours: '9000' },
   ]
   for (const query of malformed) {
-    test(`rejects malformed values for the new filters: ${JSON.stringify(query)}`, async ({
+    test(`sends malformed values for the new filters back with errors: ${JSON.stringify(query)}`, async ({
       assert,
     }) => {
-      const response = await client.visit('GET', `${INDEX}?${new URLSearchParams(query)}`)
+      // escalated-laravel's $request->validate(): a redirect back with the
+      // errors flashed for the next page, never a raw 422 (which the Inertia
+      // client shows as an error modal).
+      const from = `${INDEX}?assigned=me`
+      const response = await client.visit('GET', `${INDEX}?${new URLSearchParams(query)}`, {
+        referer: from,
+      })
+
+      assert.equal(response.status, 302)
+      assert.equal(response.location, from)
+      const next = await client.visit('GET', from)
+      assert.deepEqual(Object.keys(next.body.flash.errors), Object.keys(query))
+      for (const message of Object.values(next.body.flash.errors)) assert.isString(message)
+    })
+
+    test(`answers a JSON client's malformed filter with a 422: ${JSON.stringify(query)}`, async ({
+      assert,
+    }) => {
+      const response = await client.visit('GET', `${INDEX}?${new URLSearchParams(query)}`, {
+        headers: { 'X-Inertia': '', 'X-Requested-With': '', 'Accept': 'application/json' },
+      })
 
       assert.equal(response.status, 422)
       assert.deepEqual(Object.keys(response.body.errors), Object.keys(query))
+      assert.isString(response.body.message)
     })
   }
+
+  test('sends a malformed filter with no referer back to the list', async ({ assert }) => {
+    const response = await client.visit('GET', `${INDEX}?sla_at_risk=soon`)
+
+    assert.equal(response.status, 302)
+    assert.equal(response.location, INDEX)
+  })
 
   test('previews the latest customer-visible message, never an internal note', async ({
     assert,
