@@ -88,5 +88,19 @@
       "urgent": "Urgente",
       "critical": "Critique"
     }
+  },
+  "agent_inbox": {
+    "queues": {
+      "mine": "Ma bo\u00eete",
+      "unassigned": "Non assign\u00e9s",
+      "all": "Tous les tickets"
+    },
+    "views": {
+      "urgent": "Urgents",
+      "sla_at_risk": "SLA \u00e0 risque",
+      "waiting_on_me": "En attente de moi",
+      "waiting_on_customer": "En attente du client",
+      "recently_updated": "Mis \u00e0 jour r\u00e9cemment"
+    }
   }
 }

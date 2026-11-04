@@ -18,6 +18,8 @@ import type { TicketStatus, TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
 import { requireAuthUser } from '../support/auth_user.js'
 import TicketSubjectService from '../services/ticket_subject_service.js'
+import AgentInbox from '../services/agent_inbox.js'
+import { listFilterErrors } from '../support/ticket_list_filters.js'
 import emitter from '@adonisjs/core/services/emitter'
 import { ESCALATED_EVENTS } from '../events/index.js'
 
@@ -30,7 +32,7 @@ export default class AgentTicketsController {
    * GET /support/agent/tickets — List all tickets (agent view)
    */
   async index(ctx: HttpContext) {
-    const filters = ctx.request.only([
+    const requested = ctx.request.only([
       'status',
       'priority',
       'ticket_type',
@@ -45,8 +47,26 @@ export default class AgentTicketsController {
       'sort_by',
       'sort_dir',
       'per_page',
+      'page',
       'following',
+      'assigned',
+      'sla_at_risk',
+      'resolved_today',
+      'open',
+      'updated_within_hours',
+      'view',
     ])
+
+    const errors = listFilterErrors(requested)
+    if (errors) {
+      return ctx.response.status(422).json({ message: 'The given data was invalid.', errors })
+    }
+
+    const inbox = new AgentInbox(requireAuthUser(ctx.auth).id)
+    const selected = inbox.normaliseFilters(requested)
+    const queue = await inbox.queueFor(selected)
+    inbox.remember((ctx as any).session, queue)
+    const filters = inbox.listFilters(selected, queue)
 
     const tickets = await this.ticketService.list(
       filters,
@@ -65,6 +85,8 @@ export default class AgentTicketsController {
       filters: ctx.request.all(),
       departments,
       tags,
+      queue: inbox.queueProp(queue),
+      ...(await inbox.inboxProps(queue)),
     })
   }
 
@@ -132,6 +154,9 @@ export default class AgentTicketsController {
 
     const subjects = await new TicketSubjectService().serializeForTicket(ticket)
 
+    const inbox = new AgentInbox(userId)
+    const queue = await inbox.recalled((ctx as any).session)
+
     return getRenderer().render(ctx, 'Escalated/Agent/TicketShow', {
       ticket,
       subjects,
@@ -155,6 +180,8 @@ export default class AgentTicketsController {
       related_tickets: relatedTickets,
       custom_fields: await this.customFields.ticketValues(ticket.id),
       customActions: this.customActionsForTicket(ticket, ctx.auth.user),
+      queue: inbox.queueProp(queue),
+      ...(await inbox.inboxProps(queue)),
     })
   }
 

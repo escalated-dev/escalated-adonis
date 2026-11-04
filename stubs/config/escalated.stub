@@ -34,6 +34,9 @@ const escalatedConfig: EscalatedConfig = {
   accounts: { enabled: false, scopeAgents: false },
   targetedSlas: false,
 
+  // Seconds the agent panel's inbox counts are cached per agent (0 = off).
+  agentInbox: { cacheSeconds: 10 },
+
   /*
   |--------------------------------------------------------------------------
   | User Model
