@@ -379,6 +379,11 @@ async function registerUiRoutes(config: any) {
       router
         .post('/notifications/:id/read', [AgentPanelController, 'readNotification'])
         .as('escalated.agent.notifications.read')
+      // Echo's private-channel auth for the agent's own notifications channel
+      // (404 unless broadcasting over the Pusher protocol is configured).
+      router
+        .post('/broadcasting/auth', [AgentPanelController, 'broadcastingAuth'])
+        .as('escalated.broadcasting.auth')
       router
         .post('/tickets/bulk', [BulkActionsController, 'handle'])
         .as('escalated.agent.tickets.bulk')

@@ -1226,6 +1226,24 @@
     "handler": "AgentPanelController#readNotification"
   },
   {
+    "name": "escalated.broadcasting.auth",
+    "pattern": "/support/agent/broadcasting/auth",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentPanelController#broadcastingAuth"
+  },
+  {
     "name": "escalated.agent.tickets.bulk",
     "pattern": "/support/agent/tickets/bulk",
     "methods": ["POST"],

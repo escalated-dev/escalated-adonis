@@ -223,6 +223,14 @@ export interface EscalatedConfig {
   /** The agents' in-app notifications feed and bell (default true). */
   agentNotifications?: boolean
 
+  /**
+   * Realtime push of new notifications (`notification.created` on the
+   * agent's private channel `escalated.agents.{id}`), for the frontend's
+   * Laravel Echo client: over the Pusher protocol (Pusher, Soketi, Reverb)
+   * or a transport of your own. Off by default. See docs/agent-panel.md.
+   */
+  broadcasting?: import('./support/realtime.js').EscalatedBroadcastingConfig
+
   locale?: string
 
   /**
