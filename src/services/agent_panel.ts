@@ -414,6 +414,16 @@ export function notificationItem(row: any, tickets: Map<number, any>): Record<st
 
 // ---- Event wiring ---------------------------------------------------------------------
 
+/**
+ * @mentions in an agent's reply or internal note (escalated-laravel's
+ * MentionService). A customer's reply mentions nobody; imports are skipped.
+ */
+async function processMentions(reply: any): Promise<void> {
+  if (ImportContext.isImporting() || !reply?.body) return
+  const { default: MentionService } = await import('./mention_service.js')
+  await new MentionService().processMentions(reply)
+}
+
 /** Subscribes the notifications to the package events. The agent who caused an event is never notified. */
 export function wireAgentNotifications(emitter: any, events: Record<string, string>): void {
   // After the emitting change: an event raised inside a transaction must not
@@ -436,7 +446,11 @@ export function wireAgentNotifications(emitter: any, events: Record<string, stri
       if (!reply) return
       const { default: Ticket } = await import('../models/ticket.js')
       const ticket = await withTicketAccess(null, () => Ticket.find(reply.ticketId))
-      if (!ticket || !(await isCustomerSide(reply, ticket))) return
+      if (!ticket) return
+      if (!(await isCustomerSide(reply, ticket))) {
+        await processMentions(reply)
+        return
+      }
       const recipients = new Map<string, UserId>()
       for (const id of [ticket.assignedTo, ...(data.followerUserIds ?? [])]) {
         if (present(id)) recipients.set(String(id), id)
@@ -444,6 +458,12 @@ export function wireAgentNotifications(emitter: any, events: Record<string, stri
       for (const agentId of recipients.values()) {
         await notify(agentId, 'ticket_reply', ticket, {}, reply.authorId ?? null)
       }
+    })
+  )
+
+  emitter.on(events.INTERNAL_NOTE_ADDED, (data: any) =>
+    safely(async () => {
+      if (data.reply) await processMentions(data.reply)
     })
   )
 

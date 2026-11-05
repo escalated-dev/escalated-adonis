@@ -7,6 +7,9 @@
 - **Agents get in-app notifications** (`agentNotifications: false` turns them off). Assigning a ticket to yourself creates none, and a `ticket_reply` notification is sent only for customer-side replies, never for other agents' replies.
 - **Optional: embed the admin in your own admin panel (off by default; no change unless configured).** With no `ui.embed` configuration (and `ESCALATED_EMBED` unset) every route, middleware, shared prop, root view and header is unchanged; a test compares the whole route table with a snapshot taken before this change (`tests/integration/fixtures/embed/default-routes.json`). A published `config/escalated.ts` without the new `ui.embed` block keeps it off. See docs/embedding-admin.md.
 
+### Added
+- **@mention notifications**, as escalated-laravel: an agent mentioned in an agent's reply or internal note (`@{Full Name}`, what the composer's picker inserts, or `@name`; matched to staff, `authorization.isAgent`/`isAdmin`, by name or email, ignoring case) gets an `escalated_mentions` row and a `mention` notification in the feed. Nobody is notified of their own mention; a customer's reply mentions nobody. The picker route `escalated.admin.agents.search` now lists only agents and admins from the host user model, as `{ id, name, email }` (it searched a hard-coded `users` table).
+
 ### Fixed
 - Knowledge-base search (customer knowledge base, widget) takes `%` and `_` literally and ignores case on PostgreSQL.
 

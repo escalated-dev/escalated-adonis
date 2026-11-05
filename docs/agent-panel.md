@@ -69,9 +69,14 @@ default 120).
 | `ticket_reply` | the assignee and followers | a customer-side public reply or chat message |
 | `sla_warning` / `sla_breached` | the assignee | `escalated:sla:warning` / `escalated:sla:breached` |
 | `chat_transferred` | the receiving agent | a chat is transferred to them by someone else |
+| `mention` | the mentioned agent | an @mention in another agent's reply or internal note |
 
-There is no `mention` notification: @mentions are not processed on replies in
-this package.
+@mentions follow escalated-laravel: `@{Full Name}` (what the composer's picker
+inserts) and `@name` match an agent or admin (`authorization.isAgent` /
+`isAdmin` over the host user model) by name or email, ignoring case, and add
+an `escalated_mentions` row. A customer's reply mentions nobody. The picker is
+`GET /{prefix}/admin/agents/search?q=` (`escalated.admin.agents.search`,
+`ticket.view`): up to 10 `{ id, name, email }`.
 
 | Route | Name | Answer |
 |---|---|---|
