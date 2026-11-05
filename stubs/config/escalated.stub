@@ -79,6 +79,34 @@ const escalatedConfig: EscalatedConfig = {
 
   /*
   |--------------------------------------------------------------------------
+  | UI: embed the admin in your own admin panel (optional)
+  |--------------------------------------------------------------------------
+  |
+  | Off by default: the standalone admin at /{prefix}/admin is used and
+  | nothing in `embed` has any effect. Turned on, the admin routes move under
+  | `embed.prefix` and `embed.middleware` (null keeps `adminMiddleware`), keep
+  | their names, and the admin menu is shared as `escalated.navigation` for
+  | your own sidebar. `replaceAdminGate: true` lets your middleware alone
+  | decide who reaches the admin. `mode: 'iframe'` lets the exact origins in
+  | `frameAncestors` frame it. See docs/embedding-admin.md.
+  |
+  */
+  ui: {
+    enabled: true,
+    embed: {
+      enabled: process.env.ESCALATED_EMBED === 'true',
+      mode: process.env.ESCALATED_EMBED_MODE === 'iframe' ? 'iframe' : 'layout',
+      prefix: process.env.ESCALATED_EMBED_PREFIX || 'admin/support',
+      middleware: null,
+      replaceAdminGate: false,
+      layout: null,
+      rootView: null,
+      frameAncestors: process.env.ESCALATED_EMBED_FRAME_ANCESTORS ?? '',
+    },
+  },
+
+  /*
+  |--------------------------------------------------------------------------
   | Table Prefix
   |--------------------------------------------------------------------------
   */

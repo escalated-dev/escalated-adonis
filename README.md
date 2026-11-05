@@ -60,6 +60,32 @@ Run the migrations:
 node ace migration:run
 ```
 
+## Embedding the admin in your own admin panel (optional)
+
+Escalated's admin is a standalone panel at `/support/admin` by default, and
+needs no setup. If your app already has an admin panel, you can show
+Escalated's admin screens inside it instead: under your prefix, your
+middleware and your sidebar. It is off unless you turn it on, and changes
+nothing until then.
+
+```ts
+// config/escalated.ts
+import { embedAdmin } from '@escalated-dev/escalated-adonis/support/embed'
+
+ui: {
+  enabled: true,
+  embed: embedAdmin({ prefix: 'admin/support', middleware: ['auth', 'admin'] }),
+},
+```
+
+The admin routes then answer under `/admin/support` with the same route
+names, and every Inertia page shares the admin menu as `escalated.navigation`
+for your sidebar. It works with a Vue + Inertia admin layout, an Edge admin
+template as the root view, or an allow-listed iframe (`ESCALATED_EMBED`,
+`ESCALATED_EMBED_MODE`, `ESCALATED_EMBED_PREFIX`,
+`ESCALATED_EMBED_FRAME_ANCESTORS`). See
+[docs/embedding-admin.md](docs/embedding-admin.md).
+
 ## Configuration
 
 Edit `config/escalated.ts` to customize behavior:

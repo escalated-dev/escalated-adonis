@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Upgrading
+- **Optional: embed the admin in your own admin panel (off by default; no change unless configured).** With no `ui.embed` configuration (and `ESCALATED_EMBED` unset) every route, middleware, shared prop, root view and header is unchanged; a test compares the whole route table with a snapshot taken before this change (`tests/integration/fixtures/embed/default-routes.json`). A published `config/escalated.ts` without the new `ui.embed` block keeps it off. See docs/embedding-admin.md.
+
+### Added
+- **Embedding the admin in your own admin panel** (optional; ADR 2026-11-05-embeddable-admin). `ui.embed` in `config/escalated.ts`, or `embedAdmin({ prefix, middleware, layout, rootView, mode, replaceAdminGate, frameAncestors })` from `@escalated-dev/escalated-adonis/support/embed`, or `ESCALATED_EMBED`, `ESCALATED_EMBED_MODE`, `ESCALATED_EMBED_PREFIX`, `ESCALATED_EMBED_FRAME_ANCESTORS`:
+  - the `escalated.admin.*` routes under `/{prefix}/admin` (admin screens, plugins, API tokens, import) and SDK plugin admin pages move under the host's prefix and middleware (named as in `start/kernel.ts`; default `routes.adminMiddleware`) with the same route names and controllers; Escalated's admin gate stays unless `replaceAdminGate` is set (refused without `middleware`); two-factor and route permissions always apply; the standalone URLs answer 404. Agent, customer, guest, widget, API, SSO, two-factor enrolment and challenge, End Chat and the newsletter admin do not move;
+  - every Inertia page shares `escalated.embed` (`enabled` on embedded admin responses only, `mode`, `layout`, `route`, `base_url`, `allowed_origins`) and `escalated.navigation`, the admin menu filtered by the admin gate, routes that exist, feature switches and route permissions, with plugin admin items; `adminNavigation(user, ctx)` returns the same list for Edge templates. Escalated shares the `escalated` prop through a router middleware registered only while embedding is on;
+  - `rootView` renders embedded pages in the host's Edge admin template, which gets the menu as `escalatedNavigation`;
+  - iframe mode sends `Content-Security-Policy: frame-ancestors 'self' <origins>` and drops `X-Frame-Options` on embedded responses only, when their headers are written (after shield and any host middleware); layout mode adds no headers;
+  - the SSO and two-factor sign-in send admins to the admin's reports wherever it is mounted.
+
 ## [0.7.11] - 2026-11-04
 
 ### Upgrading
