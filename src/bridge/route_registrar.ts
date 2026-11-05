@@ -7,6 +7,7 @@
 | appropriate AdonisJS routes for:
 |
 |   - Plugin admin pages     →  {METHOD} /{prefix}/admin/plugins/{slug}/{route}
+|                               (/{ui.embed.prefix}/plugins/... while embedded)
 |   - Plugin data endpoints  →  {METHOD} /{prefix}/api/plugins/{slug}{path}
 |   - Plugin webhook routes  →  {METHOD} /{prefix}/webhooks/plugins/{slug}{path}
 |
@@ -26,6 +27,7 @@ import { getRenderer } from '../rendering/renderer.js'
 import type PluginBridge from './plugin_bridge.js'
 import { getConfig } from '../helpers/config.js'
 import { escalatedMiddleware, resolveConfiguredMiddleware } from '../support/route_middleware.js'
+import { adminRouteMount } from '../support/embed.js'
 import { actingAs } from './native_context.js'
 
 /** Headers a plugin never sees (domain-model/plugin-contract.md); also every `Proxy-*`. */
@@ -74,6 +76,9 @@ export default class RouteRegistrar {
       return usable
     })
     if (pages.length > 0) {
+      // Beside the admin: `{prefix}/admin/plugins/...`, or under the host's
+      // prefix and middleware while the admin is embedded (ADR 2026-11-05).
+      const admin = await adminRouteMount(router, (guards) => [guards.requireTwoFactor()])
       router
         .group(() => {
           for (const page of pages) {
@@ -83,8 +88,8 @@ export default class RouteRegistrar {
               .as(`escalated.plugin.${this.slugify(name)}.page.${this.slugify(pagePath)}`)
           }
         })
-        .prefix(`${prefix}/admin/plugins/${this.slugify(name)}`)
-        .use([...adminMiddleware, middleware.ensureIsAdmin(), middleware.requireTwoFactor()])
+        .prefix(`${admin.prefix}/plugins/${this.slugify(name)}`)
+        .use(admin.middleware)
     }
 
     // ---- Data endpoints (admin-authenticated) ----

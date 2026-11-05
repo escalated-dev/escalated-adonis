@@ -6,4 +6,8 @@ import router from '@adonisjs/core/services/router'
  */
 export const middleware = router.named({
   auth: () => import('./auth_middleware.js'),
+  // The host admin panel's own sign-in and staff check, and its security
+  // headers, for the embedded-admin specs (tests/embed).
+  hostPanel: () => import('./embed/host_panel_middleware.js'),
+  hostHeaders: () => import('./embed/host_headers_middleware.js'),
 })

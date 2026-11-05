@@ -33,6 +33,17 @@ export { default as ApiRateLimit } from './src/middleware/api_rate_limit.js'
 export { isWidgetCsrfExempt } from './src/support/widget_origins.js'
 // Single sign-on: the ACS and JWT callback take the IdP's cross-site POSTs.
 export { isSsoCsrfExempt } from './src/support/sso.js'
+// Embedding the admin in your own admin panel (optional; docs/embedding-admin.md)
+export {
+  embedAdmin,
+  adminBasePath,
+  isEmbeddedRequest,
+  frameAncestorsDirective,
+} from './src/support/embed.js'
+export type { EscalatedEmbedConfig, EscalatedEmbedMode } from './src/support/embed.js'
+export { adminNavigation, ADMIN_NAVIGATION_ITEMS } from './src/support/admin_navigation.js'
+export type { AdminNavigationItem, AdminNavigationChild } from './src/support/admin_navigation.js'
+export { escalatedSharedData } from './src/support/shared_data.js'
 // Two-factor authentication (TOTP + recovery codes)
 export { default as TwoFactor } from './src/models/two_factor.js'
 export { default as TwoFactorService } from './src/services/two_factor_service.js'

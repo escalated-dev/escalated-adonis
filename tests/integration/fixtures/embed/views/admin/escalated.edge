@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin</title>
+  {{-- Your assets, as in resources/views/inertia_layout.edge, e.g. @vite(['inertia/app.ts']) --}}
+  @inertiaHead()
+</head>
+<body data-root-view="admin/escalated">
+  <header class="admin-header">Acme admin</header>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <a href="/admin">Dashboard</a>
+      <p class="menu-heading">Support</p>
+      <ul>
+        @each(item in escalatedNavigation)
+          <li>
+            <a href="{{ item.url }}"{{{ item.active ? ' class="active" aria-current="page"' : '' }}}>{{ item.label }}</a>
+          </li>
+        @end
+      </ul>
+    </aside>
+    <main class="admin-main">
+      @inertia()
+    </main>
+  </div>
+</body>
+</html>

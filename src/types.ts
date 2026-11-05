@@ -324,6 +324,12 @@ export interface EscalatedConfig {
 
   ui: {
     enabled: boolean
+    /**
+     * Embed the admin in your own admin panel (optional, off by default; ADR
+     * 2026-11-05-embeddable-admin). See docs/embedding-admin.md and
+     * `embedAdmin()`.
+     */
+    embed?: import('./support/embed.js').EscalatedEmbedConfig
   }
 
   /**
