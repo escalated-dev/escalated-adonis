@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
 import { getConfig } from '../helpers/config.js'
+import { adminBasePath } from '../support/embed.js'
 import { getRenderer } from '../rendering/renderer.js'
 import { requireAuthUser } from '../support/auth_user.js'
 import { confirmedEnrolment, consumeCode, consumeRecoveryCode } from '../support/two_factor.js'
@@ -79,7 +80,7 @@ export default class TwoFactorChallengeController {
     const authorization = getConfig().authorization
     const user = ctx.auth?.user
     const isAgent = Boolean(authorization?.isAgent && (await authorization.isAgent(user)))
-    const home = isAgent ? `/${this.prefix()}/agent/tickets` : `/${this.prefix()}/admin/reports`
+    const home = isAgent ? `/${this.prefix()}/agent/tickets` : `${adminBasePath()}/reports`
     return TwoFactorSession.pullIntended(ctx.session, home)
   }
 

@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
 import { getConfig } from '../helpers/config.js'
+import { adminBasePath } from '../support/embed.js'
 import SsoService, { SsoValidationError, type SsoProvider } from '../services/sso_service.js'
 import SsoUserResolver from '../services/sso_user_resolver.js'
 import TwoFactorSession from '../support/two_factor_session.js'
@@ -153,7 +154,7 @@ export default class SsoController {
       return `/${prefix}/agent/tickets`
     }
     if (authorization?.isAdmin && (await authorization.isAdmin(user))) {
-      return `/${prefix}/admin/reports`
+      return `${adminBasePath()}/reports`
     }
     return `/${prefix}`
   }

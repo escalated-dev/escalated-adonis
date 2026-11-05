@@ -57,10 +57,25 @@ test.group('Embedding the admin: off by default', (group) => {
     )
     assert.equal(agent.status, 403)
 
+    assert.isNull(admin.headers.get('content-security-policy'))
+    assert.isNull(admin.headers.get('x-frame-options'))
+
     const embedded = await new InertiaClient(running.baseUrl, { user: TEST_USERS.admin }).visit(
       'GET',
       '/admin/support/tags'
     )
     assert.equal(embedded.status, 404)
+  })
+
+  test('the shared escalated prop has no embed or navigation keys', async ({ assert }) => {
+    const { escalatedSharedData } = await import('../../src/support/shared_data.js')
+    const shared = await escalatedSharedData({
+      auth: { user: TEST_USERS.admin },
+      route: { name: 'escalated.admin.tags.index' },
+    })
+
+    assert.isTrue(shared.is_admin)
+    assert.notProperty(shared, 'embed')
+    assert.notProperty(shared, 'navigation')
   })
 })

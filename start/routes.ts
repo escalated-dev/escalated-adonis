@@ -16,6 +16,7 @@ import {
   escalatedMiddleware,
   resolveConfiguredMiddleware,
 } from '../src/support/route_middleware.js'
+import { adminRouteMount, resolveEmbed } from '../src/support/embed.js'
 
 // Lazy-load controllers (UI — Inertia-powered)
 const CustomerTicketsController = () => import('../src/controllers/customer_tickets_controller.js')
@@ -137,6 +138,13 @@ export async function registerRoutes() {
     // 500 or 503 gets the shared Escalated/Error page. Router middleware, so it
     // wraps every route's own middleware; it passes anything else through.
     router.use([() => import('../src/middleware/inertia_error_page.js')])
+
+    // Only while the admin is embedded in the host's admin panel (ADR
+    // 2026-11-05-embeddable-admin): `escalated.embed` and
+    // `escalated.navigation` on every Inertia page.
+    if (resolveEmbed()) {
+      router.use([() => import('../src/middleware/share_escalated_props.js')])
+    }
   }
 }
 
@@ -477,6 +485,14 @@ async function registerUiRoutes(config: any) {
     ])
 
   // ---- Admin Routes ----
+  // Under `{prefix}/admin`, or under the host's prefix and middleware while the
+  // admin is embedded in the host's admin panel (src/support/embed.ts).
+  const embed = resolveEmbed()
+  const adminMount = await adminRouteMount(router, (guards) => [
+    guards.requireTwoFactor(),
+    guards.enforceRoutePermissions(),
+    guards.ticketAccess(),
+  ])
   router
     .group(() => {
       // Reports
@@ -1206,18 +1222,30 @@ async function registerUiRoutes(config: any) {
         .delete('/plugins/:slug', [AdminPluginsController, 'destroy'])
         .as('escalated.admin.plugins.destroy')
 
-      if ((config as any).enableNewsletters) {
+      if ((config as any).enableNewsletters && !embed) {
         registerNewsletterAdminRoutes()
       }
     })
-    .prefix(`${prefix}/admin`)
-    .use([
-      ...adminMiddleware,
-      middleware.ensureIsAdmin(),
-      middleware.requireTwoFactor(),
-      middleware.enforceRoutePermissions(),
-      middleware.ticketAccess(),
-    ])
+    .prefix(adminMount.prefix)
+    .use(adminMount.middleware)
+
+  // The newsletter admin does not move with an embedded admin (ADR
+  // 2026-11-05-embeddable-admin): it keeps `{prefix}/admin/newsletters` and the
+  // standalone admin middleware.
+  if ((config as any).enableNewsletters && embed) {
+    router
+      .group(() => {
+        registerNewsletterAdminRoutes()
+      })
+      .prefix(`${prefix}/admin`)
+      .use([
+        ...adminMiddleware,
+        middleware.ensureIsAdmin(),
+        middleware.requireTwoFactor(),
+        middleware.enforceRoutePermissions(),
+        middleware.ticketAccess(),
+      ])
+  }
 
   // ---- Two-Factor Authentication (ADR 2026-10-29-configurable-access-features) ----
   // 404 while the two-factor switch is off.

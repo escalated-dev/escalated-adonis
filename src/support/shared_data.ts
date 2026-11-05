@@ -13,6 +13,8 @@ import { pluginSlug } from './plugin_events.js'
 import { sharedAccessFeatures } from './access_features.js'
 import { sharedPermissions } from './permissions.js'
 import { activeSdkPluginNames } from '../bridge/sdk_plugin_activation.js'
+import { adminBasePath, embedProp, resolveEmbed } from './embed.js'
+import { adminNavigation } from './admin_navigation.js'
 
 type Allows = (ability: unknown) => boolean
 
@@ -28,10 +30,11 @@ type Allows = (ability: unknown) => boolean
 export async function pluginExtensions(options: {
   isAdmin: boolean
   permissions: string[]
-  prefix: string
+  /** Unused: plugin page URLs follow adminBasePath(). Kept for existing callers. */
+  prefix?: string
   viewer?: unknown
 }): Promise<Record<string, unknown>> {
-  const { isAdmin, permissions, prefix, viewer = null } = options
+  const { isAdmin, permissions, viewer = null } = options
   const allows: Allows = (ability) =>
     ability === null ||
     ability === undefined ||
@@ -107,8 +110,9 @@ export async function pluginExtensions(options: {
       if ((section === 'admin' && !isAdmin) || !allows(page.capability)) continue
       menuItems.push({
         label: page.menu.label ?? page.component,
-        // Where RouteRegistrar mounts the page.
-        route: `/${prefix}/admin/plugins/${slug}/${route}`,
+        // Where RouteRegistrar mounts the page (under the host's prefix while
+        // the admin is embedded).
+        route: `${adminBasePath()}/plugins/${slug}/${route}`,
         icon: page.menu.icon ?? null,
         position: page.menu.position ?? 100,
         section,
@@ -224,6 +228,18 @@ export async function escalatedSharedData(ctx: any): Promise<Record<string, any>
     })
   } catch {
     data.plugins = {}
+  }
+
+  // Embedding the admin in the host's admin panel (optional; ADR
+  // 2026-11-05-embeddable-admin). Neither key exists while it is off.
+  const embed = resolveEmbed()
+  if (embed) {
+    data.embed = embedProp(embed, ctx)
+    try {
+      data.navigation = await adminNavigation(user ?? null, ctx)
+    } catch {
+      data.navigation = []
+    }
   }
 
   return data

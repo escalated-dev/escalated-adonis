@@ -133,11 +133,33 @@ export type TestApp = {
   baseUrl: string
 }
 
+/**
+ * How a test process's application differs from the default one. Only the
+ * first `testApp()` call of a process boots the application, so a process
+ * that needs different options runs on its own: the embedding specs under
+ * tests/embed each run in a process of their own (scripts/run-embed-tests.mjs).
+ */
+export type TestAppOptions = {
+  /** Merged over the default `escalated` config, key by key. */
+  escalated?: Record<string, unknown>
+  /**
+   * Render through the real `@adonisjs/inertia` (InertiaManager and the
+   * middleware a host's start/kernel.ts runs) and Edge, instead of the JSON
+   * stand-in: `views` is mounted as the Edge views directory and `rootView`
+   * is config/inertia.ts's `rootView`.
+   */
+  inertia?: { views: string; rootView: string }
+  /** Host router middleware, run after the host's Inertia middleware. */
+  routerMiddleware?: Array<() => Promise<{ default: any }>>
+  /** Host routes, registered before Escalated's. */
+  routes?: (router: any) => void
+}
+
 let running: Promise<TestApp & { close: () => Promise<void> }> | null = null
 
-/** The shared application, booted on first use. */
-export async function testApp(): Promise<TestApp> {
-  running ??= boot()
+/** The shared application, booted on first use (with `options`, on that first call only). */
+export async function testApp(options: TestAppOptions = {}): Promise<TestApp> {
+  running ??= boot(options)
   return running
 }
 
@@ -149,7 +171,27 @@ export async function closeTestApp() {
   await booted.close()
 }
 
-async function boot() {
+/**
+ * Plays a host's `app/middleware/inertia_middleware.ts` on the real
+ * `@adonisjs/inertia`, plus the stand-in session guard the JSON stand-in sets.
+ */
+async function realInertiaMiddleware() {
+  const { default: BaseInertiaMiddleware } = await import('@adonisjs/inertia/inertia_middleware')
+  return class HostInertiaMiddleware extends (BaseInertiaMiddleware as any) {
+    async handle(ctx: HttpContext, next: NextFn) {
+      ;(ctx as any).auth = { user: await currentTestUser(ctx) }
+      await this.init(ctx)
+      const output = await next()
+      this.dispose(ctx)
+      return output
+    }
+  }
+}
+
+async function boot(options: TestAppOptions) {
+  const inertiaLayer = options.inertia
+    ? async () => ({ default: await realInertiaMiddleware() })
+    : async () => ({ default: InertiaStandIn })
   const ignitor = new IgnitorFactory()
     .withCoreProviders()
     .withCoreConfig()
@@ -159,6 +201,7 @@ async function boot() {
           () => import('@adonisjs/lucid/database_provider'),
           () => import('@adonisjs/session/session_provider'),
           () => import('@adonisjs/drive/drive_provider'),
+          ...(options.inertia ? [() => import('@adonisjs/core/providers/edge_provider')] : []),
           () => import('../../../providers/escalated_provider.js'),
         ],
         // As a host's adonisrc registers them, via `configure`.
@@ -221,10 +264,28 @@ async function boot() {
           // Codes land in fixtures/guest_codes instead of a mailbox.
           guestAccess: { sendCode: captureCode },
           ui: { enabled: true },
+          ...options.escalated,
         },
       },
     })
     .preload(async (app) => {
+      if (options.inertia) {
+        const { InertiaManager } = await import('@adonisjs/inertia')
+        const { edgePluginInertia } = await import('@adonisjs/inertia/plugins/edge')
+        const { default: edge } = await import('edge.js')
+        edge.mount(options.inertia.views)
+        edge.use(edgePluginInertia())
+        const inertiaConfig = {
+          rootView: options.inertia.rootView,
+          assetsVersion: '1',
+          ssr: { enabled: false },
+        }
+        app.container.singleton(
+          InertiaManager as any,
+          () => new InertiaManager(inertiaConfig as any)
+        )
+      }
+
       const server = await app.container.make('server')
       server.errorHandler(async () => ({ default: TestErrorHandler }) as any)
 
@@ -232,9 +293,11 @@ async function boot() {
       router.use([
         () => import('@adonisjs/core/bodyparser_middleware'),
         () => import('@adonisjs/session/session_middleware'),
-        async () => ({ default: InertiaStandIn }) as any,
+        inertiaLayer as any,
         async () => ({ default: CsrfStandIn }) as any,
+        ...((options.routerMiddleware ?? []) as any[]),
       ])
+      options.routes?.(router)
 
       // Stand-ins for failures the suite cannot otherwise provoke on a real
       // Escalated route (named `escalated.*` like the package's own), and a
@@ -373,12 +436,20 @@ export class InertiaClient {
       form?: Record<string, string>
       referer?: string
       headers?: Record<string, string>
+      /** `false`: a full page load (no Inertia headers), as a browser's first visit. */
+      inertia?: boolean
     } = {}
   ): Promise<Visit> {
     const headers: Record<string, string> = {
-      'X-Inertia': 'true',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Accept': 'text/html, application/xhtml+xml',
+      ...(options.inertia === false
+        ? {}
+        : {
+            'X-Inertia': 'true',
+            // The asset version the real Inertia middleware compares (the stand-in ignores it).
+            'X-Inertia-Version': '1',
+            'X-Requested-With': 'XMLHttpRequest',
+          }),
+      Accept: 'text/html, application/xhtml+xml',
       ...options.headers,
     }
     if (this.options.user) headers[TEST_USER_HEADER] = String(this.options.user.id)
