@@ -22,6 +22,7 @@ import { adminRouteMount, resolveEmbed } from '../src/support/embed.js'
 const CustomerTicketsController = () => import('../src/controllers/customer_tickets_controller.js')
 const AgentDashboardController = () => import('../src/controllers/agent_dashboard_controller.js')
 const AgentTicketsController = () => import('../src/controllers/agent_tickets_controller.js')
+const AgentPanelController = () => import('../src/controllers/agent_panel_controller.js')
 const AdminTicketsController = () => import('../src/controllers/admin_tickets_controller.js')
 const AdminDepartmentsController = () =>
   import('../src/controllers/admin_departments_controller.js')
@@ -349,7 +350,9 @@ async function registerUiRoutes(config: any) {
         .use([middleware.resolveTicket()])
     })
     .prefix(prefix)
-    .use([...authMiddleware, middleware.ticketAccess()])
+    // recordCustomerPresence: agent pages show the customer online (ADR
+    // 2026-11-05-agent-panel-data); staff browsing the portal are skipped.
+    .use([...authMiddleware, middleware.ticketAccess(), middleware.recordCustomerPresence()])
 
   // ---- Agent Routes ----
   router
@@ -361,6 +364,21 @@ async function registerUiRoutes(config: any) {
         .post('/mentions/read', [AgentMentionsController, 'markRead'])
         .as('escalated.agent.mentions.read')
       router.get('/tickets', [AgentTicketsController, 'index']).as('escalated.agent.tickets.index')
+
+      // The agent panel's data (ADR 2026-11-05-agent-panel-data).
+      router
+        .route('/status', ['PUT', 'POST'], [AgentPanelController, 'status'])
+        .as('escalated.agent.status')
+      router.get('/kb/search', [AgentPanelController, 'kbSearch']).as('escalated.agent.kb.search')
+      router
+        .get('/notifications', [AgentPanelController, 'notifications'])
+        .as('escalated.agent.notifications.index')
+      router
+        .post('/notifications/read-all', [AgentPanelController, 'readAllNotifications'])
+        .as('escalated.agent.notifications.read-all')
+      router
+        .post('/notifications/:id/read', [AgentPanelController, 'readNotification'])
+        .as('escalated.agent.notifications.read')
       router
         .post('/tickets/bulk', [BulkActionsController, 'handle'])
         .as('escalated.agent.tickets.bulk')
@@ -420,6 +438,12 @@ async function registerUiRoutes(config: any) {
           router
             .post('/tickets/:ticket/follow', [AgentTicketsController, 'follow'])
             .as('escalated.agent.tickets.follow')
+          router
+            .post('/tickets/:ticket/read', [AgentPanelController, 'markRead'])
+            .as('escalated.agent.tickets.read')
+          router
+            .post('/tickets/:ticket/unread', [AgentPanelController, 'markUnread'])
+            .as('escalated.agent.tickets.unread')
           router
             .post('/tickets/:ticket/presence', [AgentTicketsController, 'presence'])
             .as('escalated.agent.tickets.presence')

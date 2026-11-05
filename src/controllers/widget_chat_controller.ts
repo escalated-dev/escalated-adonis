@@ -1,3 +1,4 @@
+import { quietly, seeTicketCustomer } from '../services/agent_panel.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import ChatSessionService from '../services/chat_session_service.js'
 import ChatAvailabilityService from '../services/chat_availability_service.js'
@@ -34,6 +35,14 @@ const AGENT_FALLBACK_NAME = 'Support'
  */
 export default class WidgetChatController {
   protected chatService = new ChatSessionService()
+
+  /** The visitor is on the site: agent pages show the chat's customer online. */
+  protected async seen(session: any) {
+    await quietly(async () => {
+      const ticket = session.ticket ?? (await Ticket.find(session.ticketId))
+      if (ticket) await seeTicketCustomer(ticket)
+    })
+  }
   protected availabilityService = new ChatAvailabilityService()
   protected routingService = new ChatRoutingService()
 
@@ -112,6 +121,8 @@ export default class WidgetChatController {
       throw failure
     }
     const { ticket, session, visitorToken, visitorTokenExpiresAt, firstReply } = started
+    // The visitor is on the site: agent pages show the chat's customer online.
+    await quietly(() => seeTicketCustomer(ticket))
 
     // Attempt auto-assignment
     const agentId = await this.routingService.findAvailableAgent({
@@ -153,6 +164,7 @@ export default class WidgetChatController {
    */
   async messages(ctx: HttpContext) {
     const session = await this.chatService.findByVisitorToken(ctx.params.token)
+    if (session) await this.seen(session)
     if (!session) {
       return notFound(ctx)
     }
@@ -195,6 +207,8 @@ export default class WidgetChatController {
     const { body } = ctx.request.only(['body'])
 
     const session = await this.chatService.findByVisitorToken(token)
+
+    if (session) await this.seen(session)
     if (!session) {
       return notFound(ctx)
     }
@@ -234,6 +248,8 @@ export default class WidgetChatController {
     const { is_typing: isTyping } = ctx.request.only(['is_typing'])
 
     const session = await this.chatService.findByVisitorToken(token)
+
+    if (session) await this.seen(session)
     if (!session) {
       return notFound(ctx)
     }
@@ -259,6 +275,8 @@ export default class WidgetChatController {
     const { token } = ctx.params
 
     const session = await this.chatService.findByVisitorToken(token)
+
+    if (session) await this.seen(session)
     if (!session) {
       return notFound(ctx)
     }
@@ -280,6 +298,8 @@ export default class WidgetChatController {
     const { rating, comment } = ctx.request.only(['rating', 'comment'])
 
     const session = await this.chatService.findByVisitorToken(token)
+
+    if (session) await this.seen(session)
     if (!session) {
       return notFound(ctx)
     }

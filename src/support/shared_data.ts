@@ -195,6 +195,20 @@ export async function escalatedSharedData(ctx: any): Promise<Record<string, any>
     }
   }
 
+  // The agent panel's data (ADR 2026-11-05-agent-panel-data), staff only.
+  if (user && (data.is_agent || data.is_admin)) {
+    try {
+      const panel = await import('../services/agent_panel.js')
+      data.agent_status = await panel.agentStatus((user as { id: any }).id)
+      data.agent_statuses = [...panel.AGENT_STATUSES]
+      if (panel.notificationsAvailable()) {
+        data.notifications = { unread_count: await panel.unreadCount((user as { id: any }).id) }
+      }
+    } catch {
+      // the agent panel tables may not exist yet
+    }
+  }
+
   // Share guest tickets setting
   try {
     const { default: EscalatedSetting } = await import('../models/escalated_setting.js')

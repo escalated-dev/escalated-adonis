@@ -1,5 +1,5 @@
 import { type DateTime } from 'luxon'
-import { column, belongsTo, hasMany, scope } from '@adonisjs/lucid/orm'
+import { afterCreate, column, belongsTo, hasMany, scope } from '@adonisjs/lucid/orm'
 import EscalatedBaseModel from './base_model.js'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import type { UserId } from '../helpers/user_id_column.js'
@@ -39,6 +39,13 @@ export default class Reply extends EscalatedBaseModel {
       value ? (typeof value === 'string' ? JSON.parse(value) : value) : null,
   })
   declare metadata: Record<string, any> | null
+
+  /** A customer-side public reply or chat message is unread activity for agents. */
+  @afterCreate()
+  static async recordCustomerActivity(reply: Reply) {
+    const { recordReplyActivity } = await import('../services/agent_panel.js')
+    await recordReplyActivity(reply)
+  }
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

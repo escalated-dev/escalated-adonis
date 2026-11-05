@@ -63,11 +63,24 @@ export default class Article extends EscalatedBaseModel {
     query.where('status', DRAFT_STATUS)
   })
 
+  /**
+   * Title or body contains the term, ignoring case on every database
+   * (PostgreSQL's LIKE is case-sensitive), with `%` and `_` taken literally.
+   */
   static search = scope((query, term: string) => {
-    const like = `%${term}%`
+    const like = likePattern(term)
     query.where((sub) => {
-      sub.where('title', 'like', like).orWhere('body', 'like', like)
+      sub
+        .whereRaw("LOWER(title) LIKE ? ESCAPE '!'", [like])
+        .orWhereRaw("LOWER(body) LIKE ? ESCAPE '!'", [like])
     })
+  })
+
+  /** Articles whose title contains the term first. */
+  static titleMatchFirst = scope((query, term: string) => {
+    query.orderByRaw("CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 0 ELSE 1 END", [
+      likePattern(term),
+    ])
   })
 
   // ---- Hooks ----
@@ -95,4 +108,11 @@ export default class Article extends EscalatedBaseModel {
     await Article.query().where('id', this.id).increment('not_helpful_count', 1)
     this.notHelpfulCount = (this.notHelpfulCount ?? 0) + 1
   }
+}
+
+/** `%term%`, lower-cased, with `%`, `_` and the escape character `!` escaped. */
+export function likePattern(term: string): string {
+  return `%${String(term)
+    .toLowerCase()
+    .replace(/[!%_]/g, (char) => `!${char}`)}%`
 }

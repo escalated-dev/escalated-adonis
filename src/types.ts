@@ -213,6 +213,16 @@ export interface EscalatedConfig {
    */
   agentInbox?: { cacheSeconds?: number }
 
+  /**
+   * Customer online status on agent pages (ADR 2026-11-05-agent-panel-data):
+   * online while the portal or the widget saw them within
+   * `onlineWindowSeconds` (default 120, env ESCALATED_PRESENCE_ONLINE_WINDOW).
+   */
+  presence?: { onlineWindowSeconds?: number }
+
+  /** The agents' in-app notifications feed and bell (default true). */
+  agentNotifications?: boolean
+
   locale?: string
 
   /**

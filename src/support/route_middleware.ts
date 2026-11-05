@@ -45,6 +45,7 @@ export function escalatedMiddleware(router: Router) {
     widgetCors: () => import('../middleware/widget_cors.js'),
     knowledgeBaseGuard: () => import('../middleware/knowledge_base_guard.js'),
     applyEmbedContext: () => import('../middleware/apply_embed_context.js'),
+    recordCustomerPresence: () => import('../middleware/record_customer_presence.js'),
   })
 }
 

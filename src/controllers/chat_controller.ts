@@ -149,8 +149,11 @@ export default class ChatController {
       await profile.save()
     }
 
+    // The same field as the agent route (escalated.agent.status); this route
+    // is kept as an alias.
     return ctx.response.json({
       status: profile.chatStatus,
+      agent_status: profile.chatStatus,
     })
   }
 

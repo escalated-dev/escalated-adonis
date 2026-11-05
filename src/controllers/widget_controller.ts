@@ -1,3 +1,4 @@
+import { quietly, seeTicketCustomer } from '../services/agent_panel.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
 import EscalatedSetting from '../models/escalated_setting.js'
@@ -265,6 +266,8 @@ export default class WidgetController {
     }
 
     const found = ticket
+    // The customer is on the site (only agent pages ever show it).
+    await quietly(() => seeTicketCustomer(found))
     const replies = await Reply.query()
       .where('ticket_id', found.id)
       .where('is_internal_note', false)

@@ -890,7 +890,8 @@
       "router:CsrfStandIn",
       "router:../src/middleware/inertia_error_page.js",
       "auth",
-      "ticketAccess"
+      "ticketAccess",
+      "recordCustomerPresence"
     ],
     "handler": "CustomerTicketsController#index"
   },
@@ -905,7 +906,8 @@
       "router:CsrfStandIn",
       "router:../src/middleware/inertia_error_page.js",
       "auth",
-      "ticketAccess"
+      "ticketAccess",
+      "recordCustomerPresence"
     ],
     "handler": "CustomerTicketsController#create"
   },
@@ -920,7 +922,8 @@
       "router:CsrfStandIn",
       "router:../src/middleware/inertia_error_page.js",
       "auth",
-      "ticketAccess"
+      "ticketAccess",
+      "recordCustomerPresence"
     ],
     "handler": "CustomerTicketsController#store"
   },
@@ -936,6 +939,7 @@
       "router:../src/middleware/inertia_error_page.js",
       "auth",
       "ticketAccess",
+      "recordCustomerPresence",
       "knowledgeBaseGuard"
     ],
     "handler": "CustomerKnowledgeBaseController#index"
@@ -952,6 +956,7 @@
       "router:../src/middleware/inertia_error_page.js",
       "auth",
       "ticketAccess",
+      "recordCustomerPresence",
       "knowledgeBaseGuard"
     ],
     "handler": "CustomerKnowledgeBaseController#show"
@@ -968,6 +973,7 @@
       "router:../src/middleware/inertia_error_page.js",
       "auth",
       "ticketAccess",
+      "recordCustomerPresence",
       "knowledgeBaseGuard"
     ],
     "handler": "CustomerKnowledgeBaseController#feedback"
@@ -984,6 +990,7 @@
       "router:../src/middleware/inertia_error_page.js",
       "auth",
       "ticketAccess",
+      "recordCustomerPresence",
       "resolveTicket"
     ],
     "handler": "CustomerTicketsController#show"
@@ -1000,6 +1007,7 @@
       "router:../src/middleware/inertia_error_page.js",
       "auth",
       "ticketAccess",
+      "recordCustomerPresence",
       "resolveTicket"
     ],
     "handler": "CustomerTicketsController#reply"
@@ -1016,6 +1024,7 @@
       "router:../src/middleware/inertia_error_page.js",
       "auth",
       "ticketAccess",
+      "recordCustomerPresence",
       "resolveTicket"
     ],
     "handler": "CustomerTicketsController#close"
@@ -1032,6 +1041,7 @@
       "router:../src/middleware/inertia_error_page.js",
       "auth",
       "ticketAccess",
+      "recordCustomerPresence",
       "resolveTicket"
     ],
     "handler": "CustomerTicketsController#reopen"
@@ -1048,6 +1058,7 @@
       "router:../src/middleware/inertia_error_page.js",
       "auth",
       "ticketAccess",
+      "recordCustomerPresence",
       "resolveTicket"
     ],
     "handler": "SatisfactionRatingController#store"
@@ -1123,6 +1134,96 @@
       "ticketAccess"
     ],
     "handler": "AgentTicketsController#index"
+  },
+  {
+    "name": "escalated.agent.status",
+    "pattern": "/support/agent/status",
+    "methods": ["POST", "PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentPanelController#status"
+  },
+  {
+    "name": "escalated.agent.kb.search",
+    "pattern": "/support/agent/kb/search",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentPanelController#kbSearch"
+  },
+  {
+    "name": "escalated.agent.notifications.index",
+    "pattern": "/support/agent/notifications",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentPanelController#notifications"
+  },
+  {
+    "name": "escalated.agent.notifications.read-all",
+    "pattern": "/support/agent/notifications/read-all",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentPanelController#readAllNotifications"
+  },
+  {
+    "name": "escalated.agent.notifications.read",
+    "pattern": "/support/agent/notifications/:id/read",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentPanelController#readNotification"
   },
   {
     "name": "escalated.agent.tickets.bulk",
@@ -1497,6 +1598,44 @@
       "resolveTicket"
     ],
     "handler": "AgentTicketsController#follow"
+  },
+  {
+    "name": "escalated.agent.tickets.read",
+    "pattern": "/support/agent/tickets/:ticket/read",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentPanelController#markRead"
+  },
+  {
+    "name": "escalated.agent.tickets.unread",
+    "pattern": "/support/agent/tickets/:ticket/unread",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentPanelController#markUnread"
   },
   {
     "name": "escalated.agent.tickets.presence",
