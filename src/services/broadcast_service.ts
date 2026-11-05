@@ -3,6 +3,7 @@ import type Ticket from '../models/ticket.js'
 import type Reply from '../models/reply.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import type { UserId } from '../helpers/user_id_column.js'
+import { agentChannel, broadcastingEnabled, configuredTransport } from '../support/realtime.js'
 
 /**
  * Configuration for the broadcast service.
@@ -61,6 +62,15 @@ export function getDefaultBroadcastConfig(): BroadcastConfig {
       internalNoteAdded: false,
     },
   }
+}
+
+/**
+ * The broadcast service for the configured `broadcasting` (src/support/realtime.ts),
+ * or null while broadcasting is off.
+ */
+export function configuredBroadcastService(): BroadcastService | null {
+  if (!broadcastingEnabled()) return null
+  return new BroadcastService({ enabled: true }, configuredTransport() ?? undefined)
 }
 
 /**
@@ -283,6 +293,17 @@ export default class BroadcastService {
       reply.isInternalNote ? 'reply.note_added' : 'reply.created',
       data
     )
+  }
+
+  /**
+   * A new in-app notification, as `notification.created` on the agent's
+   * private channel (ADR 2026-11-05-agent-panel-data). The item is already
+   * redacted for that agent, and only that agent may join the channel, so it
+   * goes straight to the transport whatever the ticket access mode.
+   */
+  async broadcastAgentNotification(agentId: UserId, item: Record<string, any>): Promise<void> {
+    if (!this.config.enabled || !this.transport) return
+    await this.transport(agentChannel(agentId), 'notification.created', item)
   }
 
   // ---- Helpers ----

@@ -5,6 +5,7 @@ import AgentNotification from '../models/agent_notification.js'
 import EscalatedSetting from '../models/escalated_setting.js'
 import { requireAuthUser } from '../support/auth_user.js'
 import { getConfig } from '../helpers/config.js'
+import { authorizeAgentChannel, pusherConfigured } from '../support/realtime.js'
 import {
   AGENT_STATUSES,
   NOTIFICATIONS_MAX_PER_PAGE,
@@ -202,5 +203,22 @@ export default class AgentPanelController {
       await row.save()
     }
     return ctx.response.json({ unread_count: 0 })
+  }
+
+  /**
+   * Laravel Echo's private-channel authorization (Pusher protocol): signs
+   * `socket_id:channel_name` for the signed-in agent's own channel
+   * (`private-escalated.agents.{id}`); any other channel is refused.
+   */
+  async broadcastingAuth(ctx: HttpContext) {
+    if (!pusherConfigured()) return ctx.response.notFound({ message: 'Not found' })
+    const user = requireAuthUser(ctx.auth)
+    const auth = authorizeAgentChannel(
+      user.id,
+      String(ctx.request.input('socket_id', '')),
+      String(ctx.request.input('channel_name', ''))
+    )
+    if (!auth) return ctx.response.forbidden({ message: 'Forbidden' })
+    return ctx.response.json(auth)
   }
 }

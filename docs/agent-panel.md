@@ -87,7 +87,42 @@ an `escalated_mentions` row. A customer's reply mentions nobody. The picker is
 Items are `{ id, type, title, body, ticket, url, created_at, read_at }` with
 English titles. A ticket the agent can no longer see is redacted (`ticket`,
 `url`, `body` null, generic title). Staff share
-`escalated.notifications.unread_count`. This package has no live broadcast
-transport, so there is no `notification.created` push: the frontend refreshes
-the count on navigation and when the bell opens. Mute preferences are not
-built.
+`escalated.notifications.unread_count`. Mute preferences are not built.
+
+### Realtime (`notification.created`)
+
+The frontend listens with Laravel Echo, which the host sets up as
+`window.Echo`: `Echo.private('escalated.agents.{id}')` and the event
+`.notification.created`. AdonisJS has no Echo-compatible server, so with
+`broadcasting` on this package sends each new notification, as the feed item
+the agent would see (redacted when they can no longer view the ticket), to a
+Pusher-protocol server (Pusher, Soketi or Laravel Reverb) or to a transport
+you supply. Off by default; without it the frontend refreshes the count on
+navigation and when the bell opens.
+
+```ts
+// config/escalated.ts
+broadcasting: {
+  enabled: true,
+  // a Pusher-protocol server ...
+  pusher: {
+    appId: env.get('PUSHER_APP_ID'),
+    key: env.get('PUSHER_APP_KEY'),
+    secret: env.get('PUSHER_APP_SECRET'),
+    host: 'soketi.internal', // or cluster: 'eu' for Pusher
+    port: 6001,
+    useTLS: false,
+  },
+  // ... or your own: transport: (channel, event, data) => ...
+  // channelPrefix: 'escalated',
+},
+```
+
+With `pusher`, point Echo's `authEndpoint` at
+`POST /{prefix}/agent/broadcasting/auth` (`escalated.broadcasting.auth`,
+agents only). It signs `socket_id:channel_name` for the signed-in agent's own
+channel, `private-escalated.agents.{id}`, and refuses any other (403); it
+answers 404 while `pusher` broadcasting is not configured. A `transport` gets
+the channel without Echo's `private-` prefix, the event and the item; deliver
+it only to that agent. A failed send is logged and never fails the action that
+raised the notification.

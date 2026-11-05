@@ -335,7 +335,7 @@ export async function notify(
   if (!notificationsAvailable() || !present(agentId) || ImportContext.isImporting()) return
   if (present(causerId) && String(causerId) === String(agentId)) return
   const { default: AgentNotification } = await import('../models/agent_notification.js')
-  await AgentNotification.create({
+  const row = await AgentNotification.create({
     id: randomUUID(),
     userId: agentId!,
     type,
@@ -343,6 +343,23 @@ export async function notify(
     readAt: null,
     createdAt: DateTime.now(),
   })
+  await broadcastNotification(agentId!, row).catch((error) =>
+    console.warn('[Escalated] notification broadcast failed:', (error as Error).message)
+  )
+}
+
+/**
+ * `notification.created` on the agent's private channel while broadcasting
+ * is on, with the feed item as that agent sees it (redacted when they can no
+ * longer view the ticket).
+ */
+async function broadcastNotification(agentId: UserId, row: any): Promise<void> {
+  const { configuredBroadcastService } = await import('./broadcast_service.js')
+  const broadcaster = configuredBroadcastService()
+  if (!broadcaster) return
+  const agent = await findHostUser(agentId)
+  const [item] = await presentNotifications([row], agent ?? { id: agentId })
+  await broadcaster.broadcastAgentNotification(agentId, item)
 }
 
 export async function unreadCount(userId: UserId): Promise<number> {

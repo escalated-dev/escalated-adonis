@@ -62,6 +62,7 @@ export const ROUTE_PERMISSIONS: Entries = [
   // The agent panel's personal routes (ADR 2026-11-05-agent-panel-data).
   ['escalated.agent.status', []],
   ['escalated.agent.notifications.*', []],
+  ['escalated.broadcasting.auth', []],
   ['escalated.agent.tickets.read', ['ticket.view']],
   ['escalated.agent.tickets.unread', ['ticket.view']],
   ['escalated.agent.kb.search', ['kb.view']],
