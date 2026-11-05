@@ -1,0 +1,5673 @@
+[
+  {
+    "name": "escalated.attachments.download",
+    "pattern": "/support/attachments/:attachment/download",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ticketAccess"
+    ],
+    "handler": "AttachmentsController#download"
+  },
+  {
+    "name": "escalated.widget.script",
+    "pattern": "/support/widget/embed.js",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js"
+    ],
+    "handler": "WidgetScriptController#show"
+  },
+  {
+    "name": "escalated.widget.preflight",
+    "pattern": "/support/widget/*",
+    "methods": ["OPTIONS"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "closure"
+  },
+  {
+    "name": "escalated.widget.config",
+    "pattern": "/support/widget/config",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetController#config"
+  },
+  {
+    "name": "escalated.widget.articles",
+    "pattern": "/support/widget/articles",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetController#articles"
+  },
+  {
+    "name": "escalated.widget.articles.show",
+    "pattern": "/support/widget/articles/:slug",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetController#articleDetail"
+  },
+  {
+    "name": "escalated.widget.tickets.create",
+    "pattern": "/support/widget/tickets",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"ticket\"})"
+    ],
+    "handler": "WidgetController#createTicket"
+  },
+  {
+    "name": "escalated.widget.tickets.lookup",
+    "pattern": "/support/widget/tickets/:reference",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetController#lookupTicket"
+  },
+  {
+    "name": "escalated.widget.verification",
+    "pattern": "/support/widget/verification",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"ticket\"})"
+    ],
+    "handler": "GuestVerificationController#verification"
+  },
+  {
+    "name": "escalated.widget.lookup",
+    "pattern": "/support/widget/lookup",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"reply\"})"
+    ],
+    "handler": "GuestVerificationController#lookup"
+  },
+  {
+    "name": "escalated.widget.chat.availability",
+    "pattern": "/support/widget/chat/availability",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetChatController#availability"
+  },
+  {
+    "name": "escalated.widget.chat.start",
+    "pattern": "/support/widget/chat/start",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetChatController#start"
+  },
+  {
+    "name": "escalated.widget.chat.message",
+    "pattern": "/support/widget/chat/:token/message",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetChatController#message"
+  },
+  {
+    "name": "escalated.widget.chat.messages",
+    "pattern": "/support/widget/chat/:token/messages",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetChatController#messages"
+  },
+  {
+    "name": "escalated.widget.chat.messages.store",
+    "pattern": "/support/widget/chat/:token/messages",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetChatController#storeMessage"
+  },
+  {
+    "name": "escalated.widget.chat.typing",
+    "pattern": "/support/widget/chat/:token/typing",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetChatController#typing"
+  },
+  {
+    "name": "escalated.widget.chat.end",
+    "pattern": "/support/widget/chat/:token/end",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetChatController#end"
+  },
+  {
+    "name": "escalated.widget.chat.rate",
+    "pattern": "/support/widget/chat/:token/rate",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "widgetCors",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "WidgetChatController#rate"
+  },
+  {
+    "name": "escalated.api.auth.validate",
+    "pattern": "/support/api/v1/auth/validate",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiAuthController#validate"
+  },
+  {
+    "name": "escalated.api.dashboard",
+    "pattern": "/support/api/v1/dashboard",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiDashboardController#handle"
+  },
+  {
+    "name": "escalated.api.tickets.index",
+    "pattern": "/support/api/v1/tickets",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiTicketController#index"
+  },
+  {
+    "name": "escalated.api.tickets.store",
+    "pattern": "/support/api/v1/tickets",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiTicketController#store"
+  },
+  {
+    "name": "escalated.api.tickets.show",
+    "pattern": "/support/api/v1/tickets/:ticket",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#show"
+  },
+  {
+    "name": "escalated.api.tickets.reply",
+    "pattern": "/support/api/v1/tickets/:ticket/reply",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#reply"
+  },
+  {
+    "name": "escalated.api.tickets.status",
+    "pattern": "/support/api/v1/tickets/:ticket/status",
+    "methods": ["PATCH"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#status"
+  },
+  {
+    "name": "escalated.api.tickets.priority",
+    "pattern": "/support/api/v1/tickets/:ticket/priority",
+    "methods": ["PATCH"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#priority"
+  },
+  {
+    "name": "escalated.api.tickets.assign",
+    "pattern": "/support/api/v1/tickets/:ticket/assign",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#assign"
+  },
+  {
+    "name": "escalated.api.tickets.follow",
+    "pattern": "/support/api/v1/tickets/:ticket/follow",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#follow"
+  },
+  {
+    "name": "escalated.api.tickets.macro",
+    "pattern": "/support/api/v1/tickets/:ticket/macro",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#applyMacro"
+  },
+  {
+    "name": "escalated.api.tickets.custom-action",
+    "pattern": "/support/api/v1/tickets/:ticket/actions/:action",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#customAction"
+  },
+  {
+    "name": "escalated.api.tickets.tags",
+    "pattern": "/support/api/v1/tickets/:ticket/tags",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#tags"
+  },
+  {
+    "name": "escalated.api.agents",
+    "pattern": "/support/api/v1/agents",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiResourceController#agents"
+  },
+  {
+    "name": "escalated.api.departments",
+    "pattern": "/support/api/v1/departments",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiResourceController#departments"
+  },
+  {
+    "name": "escalated.api.tags",
+    "pattern": "/support/api/v1/tags",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiResourceController#tags"
+  },
+  {
+    "name": "escalated.api.canned-responses",
+    "pattern": "/support/api/v1/canned-responses",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiResourceController#cannedResponses"
+  },
+  {
+    "name": "escalated.api.macros",
+    "pattern": "/support/api/v1/macros",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiResourceController#macros"
+  },
+  {
+    "name": "escalated.api.realtime",
+    "pattern": "/support/api/v1/realtime/config",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"agent\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ApiResourceController#realtimeConfig"
+  },
+  {
+    "name": "escalated.api.tickets.destroy",
+    "pattern": "/support/api/v1/tickets/:ticket",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "authenticateApiToken({\"ability\":\"admin\"})",
+      "apiRateLimit",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "ApiTicketController#destroy"
+  },
+  {
+    "name": "escalated.api.auth.login",
+    "pattern": "/support/api/v1/auth/login",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "ApiAuthController#login"
+  },
+  {
+    "name": "escalated.api.auth.register",
+    "pattern": "/support/api/v1/auth/register",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "ApiAuthController#register"
+  },
+  {
+    "name": "escalated.api.auth.logout",
+    "pattern": "/support/api/v1/auth/logout",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "ApiAuthController#logout"
+  },
+  {
+    "name": "escalated.api.auth.refresh",
+    "pattern": "/support/api/v1/auth/refresh",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "ApiAuthController#refresh"
+  },
+  {
+    "name": "escalated.api.auth.me",
+    "pattern": "/support/api/v1/auth/me",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "ApiAuthController#me"
+  },
+  {
+    "name": "escalated.api.auth.profile",
+    "pattern": "/support/api/v1/auth/profile",
+    "methods": ["PATCH"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "ApiAuthController#profile"
+  },
+  {
+    "name": "escalated.api.mobile.guest.verification",
+    "pattern": "/support/api/v1/mobile/guest/verification",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "guestPrivacyHeaders",
+      "apiRateLimit",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"ticket\"})"
+    ],
+    "handler": "GuestVerificationController#verification"
+  },
+  {
+    "name": "escalated.api.mobile.guest.lookup",
+    "pattern": "/support/api/v1/mobile/guest/lookup",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "guestPrivacyHeaders",
+      "apiRateLimit",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"reply\"})"
+    ],
+    "handler": "GuestVerificationController#lookup"
+  },
+  {
+    "name": "escalated.api.mobile.guest.tickets.store",
+    "pattern": "/support/api/v1/mobile/guest/tickets",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "guestPrivacyHeaders",
+      "apiRateLimit",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"ticket\"})"
+    ],
+    "handler": "MobileGuestTicketsController#store"
+  },
+  {
+    "name": "escalated.api.mobile.guest.tickets.show",
+    "pattern": "/support/api/v1/mobile/guest/tickets/:token",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "guestPrivacyHeaders",
+      "apiRateLimit",
+      "ticketAccess"
+    ],
+    "handler": "MobileGuestTicketsController#show"
+  },
+  {
+    "name": "escalated.api.mobile.guest.tickets.reply",
+    "pattern": "/support/api/v1/mobile/guest/tickets/:token/replies",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "guestPrivacyHeaders",
+      "apiRateLimit",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"reply\"})"
+    ],
+    "handler": "MobileGuestTicketsController#reply"
+  },
+  {
+    "name": "escalated.sso.login",
+    "pattern": "/support/sso/login",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"sso\"})"
+    ],
+    "handler": "SsoController#login"
+  },
+  {
+    "name": "escalated.sso.saml.metadata",
+    "pattern": "/support/sso/saml/metadata",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"sso\"})"
+    ],
+    "handler": "SsoController#metadata"
+  },
+  {
+    "name": "escalated.sso.saml.acs",
+    "pattern": "/support/sso/saml/acs",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"sso\"})"
+    ],
+    "handler": "SsoController#samlAcs"
+  },
+  {
+    "name": "escalated.sso.oauth.callback",
+    "pattern": "/support/sso/oauth/callback",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"sso\"})"
+    ],
+    "handler": "SsoController#oauthCallback"
+  },
+  {
+    "name": "escalated.sso.jwt.callback",
+    "pattern": "/support/sso/jwt/callback",
+    "methods": ["GET", "POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"sso\"})"
+    ],
+    "handler": "SsoController#jwtCallback"
+  },
+  {
+    "name": "escalated.customer.tickets.index",
+    "pattern": "/support",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess"
+    ],
+    "handler": "CustomerTicketsController#index"
+  },
+  {
+    "name": "escalated.customer.tickets.create",
+    "pattern": "/support/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess"
+    ],
+    "handler": "CustomerTicketsController#create"
+  },
+  {
+    "name": "escalated.customer.tickets.store",
+    "pattern": "/support",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess"
+    ],
+    "handler": "CustomerTicketsController#store"
+  },
+  {
+    "name": "escalated.customer.kb.index",
+    "pattern": "/support/kb",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess",
+      "knowledgeBaseGuard"
+    ],
+    "handler": "CustomerKnowledgeBaseController#index"
+  },
+  {
+    "name": "escalated.customer.kb.show",
+    "pattern": "/support/kb/:slug",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess",
+      "knowledgeBaseGuard"
+    ],
+    "handler": "CustomerKnowledgeBaseController#show"
+  },
+  {
+    "name": "escalated.customer.kb.feedback",
+    "pattern": "/support/kb/:slug/feedback",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess",
+      "knowledgeBaseGuard"
+    ],
+    "handler": "CustomerKnowledgeBaseController#feedback"
+  },
+  {
+    "name": "escalated.customer.tickets.show",
+    "pattern": "/support/:ticket",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "CustomerTicketsController#show"
+  },
+  {
+    "name": "escalated.customer.tickets.reply",
+    "pattern": "/support/:ticket/reply",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "CustomerTicketsController#reply"
+  },
+  {
+    "name": "escalated.customer.tickets.close",
+    "pattern": "/support/:ticket/close",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "CustomerTicketsController#close"
+  },
+  {
+    "name": "escalated.customer.tickets.reopen",
+    "pattern": "/support/:ticket/reopen",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "CustomerTicketsController#reopen"
+  },
+  {
+    "name": "escalated.customer.tickets.rate",
+    "pattern": "/support/:ticket/rate",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "SatisfactionRatingController#store"
+  },
+  {
+    "name": "escalated.agent.dashboard",
+    "pattern": "/support/agent",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentDashboardController#handle"
+  },
+  {
+    "name": "escalated.agent.mentions",
+    "pattern": "/support/agent/mentions",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentMentionsController#index"
+  },
+  {
+    "name": "escalated.agent.mentions.read",
+    "pattern": "/support/agent/mentions/read",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentMentionsController#markRead"
+  },
+  {
+    "name": "escalated.agent.tickets.index",
+    "pattern": "/support/agent/tickets",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentTicketsController#index"
+  },
+  {
+    "name": "escalated.agent.tickets.bulk",
+    "pattern": "/support/agent/tickets/bulk",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "BulkActionsController#handle"
+  },
+  {
+    "name": "escalated.agent.views.index",
+    "pattern": "/support/agent/views",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "SavedViewsController#index"
+  },
+  {
+    "name": "escalated.agent.views.store",
+    "pattern": "/support/agent/views",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "SavedViewsController#store"
+  },
+  {
+    "name": "escalated.agent.views.reorder",
+    "pattern": "/support/agent/views/reorder",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "SavedViewsController#reorder"
+  },
+  {
+    "name": "escalated.agent.views.update",
+    "pattern": "/support/agent/views/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "SavedViewsController#update"
+  },
+  {
+    "name": "escalated.agent.views.destroy",
+    "pattern": "/support/agent/views/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "SavedViewsController#destroy"
+  },
+  {
+    "name": "escalated.agent.tickets.show",
+    "pattern": "/support/agent/tickets/:ticket",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#show"
+  },
+  {
+    "name": "escalated.agent.tickets.update",
+    "pattern": "/support/agent/tickets/:ticket",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#update"
+  },
+  {
+    "name": "escalated.agent.tickets.reply",
+    "pattern": "/support/agent/tickets/:ticket/reply",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#reply"
+  },
+  {
+    "name": "escalated.agent.tickets.note",
+    "pattern": "/support/agent/tickets/:ticket/note",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#note"
+  },
+  {
+    "name": "escalated.agent.tickets.assign",
+    "pattern": "/support/agent/tickets/:ticket/assign",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#assign"
+  },
+  {
+    "name": "escalated.agent.tickets.status",
+    "pattern": "/support/agent/tickets/:ticket/status",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#status"
+  },
+  {
+    "name": "escalated.agent.tickets.priority",
+    "pattern": "/support/agent/tickets/:ticket/priority",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#priority"
+  },
+  {
+    "name": "escalated.agent.tickets.tags",
+    "pattern": "/support/agent/tickets/:ticket/tags",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#tags"
+  },
+  {
+    "name": "escalated.agent.tickets.subjects.store",
+    "pattern": "/support/agent/tickets/:ticket/subjects",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "TicketSubjectsController#store"
+  },
+  {
+    "name": "escalated.agent.tickets.subjects.destroy",
+    "pattern": "/support/agent/tickets/:ticket/subjects/:subject",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "TicketSubjectsController#destroy"
+  },
+  {
+    "name": "escalated.agent.tickets.department",
+    "pattern": "/support/agent/tickets/:ticket/department",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#department"
+  },
+  {
+    "name": "escalated.agent.tickets.macro",
+    "pattern": "/support/agent/tickets/:ticket/macro",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#applyMacro"
+  },
+  {
+    "name": "escalated.agent.tickets.custom-action",
+    "pattern": "/support/agent/tickets/:ticket/actions/:action",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#customAction"
+  },
+  {
+    "name": "escalated.agent.tickets.follow",
+    "pattern": "/support/agent/tickets/:ticket/follow",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#follow"
+  },
+  {
+    "name": "escalated.agent.tickets.presence",
+    "pattern": "/support/agent/tickets/:ticket/presence",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#presence"
+  },
+  {
+    "name": "escalated.agent.tickets.pin",
+    "pattern": "/support/agent/tickets/:ticket/replies/:reply/pin",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#pin"
+  },
+  {
+    "name": "escalated.agent.tickets.snooze",
+    "pattern": "/support/agent/tickets/:ticket/snooze",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#snooze"
+  },
+  {
+    "name": "escalated.agent.tickets.unsnooze",
+    "pattern": "/support/agent/tickets/:ticket/unsnooze",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#unsnooze"
+  },
+  {
+    "name": "escalated.agent.tickets.split",
+    "pattern": "/support/agent/tickets/:ticket/split",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AgentTicketsController#split"
+  },
+  {
+    "name": "escalated.agent.chats.index",
+    "pattern": "/support/agent/chats",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#index"
+  },
+  {
+    "name": "escalated.agent.chats.queue",
+    "pattern": "/support/agent/chats/queue",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#queue"
+  },
+  {
+    "name": "escalated.agent.chats.status",
+    "pattern": "/support/agent/chats/status",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#updateStatus"
+  },
+  {
+    "name": "escalated.agent.chats.accept",
+    "pattern": "/support/agent/chats/:id/accept",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#accept"
+  },
+  {
+    "name": "escalated.agent.chats.end",
+    "pattern": "/support/agent/chats/:id/end",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#end"
+  },
+  {
+    "name": "escalated.agent.chats.transfer",
+    "pattern": "/support/agent/chats/:id/transfer",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#transfer"
+  },
+  {
+    "name": "escalated.agent.chats.message",
+    "pattern": "/support/agent/chats/:id/message",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#message"
+  },
+  {
+    "name": "escalated.agent.chats.typing",
+    "pattern": "/support/agent/chats/:id/typing",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#typing"
+  },
+  {
+    "name": "escalated.admin.chat.end",
+    "pattern": "/support/admin/chat/:session/end",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAgent",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "ChatController#endFromTicket"
+  },
+  {
+    "name": "escalated.admin.reports",
+    "pattern": "/support/admin/reports",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminReportsController#handle"
+  },
+  {
+    "name": "escalated.admin.reports.dashboard",
+    "pattern": "/support/admin/reports/dashboard",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminReportsController#dashboard"
+  },
+  {
+    "name": "escalated.admin.reports.agents",
+    "pattern": "/support/admin/reports/agents",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminReportsController#agents"
+  },
+  {
+    "name": "escalated.admin.reports.sla",
+    "pattern": "/support/admin/reports/sla",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminReportsController#sla"
+  },
+  {
+    "name": "escalated.admin.reports.csat",
+    "pattern": "/support/admin/reports/csat",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminReportsController#csat"
+  },
+  {
+    "name": "escalated.admin.reports.agent-detail",
+    "pattern": "/support/admin/reports/agent/:id/detail",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminReportsController#agentDetail"
+  },
+  {
+    "name": "escalated.admin.reports.sla-trends",
+    "pattern": "/support/admin/reports/sla-trends",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#slaBreachTrends"
+  },
+  {
+    "name": "escalated.admin.reports.response-times",
+    "pattern": "/support/admin/reports/response-times",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#responseTimes"
+  },
+  {
+    "name": "escalated.admin.reports.resolution-times",
+    "pattern": "/support/admin/reports/resolution-times",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#resolutionTimes"
+  },
+  {
+    "name": "escalated.admin.reports.agent-ranking",
+    "pattern": "/support/admin/reports/agent-ranking",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#agentRanking"
+  },
+  {
+    "name": "escalated.admin.reports.slaTrends",
+    "pattern": "/support/admin/reports/advanced/sla-trends",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#slaBreachTrends"
+  },
+  {
+    "name": "escalated.admin.reports.frtDistribution",
+    "pattern": "/support/admin/reports/advanced/frt-distribution",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#frtDistribution"
+  },
+  {
+    "name": "escalated.admin.reports.frtTrends",
+    "pattern": "/support/admin/reports/advanced/frt-trends",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#frtTrends"
+  },
+  {
+    "name": "escalated.admin.reports.frtByAgent",
+    "pattern": "/support/admin/reports/advanced/frt-by-agent",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#frtByAgent"
+  },
+  {
+    "name": "escalated.admin.reports.resolutionDistribution",
+    "pattern": "/support/admin/reports/advanced/resolution-distribution",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#resolutionDistribution"
+  },
+  {
+    "name": "escalated.admin.reports.resolutionTrends",
+    "pattern": "/support/admin/reports/advanced/resolution-trends",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#resolutionTrends"
+  },
+  {
+    "name": "escalated.admin.reports.responseTimes",
+    "pattern": "/support/admin/reports/advanced/response-times",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#responseTimes"
+  },
+  {
+    "name": "escalated.admin.reports.resolutionTimes",
+    "pattern": "/support/admin/reports/advanced/resolution-times",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#resolutionTimes"
+  },
+  {
+    "name": "escalated.admin.reports.cohorts",
+    "pattern": "/support/admin/reports/advanced/cohorts",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#cohorts"
+  },
+  {
+    "name": "escalated.admin.reports.agentRanking",
+    "pattern": "/support/admin/reports/advanced/agent-ranking",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#agentRanking"
+  },
+  {
+    "name": "escalated.admin.reports.cohort",
+    "pattern": "/support/admin/reports/advanced/cohort",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#cohort"
+  },
+  {
+    "name": "escalated.admin.reports.comparison",
+    "pattern": "/support/admin/reports/advanced/comparison",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#comparison"
+  },
+  {
+    "name": "escalated.admin.reports.export",
+    "pattern": "/support/admin/reports/advanced/export",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAdvancedReportsController#export"
+  },
+  {
+    "name": "escalated.admin.tickets.index",
+    "pattern": "/support/admin/tickets",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTicketsController#index"
+  },
+  {
+    "name": "escalated.admin.tickets.bulk",
+    "pattern": "/support/admin/tickets/bulk",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "BulkActionsController#handle"
+  },
+  {
+    "name": "escalated.admin.tickets.merge-search",
+    "pattern": "/support/admin/tickets/merge-search",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTicketRelationsController#mergeSearch"
+  },
+  {
+    "name": "escalated.admin.agents.search",
+    "pattern": "/support/admin/agents/search",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AgentMentionsController#searchAgents"
+  },
+  {
+    "name": "escalated.admin.tickets.show",
+    "pattern": "/support/admin/tickets/:ticket",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#show"
+  },
+  {
+    "name": "escalated.admin.tickets.reply",
+    "pattern": "/support/admin/tickets/:ticket/reply",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#reply"
+  },
+  {
+    "name": "escalated.admin.tickets.note",
+    "pattern": "/support/admin/tickets/:ticket/note",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#note"
+  },
+  {
+    "name": "escalated.admin.tickets.assign",
+    "pattern": "/support/admin/tickets/:ticket/assign",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#assign"
+  },
+  {
+    "name": "escalated.admin.tickets.status",
+    "pattern": "/support/admin/tickets/:ticket/status",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#status"
+  },
+  {
+    "name": "escalated.admin.tickets.priority",
+    "pattern": "/support/admin/tickets/:ticket/priority",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#priority"
+  },
+  {
+    "name": "escalated.admin.tickets.tags",
+    "pattern": "/support/admin/tickets/:ticket/tags",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#tags"
+  },
+  {
+    "name": "escalated.admin.tickets.subjects.store",
+    "pattern": "/support/admin/tickets/:ticket/subjects",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "TicketSubjectsController#store"
+  },
+  {
+    "name": "escalated.admin.tickets.subjects.destroy",
+    "pattern": "/support/admin/tickets/:ticket/subjects/:subject",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "TicketSubjectsController#destroy"
+  },
+  {
+    "name": "escalated.admin.tickets.department",
+    "pattern": "/support/admin/tickets/:ticket/department",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#department"
+  },
+  {
+    "name": "escalated.admin.tickets.macro",
+    "pattern": "/support/admin/tickets/:ticket/macro",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#applyMacro"
+  },
+  {
+    "name": "escalated.admin.tickets.follow",
+    "pattern": "/support/admin/tickets/:ticket/follow",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#follow"
+  },
+  {
+    "name": "escalated.admin.tickets.presence",
+    "pattern": "/support/admin/tickets/:ticket/presence",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#presence"
+  },
+  {
+    "name": "escalated.admin.tickets.pin",
+    "pattern": "/support/admin/tickets/:ticket/replies/:reply/pin",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketsController#pin"
+  },
+  {
+    "name": "escalated.admin.tickets.merge",
+    "pattern": "/support/admin/tickets/:ticket/merge",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketRelationsController#merge"
+  },
+  {
+    "name": "escalated.admin.tickets.links.index",
+    "pattern": "/support/admin/tickets/:ticket/links",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketRelationsController#links"
+  },
+  {
+    "name": "escalated.admin.tickets.links.store",
+    "pattern": "/support/admin/tickets/:ticket/links",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketRelationsController#storeLink"
+  },
+  {
+    "name": "escalated.admin.tickets.links.destroy",
+    "pattern": "/support/admin/tickets/:ticket/links/:link",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketRelationsController#destroyLink"
+  },
+  {
+    "name": "escalated.admin.tickets.side-conversations.index",
+    "pattern": "/support/admin/tickets/:ticket/side-conversations",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketRelationsController#sideConversations"
+  },
+  {
+    "name": "escalated.admin.tickets.side-conversations.store",
+    "pattern": "/support/admin/tickets/:ticket/side-conversations",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketRelationsController#storeSideConversation"
+  },
+  {
+    "name": "escalated.admin.tickets.side-conversations.reply",
+    "pattern": "/support/admin/tickets/:ticket/side-conversations/:conversation/reply",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketRelationsController#replySideConversation"
+  },
+  {
+    "name": "escalated.admin.tickets.side-conversations.close",
+    "pattern": "/support/admin/tickets/:ticket/side-conversations/:conversation/close",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "resolveTicket"
+    ],
+    "handler": "AdminTicketRelationsController#closeSideConversation"
+  },
+  {
+    "name": "escalated.admin.settings",
+    "pattern": "/support/admin/settings",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSettingsController#index"
+  },
+  {
+    "name": "escalated.admin.settings.update",
+    "pattern": "/support/admin/settings",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSettingsController#update"
+  },
+  {
+    "name": "escalated.admin.settings.csat",
+    "pattern": "/support/admin/settings/csat",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCsatSettingsController#index"
+  },
+  {
+    "name": "escalated.admin.settings.csat.update",
+    "pattern": "/support/admin/settings/csat",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCsatSettingsController#update"
+  },
+  {
+    "name": "escalated.admin.settings.public-tickets",
+    "pattern": "/support/admin/settings/public-tickets",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSettingsController#publicTickets"
+  },
+  {
+    "name": "escalated.admin.settings.public-tickets.update",
+    "pattern": "/support/admin/settings/public-tickets",
+    "methods": ["POST", "PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSettingsController#updatePublicTickets"
+  },
+  {
+    "name": "escalated.admin.settings.data-retention",
+    "pattern": "/support/admin/settings/data-retention",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDataRetentionController#index"
+  },
+  {
+    "name": "escalated.admin.settings.data-retention.update",
+    "pattern": "/support/admin/settings/data-retention",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDataRetentionController#update"
+  },
+  {
+    "name": "escalated.admin.settings.email",
+    "pattern": "/support/admin/settings/email",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminEmailSettingsController#index"
+  },
+  {
+    "name": "escalated.admin.settings.email.update",
+    "pattern": "/support/admin/settings/email",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminEmailSettingsController#update"
+  },
+  {
+    "name": "escalated.admin.settings.database",
+    "pattern": "/support/admin/settings/database",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDatabaseConnectionController#index"
+  },
+  {
+    "name": "escalated.admin.settings.database.test",
+    "pattern": "/support/admin/settings/database/test",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDatabaseConnectionController#test"
+  },
+  {
+    "name": "escalated.admin.settings.database.update",
+    "pattern": "/support/admin/settings/database",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDatabaseConnectionController#update"
+  },
+  {
+    "name": "escalated.admin.settings.sso",
+    "pattern": "/support/admin/settings/sso",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"sso\"})"
+    ],
+    "handler": "AdminSsoSettingsController#index"
+  },
+  {
+    "name": "escalated.admin.settings.sso.update",
+    "pattern": "/support/admin/settings/sso",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"sso\"})"
+    ],
+    "handler": "AdminSsoSettingsController#update"
+  },
+  {
+    "name": "escalated.admin.departments.index",
+    "pattern": "/support/admin/departments",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDepartmentsController#index"
+  },
+  {
+    "name": "escalated.admin.departments.create",
+    "pattern": "/support/admin/departments/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDepartmentsController#create"
+  },
+  {
+    "name": "escalated.admin.departments.store",
+    "pattern": "/support/admin/departments",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDepartmentsController#store"
+  },
+  {
+    "name": "escalated.admin.departments.edit",
+    "pattern": "/support/admin/departments/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDepartmentsController#edit"
+  },
+  {
+    "name": "escalated.admin.departments.update",
+    "pattern": "/support/admin/departments/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDepartmentsController#update"
+  },
+  {
+    "name": "escalated.admin.departments.destroy",
+    "pattern": "/support/admin/departments/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminDepartmentsController#destroy"
+  },
+  {
+    "name": "escalated.admin.sla-policies.index",
+    "pattern": "/support/admin/sla-policies",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSlaPoliciesController#index"
+  },
+  {
+    "name": "escalated.admin.sla-policies.create",
+    "pattern": "/support/admin/sla-policies/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSlaPoliciesController#create"
+  },
+  {
+    "name": "escalated.admin.sla-policies.store",
+    "pattern": "/support/admin/sla-policies",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSlaPoliciesController#store"
+  },
+  {
+    "name": "escalated.admin.sla-policies.edit",
+    "pattern": "/support/admin/sla-policies/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSlaPoliciesController#edit"
+  },
+  {
+    "name": "escalated.admin.sla-policies.update",
+    "pattern": "/support/admin/sla-policies/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSlaPoliciesController#update"
+  },
+  {
+    "name": "escalated.admin.sla-policies.destroy",
+    "pattern": "/support/admin/sla-policies/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSlaPoliciesController#destroy"
+  },
+  {
+    "name": "escalated.admin.statuses.index",
+    "pattern": "/support/admin/statuses",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminStatusesController#index"
+  },
+  {
+    "name": "escalated.admin.statuses.create",
+    "pattern": "/support/admin/statuses/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminStatusesController#create"
+  },
+  {
+    "name": "escalated.admin.statuses.store",
+    "pattern": "/support/admin/statuses",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminStatusesController#store"
+  },
+  {
+    "name": "escalated.admin.statuses.edit",
+    "pattern": "/support/admin/statuses/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminStatusesController#edit"
+  },
+  {
+    "name": "escalated.admin.statuses.update",
+    "pattern": "/support/admin/statuses/:id",
+    "methods": ["PATCH", "PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminStatusesController#update"
+  },
+  {
+    "name": "escalated.admin.statuses.destroy",
+    "pattern": "/support/admin/statuses/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminStatusesController#destroy"
+  },
+  {
+    "name": "escalated.admin.escalation-rules.index",
+    "pattern": "/support/admin/escalation-rules",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminEscalationRulesController#index"
+  },
+  {
+    "name": "escalated.admin.escalation-rules.create",
+    "pattern": "/support/admin/escalation-rules/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminEscalationRulesController#create"
+  },
+  {
+    "name": "escalated.admin.escalation-rules.store",
+    "pattern": "/support/admin/escalation-rules",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminEscalationRulesController#store"
+  },
+  {
+    "name": "escalated.admin.escalation-rules.edit",
+    "pattern": "/support/admin/escalation-rules/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminEscalationRulesController#edit"
+  },
+  {
+    "name": "escalated.admin.escalation-rules.update",
+    "pattern": "/support/admin/escalation-rules/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminEscalationRulesController#update"
+  },
+  {
+    "name": "escalated.admin.escalation-rules.destroy",
+    "pattern": "/support/admin/escalation-rules/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminEscalationRulesController#destroy"
+  },
+  {
+    "name": "escalated.admin.tags.index",
+    "pattern": "/support/admin/tags",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTagsController#index"
+  },
+  {
+    "name": "escalated.admin.tags.store",
+    "pattern": "/support/admin/tags",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTagsController#store"
+  },
+  {
+    "name": "escalated.admin.tags.update",
+    "pattern": "/support/admin/tags/:tag",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTagsController#update"
+  },
+  {
+    "name": "escalated.admin.tags.destroy",
+    "pattern": "/support/admin/tags/:tag",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTagsController#destroy"
+  },
+  {
+    "name": "escalated.admin.skills.index",
+    "pattern": "/support/admin/skills",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSkillController#index"
+  },
+  {
+    "name": "escalated.admin.skills.create",
+    "pattern": "/support/admin/skills/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSkillController#create"
+  },
+  {
+    "name": "escalated.admin.skills.store",
+    "pattern": "/support/admin/skills",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSkillController#store"
+  },
+  {
+    "name": "escalated.admin.skills.edit",
+    "pattern": "/support/admin/skills/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSkillController#edit"
+  },
+  {
+    "name": "escalated.admin.skills.update",
+    "pattern": "/support/admin/skills/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSkillController#update"
+  },
+  {
+    "name": "escalated.admin.skills.destroy",
+    "pattern": "/support/admin/skills/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminSkillController#destroy"
+  },
+  {
+    "name": "escalated.admin.kb-articles.index",
+    "pattern": "/support/admin/kb/articles",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticlesController#index"
+  },
+  {
+    "name": "escalated.admin.kb-articles.create",
+    "pattern": "/support/admin/kb/articles/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticlesController#create"
+  },
+  {
+    "name": "escalated.admin.kb-articles.store",
+    "pattern": "/support/admin/kb/articles",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticlesController#store"
+  },
+  {
+    "name": "escalated.admin.kb-articles.edit",
+    "pattern": "/support/admin/kb/articles/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticlesController#edit"
+  },
+  {
+    "name": "escalated.admin.kb-articles.update",
+    "pattern": "/support/admin/kb/articles/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticlesController#update"
+  },
+  {
+    "name": "escalated.admin.kb-articles.destroy",
+    "pattern": "/support/admin/kb/articles/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticlesController#destroy"
+  },
+  {
+    "name": "escalated.admin.kb-categories.index",
+    "pattern": "/support/admin/kb/categories",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticleCategoriesController#index"
+  },
+  {
+    "name": "escalated.admin.kb-categories.store",
+    "pattern": "/support/admin/kb/categories",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticleCategoriesController#store"
+  },
+  {
+    "name": "escalated.admin.kb-categories.update",
+    "pattern": "/support/admin/kb/categories/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticleCategoriesController#update"
+  },
+  {
+    "name": "escalated.admin.kb-categories.destroy",
+    "pattern": "/support/admin/kb/categories/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminArticleCategoriesController#destroy"
+  },
+  {
+    "name": "escalated.admin.canned-responses.index",
+    "pattern": "/support/admin/canned-responses",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCannedResponsesController#index"
+  },
+  {
+    "name": "escalated.admin.canned-responses.store",
+    "pattern": "/support/admin/canned-responses",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCannedResponsesController#store"
+  },
+  {
+    "name": "escalated.admin.canned-responses.update",
+    "pattern": "/support/admin/canned-responses/:cannedResponse",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCannedResponsesController#update"
+  },
+  {
+    "name": "escalated.admin.canned-responses.destroy",
+    "pattern": "/support/admin/canned-responses/:cannedResponse",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCannedResponsesController#destroy"
+  },
+  {
+    "name": "escalated.admin.macros.index",
+    "pattern": "/support/admin/macros",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminMacrosController#index"
+  },
+  {
+    "name": "escalated.admin.macros.store",
+    "pattern": "/support/admin/macros",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminMacrosController#store"
+  },
+  {
+    "name": "escalated.admin.macros.update",
+    "pattern": "/support/admin/macros/:macro",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminMacrosController#update"
+  },
+  {
+    "name": "escalated.admin.macros.destroy",
+    "pattern": "/support/admin/macros/:macro",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminMacrosController#destroy"
+  },
+  {
+    "name": "escalated.admin.api-tokens.index",
+    "pattern": "/support/admin/api-tokens",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminApiTokensController#index"
+  },
+  {
+    "name": "escalated.admin.api-tokens.store",
+    "pattern": "/support/admin/api-tokens",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminApiTokensController#store"
+  },
+  {
+    "name": "escalated.admin.api-tokens.update",
+    "pattern": "/support/admin/api-tokens/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminApiTokensController#update"
+  },
+  {
+    "name": "escalated.admin.api-tokens.destroy",
+    "pattern": "/support/admin/api-tokens/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminApiTokensController#destroy"
+  },
+  {
+    "name": "escalated.admin.import.index",
+    "pattern": "/support/admin/import",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#index"
+  },
+  {
+    "name": "escalated.admin.import.progress",
+    "pattern": "/support/admin/import/progress/:jobId",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#progress"
+  },
+  {
+    "name": "escalated.admin.import.status",
+    "pattern": "/support/admin/import/status/:jobId",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#status"
+  },
+  {
+    "name": "escalated.admin.import.pause",
+    "pattern": "/support/admin/import/pause/:jobId",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#pauseJob"
+  },
+  {
+    "name": "escalated.admin.import.resume",
+    "pattern": "/support/admin/import/resume/:jobId",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#resume"
+  },
+  {
+    "name": "escalated.admin.import.cancel",
+    "pattern": "/support/admin/import/cancel/:jobId",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#cancel"
+  },
+  {
+    "name": "escalated.admin.import.create",
+    "pattern": "/support/admin/import/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#create"
+  },
+  {
+    "name": "escalated.admin.import.store",
+    "pattern": "/support/admin/import",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#store"
+  },
+  {
+    "name": "escalated.admin.import.show",
+    "pattern": "/support/admin/import/:id",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#show"
+  },
+  {
+    "name": "escalated.admin.import.job_mapping",
+    "pattern": "/support/admin/import/:id/mapping",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#jobMapping"
+  },
+  {
+    "name": "escalated.admin.import.saveMapping",
+    "pattern": "/support/admin/import/:id/mapping",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#saveMapping"
+  },
+  {
+    "name": "escalated.admin.import.job_start",
+    "pattern": "/support/admin/import/:id/start",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#start"
+  },
+  {
+    "name": "escalated.admin.import.job_pause",
+    "pattern": "/support/admin/import/:id/pause",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#pause"
+  },
+  {
+    "name": "escalated.admin.import.destroy",
+    "pattern": "/support/admin/import/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#destroy"
+  },
+  {
+    "name": "escalated.admin.import.connect",
+    "pattern": "/support/admin/import/:platform/connect",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#connect"
+  },
+  {
+    "name": "escalated.admin.import.test-connection",
+    "pattern": "/support/admin/import/:platform/test-connection",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#testConnection"
+  },
+  {
+    "name": "escalated.admin.import.mapping",
+    "pattern": "/support/admin/import/:platform/mapping",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#mapping"
+  },
+  {
+    "name": "escalated.admin.import.review",
+    "pattern": "/support/admin/import/:platform/review",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#review"
+  },
+  {
+    "name": "escalated.admin.import.start",
+    "pattern": "/support/admin/import/:platform/start",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminImportController#begin"
+  },
+  {
+    "name": "escalated.admin.automations.index",
+    "pattern": "/support/admin/automations",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAutomationsController#index"
+  },
+  {
+    "name": "escalated.admin.automations.create",
+    "pattern": "/support/admin/automations/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAutomationsController#create"
+  },
+  {
+    "name": "escalated.admin.automations.store",
+    "pattern": "/support/admin/automations",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAutomationsController#store"
+  },
+  {
+    "name": "escalated.admin.automations.edit",
+    "pattern": "/support/admin/automations/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAutomationsController#edit"
+  },
+  {
+    "name": "escalated.admin.automations.update",
+    "pattern": "/support/admin/automations/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAutomationsController#update"
+  },
+  {
+    "name": "escalated.admin.automations.destroy",
+    "pattern": "/support/admin/automations/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAutomationsController#destroy"
+  },
+  {
+    "name": "escalated.admin.workflows.index",
+    "pattern": "/support/admin/workflows",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#index"
+  },
+  {
+    "name": "escalated.admin.workflows.create",
+    "pattern": "/support/admin/workflows/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#create"
+  },
+  {
+    "name": "escalated.admin.workflows.store",
+    "pattern": "/support/admin/workflows",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#store"
+  },
+  {
+    "name": "escalated.admin.workflows.reorder",
+    "pattern": "/support/admin/workflows/reorder",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#reorder"
+  },
+  {
+    "name": "escalated.admin.workflows.edit",
+    "pattern": "/support/admin/workflows/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#edit"
+  },
+  {
+    "name": "escalated.admin.workflows.update",
+    "pattern": "/support/admin/workflows/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#update"
+  },
+  {
+    "name": "escalated.admin.workflows.destroy",
+    "pattern": "/support/admin/workflows/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#destroy"
+  },
+  {
+    "name": "escalated.admin.workflows.toggle",
+    "pattern": "/support/admin/workflows/:id/toggle",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#toggle"
+  },
+  {
+    "name": "escalated.admin.workflows.logs",
+    "pattern": "/support/admin/workflows/:id/logs",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWorkflowsController#logs"
+  },
+  {
+    "name": "escalated.admin.webhooks.index",
+    "pattern": "/support/admin/webhooks",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWebhooksController#index"
+  },
+  {
+    "name": "escalated.admin.webhooks.create",
+    "pattern": "/support/admin/webhooks/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWebhooksController#create"
+  },
+  {
+    "name": "escalated.admin.webhooks.store",
+    "pattern": "/support/admin/webhooks",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWebhooksController#store"
+  },
+  {
+    "name": "escalated.admin.webhooks.edit",
+    "pattern": "/support/admin/webhooks/:webhook/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWebhooksController#edit"
+  },
+  {
+    "name": "escalated.admin.webhooks.retry",
+    "pattern": "/support/admin/webhooks/deliveries/:delivery/retry",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWebhooksController#retry"
+  },
+  {
+    "name": "escalated.admin.webhooks.deliveries",
+    "pattern": "/support/admin/webhooks/:webhook/deliveries",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWebhooksController#deliveries"
+  },
+  {
+    "name": "escalated.admin.webhooks.update",
+    "pattern": "/support/admin/webhooks/:webhook",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWebhooksController#update"
+  },
+  {
+    "name": "escalated.admin.webhooks.destroy",
+    "pattern": "/support/admin/webhooks/:webhook",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminWebhooksController#destroy"
+  },
+  {
+    "name": "escalated.admin.users.index",
+    "pattern": "/support/admin/users",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminUsersController#index"
+  },
+  {
+    "name": "escalated.admin.users.role",
+    "pattern": "/support/admin/users/:user/role",
+    "methods": ["PATCH"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminUsersController#updateRole"
+  },
+  {
+    "name": "escalated.admin.users.roles",
+    "pattern": "/support/admin/users/:user/roles",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"roles_permissions\"})"
+    ],
+    "handler": "AdminUsersController#updateRoles"
+  },
+  {
+    "name": "escalated.admin.roles.index",
+    "pattern": "/support/admin/roles",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"roles_permissions\"})"
+    ],
+    "handler": "AdminRolesController#index"
+  },
+  {
+    "name": "escalated.admin.roles.create",
+    "pattern": "/support/admin/roles/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"roles_permissions\"})"
+    ],
+    "handler": "AdminRolesController#create"
+  },
+  {
+    "name": "escalated.admin.roles.store",
+    "pattern": "/support/admin/roles",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"roles_permissions\"})"
+    ],
+    "handler": "AdminRolesController#store"
+  },
+  {
+    "name": "escalated.admin.roles.edit",
+    "pattern": "/support/admin/roles/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"roles_permissions\"})"
+    ],
+    "handler": "AdminRolesController#edit"
+  },
+  {
+    "name": "escalated.admin.roles.update",
+    "pattern": "/support/admin/roles/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"roles_permissions\"})"
+    ],
+    "handler": "AdminRolesController#update"
+  },
+  {
+    "name": "escalated.admin.roles.destroy",
+    "pattern": "/support/admin/roles/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess",
+      "ensureFeatureEnabled({\"feature\":\"roles_permissions\"})"
+    ],
+    "handler": "AdminRolesController#destroy"
+  },
+  {
+    "name": "escalated.admin.business-hours.index",
+    "pattern": "/support/admin/business-hours",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminBusinessHoursController#index"
+  },
+  {
+    "name": "escalated.admin.business-hours.create",
+    "pattern": "/support/admin/business-hours/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminBusinessHoursController#create"
+  },
+  {
+    "name": "escalated.admin.business-hours.store",
+    "pattern": "/support/admin/business-hours",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminBusinessHoursController#store"
+  },
+  {
+    "name": "escalated.admin.business-hours.edit",
+    "pattern": "/support/admin/business-hours/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminBusinessHoursController#edit"
+  },
+  {
+    "name": "escalated.admin.business-hours.update",
+    "pattern": "/support/admin/business-hours/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminBusinessHoursController#update"
+  },
+  {
+    "name": "escalated.admin.business-hours.patch",
+    "pattern": "/support/admin/business-hours/:id",
+    "methods": ["PATCH"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminBusinessHoursController#update"
+  },
+  {
+    "name": "escalated.admin.business-hours.destroy",
+    "pattern": "/support/admin/business-hours/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminBusinessHoursController#destroy"
+  },
+  {
+    "name": "escalated.admin.capacity.index",
+    "pattern": "/support/admin/capacity",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCapacityController#index"
+  },
+  {
+    "name": "escalated.admin.capacity.update",
+    "pattern": "/support/admin/capacity/:id",
+    "methods": ["PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCapacityController#update"
+  },
+  {
+    "name": "escalated.admin.audit-logs.index",
+    "pattern": "/support/admin/audit-logs",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminAuditLogsController#index"
+  },
+  {
+    "name": "escalated.admin.custom-fields.index",
+    "pattern": "/support/admin/custom-fields",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomFieldsController#index"
+  },
+  {
+    "name": "escalated.admin.custom-fields.create",
+    "pattern": "/support/admin/custom-fields/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomFieldsController#create"
+  },
+  {
+    "name": "escalated.admin.custom-fields.reorder",
+    "pattern": "/support/admin/custom-fields/reorder",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomFieldsController#reorder"
+  },
+  {
+    "name": "escalated.admin.custom-fields.store",
+    "pattern": "/support/admin/custom-fields",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomFieldsController#store"
+  },
+  {
+    "name": "escalated.admin.custom-fields.edit",
+    "pattern": "/support/admin/custom-fields/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomFieldsController#edit"
+  },
+  {
+    "name": "escalated.admin.custom-fields.update",
+    "pattern": "/support/admin/custom-fields/:id",
+    "methods": ["PATCH", "PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomFieldsController#update"
+  },
+  {
+    "name": "escalated.admin.custom-fields.destroy",
+    "pattern": "/support/admin/custom-fields/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomFieldsController#destroy"
+  },
+  {
+    "name": "escalated.admin.custom-objects.index",
+    "pattern": "/support/admin/custom-objects",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#index"
+  },
+  {
+    "name": "escalated.admin.custom-objects.create",
+    "pattern": "/support/admin/custom-objects/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#create"
+  },
+  {
+    "name": "escalated.admin.custom-objects.store",
+    "pattern": "/support/admin/custom-objects",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#store"
+  },
+  {
+    "name": "escalated.admin.custom-objects.edit",
+    "pattern": "/support/admin/custom-objects/:id/edit",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#edit"
+  },
+  {
+    "name": "escalated.admin.custom-objects.update",
+    "pattern": "/support/admin/custom-objects/:id",
+    "methods": ["PATCH", "PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#update"
+  },
+  {
+    "name": "escalated.admin.custom-objects.destroy",
+    "pattern": "/support/admin/custom-objects/:id",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#destroy"
+  },
+  {
+    "name": "escalated.admin.custom-objects.records",
+    "pattern": "/support/admin/custom-objects/:id/records",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#records"
+  },
+  {
+    "name": "escalated.admin.custom-objects.records.store",
+    "pattern": "/support/admin/custom-objects/:id/records",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#storeRecord"
+  },
+  {
+    "name": "escalated.admin.custom-objects.records.update",
+    "pattern": "/support/admin/custom-objects/:id/records/:record",
+    "methods": ["PATCH", "PUT"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#updateRecord"
+  },
+  {
+    "name": "escalated.admin.custom-objects.records.destroy",
+    "pattern": "/support/admin/custom-objects/:id/records/:record",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminCustomObjectsController#destroyRecord"
+  },
+  {
+    "name": "escalated.admin.plugins.index",
+    "pattern": "/support/admin/plugins",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminPluginsController#index"
+  },
+  {
+    "name": "escalated.admin.plugins.upload",
+    "pattern": "/support/admin/plugins/upload",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminPluginsController#upload"
+  },
+  {
+    "name": "escalated.admin.plugins.activate",
+    "pattern": "/support/admin/plugins/:slug/activate",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminPluginsController#activate"
+  },
+  {
+    "name": "escalated.admin.plugins.deactivate",
+    "pattern": "/support/admin/plugins/:slug/deactivate",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminPluginsController#deactivate"
+  },
+  {
+    "name": "escalated.admin.plugins.destroy",
+    "pattern": "/support/admin/plugins/:slug",
+    "methods": ["DELETE"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "auth",
+      "ensureIsAdmin",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminPluginsController#destroy"
+  },
+  {
+    "name": "escalated.admin.two-factor.index",
+    "pattern": "/support/admin/settings/two-factor",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"two_factor\"})",
+      "auth",
+      "ensureIsStaff",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTwoFactorController#index"
+  },
+  {
+    "name": "escalated.admin.two-factor.setup",
+    "pattern": "/support/admin/settings/two-factor/setup",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"two_factor\"})",
+      "auth",
+      "ensureIsStaff",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTwoFactorController#setup"
+  },
+  {
+    "name": "escalated.admin.two-factor.confirm",
+    "pattern": "/support/admin/settings/two-factor/confirm",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"two_factor\"})",
+      "auth",
+      "ensureIsStaff",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTwoFactorController#confirm"
+  },
+  {
+    "name": "escalated.admin.two-factor.disable",
+    "pattern": "/support/admin/settings/two-factor/disable",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"two_factor\"})",
+      "auth",
+      "ensureIsStaff",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTwoFactorController#disable"
+  },
+  {
+    "name": "escalated.admin.two-factor.recovery-codes",
+    "pattern": "/support/admin/settings/two-factor/recovery-codes",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"two_factor\"})",
+      "auth",
+      "ensureIsStaff",
+      "requireTwoFactor",
+      "enforceRoutePermissions",
+      "ticketAccess"
+    ],
+    "handler": "AdminTwoFactorController#regenerateRecoveryCodes"
+  },
+  {
+    "name": "escalated.two-factor.challenge",
+    "pattern": "/support/two-factor/challenge",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"two_factor\"})",
+      "auth",
+      "ticketAccess"
+    ],
+    "handler": "TwoFactorChallengeController#show"
+  },
+  {
+    "name": "escalated.two-factor.verify",
+    "pattern": "/support/two-factor/challenge",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ensureFeatureEnabled({\"feature\":\"two_factor\"})",
+      "auth",
+      "ticketAccess",
+      "twoFactorThrottle"
+    ],
+    "handler": "TwoFactorChallengeController#verify"
+  },
+  {
+    "name": "escalated.guest.tickets.create",
+    "pattern": "/support/guest/create",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ticketAccess"
+    ],
+    "handler": "GuestTicketsController#create"
+  },
+  {
+    "name": "escalated.guest.verification",
+    "pattern": "/support/guest/verification",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"ticket\"})"
+    ],
+    "handler": "GuestVerificationController#verification"
+  },
+  {
+    "name": "escalated.guest.lookup",
+    "pattern": "/support/guest/lookup",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"reply\"})"
+    ],
+    "handler": "GuestVerificationController#lookup"
+  },
+  {
+    "name": "escalated.guest.tickets.store",
+    "pattern": "/support/guest",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"ticket\"})"
+    ],
+    "handler": "GuestTicketsController#store"
+  },
+  {
+    "name": "escalated.guest.tickets.show",
+    "pattern": "/support/guest/:token",
+    "methods": ["GET", "HEAD"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ticketAccess"
+    ],
+    "handler": "GuestTicketsController#show"
+  },
+  {
+    "name": "escalated.guest.tickets.reply",
+    "pattern": "/support/guest/:token/reply",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ticketAccess",
+      "guestRateLimit({\"scope\":\"reply\"})"
+    ],
+    "handler": "GuestTicketsController#reply"
+  },
+  {
+    "name": "escalated.guest.tickets.rate",
+    "pattern": "/support/guest/:token/rate",
+    "methods": ["POST"],
+    "middleware": [
+      "router:@adonisjs/core/bodyparser_middleware",
+      "router:@adonisjs/session/session_middleware",
+      "router:InertiaStandIn",
+      "router:CsrfStandIn",
+      "router:../src/middleware/inertia_error_page.js",
+      "ticketAccess"
+    ],
+    "handler": "SatisfactionRatingController#storeGuest"
+  }
+]
