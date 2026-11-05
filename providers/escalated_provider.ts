@@ -147,6 +147,9 @@ export default class EscalatedProvider {
     // Run admin workflows on the ticket events they are triggered by
     await this.wireWorkflows()
 
+    // The agents' in-app notifications (ADR 2026-11-05-agent-panel-data)
+    await this.wireAgentNotifications()
+
     // Every login (and logout) has to pass the two-factor challenge afresh
     await this.forgetTwoFactorPassOnLogin()
 
@@ -330,6 +333,22 @@ export default class EscalatedProvider {
     } catch (error) {
       // Logged rather than swallowed: a subscription that fails silently leaves
       // its feature dead with nothing to show why.
+      console.warn('[Escalated] could not subscribe to package events:', (error as Error).message)
+    }
+  }
+
+  /**
+   * Turn package events into the agents' in-app notifications (assignment,
+   * customer replies, SLA warnings and breaches, chat transfers). A failure
+   * never breaks the change that emitted the event.
+   */
+  protected async wireAgentNotifications() {
+    try {
+      const emitter = await this.app.container.make('emitter')
+      const { ESCALATED_EVENTS } = await import('../src/events/index.js')
+      const { wireAgentNotifications } = await import('../src/services/agent_panel.js')
+      wireAgentNotifications(emitter, ESCALATED_EVENTS as unknown as Record<string, string>)
+    } catch (error) {
       console.warn('[Escalated] could not subscribe to package events:', (error as Error).message)
     }
   }

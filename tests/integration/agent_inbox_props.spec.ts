@@ -140,7 +140,7 @@ test.group('Agent inbox props', (group) => {
     assert.equal(response.body.component, 'Escalated/Agent/TicketIndex')
 
     const inbox = response.body.props.inbox
-    assert.deepEqual(Object.keys(inbox), ['counts', 'views', 'stats'])
+    assert.deepEqual(Object.keys(inbox), ['counts', 'unread', 'views', 'stats'])
     // Unresolved, unsnoozed tickets in each queue.
     assert.deepEqual(inbox.counts, { mine: 2, unassigned: 1, all: 4 })
     assert.deepEqual(
@@ -511,9 +511,9 @@ test.group('Agent inbox props', (group) => {
 
     assert.equal(row.latest_reply.body, 'Customer-visible answer')
     assert.isNotNull(row.last_reply_at)
-    // Escalated tracks no per-agent read state or customer presence, so it sends neither.
-    assert.notProperty(row, 'is_unread')
-    assert.notProperty(row, 'requester_online')
+    // The new ticket is customer activity; the agent's own replies are not.
+    assert.isTrue(row.is_unread)
+    assert.isFalse(row.requester_online)
   })
 
   test('sends inbox and the queue the agent last opened on the ticket page', async ({ assert }) => {
@@ -525,7 +525,7 @@ test.group('Agent inbox props', (group) => {
     assert.equal(response.body.component, 'Escalated/Agent/TicketShow')
     assert.deepEqual(response.body.props.queue, { key: 'all', title: 'All tickets' })
     assert.deepEqual(response.body.props.inbox.counts, { mine: 1, unassigned: 1, all: 2 })
-    assert.deepEqual(Object.keys(response.body.props.inbox), ['counts', 'views', 'stats'])
+    assert.deepEqual(Object.keys(response.body.props.inbox), ['counts', 'unread', 'views', 'stats'])
 
     await visit(`${INDEX}?assigned_to=${AGENT.id}`)
 

@@ -4,6 +4,7 @@ import TicketService from '../services/ticket_service.js'
 import AssignmentService from '../services/assignment_service.js'
 import type { TicketStatus, TicketPriority } from '../types.js'
 import { t } from '../support/i18n.js'
+import { markRead, markUnread } from '../services/agent_panel.js'
 
 export default class BulkActionsController {
   protected ticketService = new TicketService()
@@ -43,6 +44,13 @@ export default class BulkActionsController {
             break
           case 'delete':
             await ticket.delete()
+            break
+          // Per-agent read markers (ADR 2026-11-05-agent-panel-data).
+          case 'mark_read':
+            await markRead((causer as any).id, ticket.id)
+            break
+          case 'mark_unread':
+            await markUnread((causer as any).id, ticket.id)
             break
         }
         successCount++

@@ -7,7 +7,8 @@ import {
   userCanAccessTicket,
 } from '../support/ticket_access.js'
 import { escalatedDb, getConfig } from '../helpers/config.js'
-import { type DateTime } from 'luxon'
+import { type DateTime, DateTime as LuxonDateTime } from 'luxon'
+import ImportContext from '../support/import_context.js'
 import {
   column,
   beforeCreate,
@@ -216,6 +217,21 @@ export default class Ticket extends EscalatedBaseModel {
   @column.dateTime()
   declare deletedAt: DateTime | null
 
+  /**
+   * The last customer-side activity: creation, or a public reply or chat
+   * message from the customer side (ADR 2026-11-05-agent-panel-data). Agents'
+   * own work never moves it, so it drives per-agent unread markers.
+   */
+  @column.dateTime({ serializeAs: null })
+  declare lastCustomerActivityAt: DateTime | null
+
+  /** Set on agent pages only (AgentPanel.decorate); never on customer responses. */
+  declare $agentPanel?: {
+    is_unread?: boolean
+    requester_online: boolean
+    requester_last_seen_at: string | null
+  }
+
   // ---- Relationships ----
 
   @belongsTo(() => Department, { foreignKey: 'departmentId' })
@@ -338,6 +354,21 @@ export default class Ticket extends EscalatedBaseModel {
     return this.$requesterTickets
   }
 
+  @computed({ serializeAs: 'is_unread' })
+  get isUnread(): boolean | undefined {
+    return this.$agentPanel?.is_unread
+  }
+
+  @computed({ serializeAs: 'requester_online' })
+  get requesterOnline(): boolean | undefined {
+    return this.$agentPanel?.requester_online
+  }
+
+  @computed({ serializeAs: 'requester_last_seen_at' })
+  get requesterLastSeenAt(): string | null | undefined {
+    return this.$agentPanel?.requester_last_seen_at
+  }
+
   @computed()
   get lastReplyAuthor(): string | null {
     // Prefer $extras populated by a subquery; fall back to preloaded replies
@@ -415,6 +446,14 @@ export default class Ticket extends EscalatedBaseModel {
 
   isOpen(): boolean {
     return isOpenStatus(this.status)
+  }
+
+  /** A new ticket is customer activity (unread until opened), except while importing. */
+  @beforeCreate()
+  static stampCustomerActivity(ticket: Ticket) {
+    if (!ImportContext.isImporting() && !ticket.lastCustomerActivityAt) {
+      ticket.lastCustomerActivityAt = LuxonDateTime.now()
+    }
   }
 
   @beforeCreate()

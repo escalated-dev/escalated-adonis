@@ -19,6 +19,7 @@ import { t } from '../support/i18n.js'
 import { requireAuthUser } from '../support/auth_user.js'
 import TicketSubjectService from '../services/ticket_subject_service.js'
 import AgentInbox from '../services/agent_inbox.js'
+import { decorate as decorateAgentRows, markRead } from '../services/agent_panel.js'
 import { listFilterErrors } from '../support/ticket_list_filters.js'
 import emitter from '@adonisjs/core/services/emitter'
 import { ESCALATED_EVENTS } from '../events/index.js'
@@ -87,6 +88,8 @@ export default class AgentTicketsController {
       filters.following ? (ctx.auth.user as any) : null
     )
     await Ticket.withCustomStatuses(tickets.all())
+    // is_unread and the customer's presence (ADR 2026-11-05-agent-panel-data).
+    await decorateAgentRows(requireAuthUser(ctx.auth).id, tickets.all())
 
     const departments = await Department.query()
       .withScopes((scopes) => scopes.active())
@@ -173,6 +176,12 @@ export default class AgentTicketsController {
 
     const inbox = new AgentInbox(userId)
     const queue = await inbox.recalled((ctx as any).session)
+
+    // Opening the ticket in the agent panel is reading it.
+    if (getConfig().mode !== 'cloud') {
+      await markRead(userId, ticket.id)
+      await decorateAgentRows(userId, [ticket])
+    }
 
     return getRenderer().render(ctx, 'Escalated/Agent/TicketShow', {
       ticket,

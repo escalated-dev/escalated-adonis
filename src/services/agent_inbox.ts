@@ -1,4 +1,5 @@
 import Ticket from '../models/ticket.js'
+import { onlyUnread } from './agent_panel.js'
 import SavedView from '../models/saved_view.js'
 import { getConfig } from '../helpers/config.js'
 import { t } from '../support/i18n.js'
@@ -21,6 +22,8 @@ export interface InboxQueue {
 
 export interface InboxSummary {
   counts: { mine: number; unassigned: number; all: number }
+  /** Open tickets in each queue unread for the agent (ADR 2026-11-05-agent-panel-data). */
+  unread: { mine: number; unassigned: number; all: number }
   views: Array<{ id: number | string; name: string; count: number; filters: Filters }>
   stats: { open: number; urgent: number; sla_at_risk: number; resolved_today: number }
 }
@@ -205,6 +208,13 @@ export default class AgentInbox {
         unassigned: await this.countOpen({ unassigned: 1 }),
         all: await this.countOpen({}),
       },
+      // Of the same open tickets, those unread for this agent
+      // (ADR 2026-11-05-agent-panel-data).
+      unread: {
+        mine: await this.countOpen({ assigned_to: this.agentId }, true),
+        unassigned: await this.countOpen({ unassigned: 1 }, true),
+        all: await this.countOpen({}, true),
+      },
       views: counted,
       // Each stat is the list the tile opens: the queue plus the tile's filters.
       stats: {
@@ -217,13 +227,14 @@ export default class AgentInbox {
   }
 
   /** Unresolved tickets, unless the filters ask for a status themselves. */
-  protected countOpen(filters: Filters): Promise<number> {
-    return this.count(filters.status ? filters : { ...filters, open: 1 })
+  protected countOpen(filters: Filters, unread = false): Promise<number> {
+    return this.count(filters.status ? filters : { ...filters, open: 1 }, unread)
   }
 
-  protected async count(filters: Filters): Promise<number> {
+  protected async count(filters: Filters, unread = false): Promise<number> {
     const query = Ticket.query()
     await applyListFilters(query, filters)
+    if (unread) onlyUnread(query, this.agentId)
     const row = await query.count('* as total').first()
     return Number((row as any)?.$extras?.total ?? 0)
   }
