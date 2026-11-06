@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.12] - 2026-11-05
+
 ### Upgrading
 - **New migration `0075_create_escalated_agent_panel_data`:** `escalated_tickets.last_customer_activity_at` and the `escalated_ticket_reads`, `escalated_customer_presence` and `escalated_notifications` tables. Run `node ace migration:run`. Existing tickets get no activity, so none of them turn unread.
 - **Agents get in-app notifications** (`agentNotifications: false` turns them off). Assigning a ticket to yourself creates none, and a `ticket_reply` notification is sent only for customer-side replies, never for other agents' replies.
