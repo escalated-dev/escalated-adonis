@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.7.13] - 2026-11-07
+
+### Upgrading
+- No code changes. The runtime dependency floors move up within their majors (below); `npm install` picks them up.
+
+### Changed
+- **Dependencies:** xml-crypto ^6.4.0, openid-client ^6.8.9, jose ^6.2.15 and otpauth ^9.6.0 (#234, #239).
+- **Dev dependencies:** @adonisjs/session ^8.3.0, @adonisjs/inertia ^5.0.5, @adonisjs/vite ^6.0.4, eslint ^10.14.0 and @escalated-dev/escalated 0.12.7 (exact pin) (#234, #239). Dependabot holds the TypeScript 7 major (`@adonisjs/assembler` peers TypeScript 5 or 6).
+
 ## [0.7.12] - 2026-11-05
 
 ### Upgrading
