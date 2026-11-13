@@ -78,10 +78,10 @@ test.group('Ace commands', (group) => {
     assert.equal(result.status, 0, output)
   })
 
-  test('every command the README tells hosts to run is registered under that name', async ({
+  test('every command the docs tell hosts to run is registered under that name', async ({
     assert,
   }) => {
-    const readme = readFileSync(new URL('README.md', ROOT), 'utf8')
+    const readme = readFileSync(new URL('docs/configuration.md', ROOT), 'utf8')
     const documented = [
       ...new Set([...readme.matchAll(/node ace (escalated:[\w:-]+)/g)].map((match) => match[1])),
     ]
@@ -89,7 +89,7 @@ test.group('Ace commands', (group) => {
 
     assert.isNotEmpty(documented)
     for (const name of documented) {
-      assert.exists(ace.getCommand(name), `the README documents ${name}, which is not registered`)
+      assert.exists(ace.getCommand(name), `the docs name ${name}, which is not registered`)
     }
   })
 

@@ -1,519 +1,198 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <b>Italiano</b> •
-  <a href="README.ja.md">日本語</a> •
-  <a href="README.ko.md">한국어</a> •
-  <a href="README.nl.md">Nederlands</a> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <b>Italiano</b> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated for AdonisJS
+<h1 align="center">Escalated for AdonisJS</h1>
 
-[![Tests](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml/badge.svg)](https://github.com/escalated-dev/escalated-adonis/actions/workflows/run-tests.yml)
-[![AdonisJS](https://img.shields.io/badge/adonisjs-v7-5A45FF?logo=adonisjs&logoColor=white)](https://adonisjs.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  Aggiungi un helpdesk completo alla tua app AdonisJS.<br>
+  Ticket, SLA, regole di escalation, una inbox per gli agenti e un portale clienti, sul tuo database.
+</p>
 
-Un sistema di ticket di supporto completo e integrabile per AdonisJS v7. Aggiungilo a qualsiasi app — ottieni un helpdesk completo con tracciamento SLA, regole di escalation, flussi di lavoro degli agenti e un portale clienti. Nessun servizio esterno richiesto.
+<p align="center">
+  <a href="https://escalated.dev"><b>Sito web</b></a> ·
+  <a href="https://escalated.dev/docs"><b>Documentazione</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>Registro delle modifiche</b></a>
+</p>
 
-> **[escalated.dev](https://escalated.dev)** — Scopri di più, guarda le demo e confronta le opzioni Cloud vs Self-Hosted.
+<br>
 
-## Requisiti
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="La inbox degli agenti di Escalated: viste salvate con contatori, conti alla rovescia SLA e priorità su ogni ticket" width="100%">
+</picture>
 
-- AdonisJS v7 (Core ^7.0)
-- @adonisjs/lucid ^22.0
-- @adonisjs/auth ^10.0
-- @adonisjs/inertia ^4.0 || ^5.0
-- @adonisjs/drive ^4.0 (for file attachments)
-- @adonisjs/mail ^10.0
-- Node.js 24+
+## Cosa fa
 
-## Installazione
-
-```bash
-npm install @escalated-dev/escalated-adonis
-```
-
-Then run the configure command:
-
-```bash
-node ace configure @escalated-dev/escalated-adonis
-```
-
-This will:
-
-1. Publish `config/escalated.ts` to your application
-2. Register the `EscalatedProvider` in your `.adonisrc.ts`
-3. Copy all database migration files to your `database/migrations/` directory
-
-Run the migrations:
-
-```bash
-node ace migration:run
-```
-
-## Configurazione
-
-Edit `config/escalated.ts` to customize behavior:
-
-```typescript
-const escalatedConfig: EscalatedConfig = {
-  // Hosting mode: 'self-hosted' | 'synced' | 'cloud'
-  mode: 'self-hosted',
-
-  // Your app's user model import path
-  userModel: '#models/user',
-
-  // Route configuration
-  routes: {
-    enabled: true,
-    prefix: 'support',
-    middleware: ['auth'],
-    adminMiddleware: ['auth'],
-  },
-
-  // Authorization callbacks
-  authorization: {
-    isAgent: (user) => user.isEscalatedAgent ?? false,
-    isAdmin: (user) => user.isEscalatedAdmin ?? false,
-  },
-
-  // ... see config file for full options
-}
-```
-
-### Autorizzazione
-
-The `isAgent` and `isAdmin` callbacks determine role-based access. You can use boolean properties, methods, or any async logic:
-
-```typescript
-authorization: {
-  isAgent: async (user) => {
-    // Check a database column
-    return user.role === 'agent' || user.role === 'admin'
-  },
-  isAdmin: async (user) => {
-    return user.role === 'admin'
-  },
-}
-```
+<table>
+  <tr>
+    <td width="40%">
+      <h3>Una inbox in cui i tuoi agenti possono lavorare tutto il giorno</h3>
+      Conversazione, note interne, risposte predefinite e timer SLA in un'unica schermata. I ticket arrivano anche via email tramite Mailgun, Postmark o SES.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="Un ticket aperto nell'area di lavoro dell'agente con l'editor di risposta">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="La pagina dei report di amministrazione con tempi di risposta, CSAT e violazioni degli SLA">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>SLA e regole di escalation che puoi vedere</h3>
+      Obiettivi di risposta e risoluzione per priorità con orari lavorativi, regole che eseguono l'escalation o riassegnano quando non vengono rispettati, e report sulle violazioni.
+    </td>
+  </tr>
+</table>
 
 ## Funzionalità
 
-- **Tickets:** Create, view, update, close, reopen tickets with status machine
-- **Replies:** Threaded conversations with rich text and pinned notes
-- **Departments:** Organize tickets by team with agent assignments
-- **Tags:** Label and categorize tickets
-- **SLA Policies:** First response and resolution time tracking with breach detection
-- **Escalation Rules:** Automated ticket escalation based on configurable conditions
-- **Canned Responses:** Pre-written reply templates (shared or per-agent)
-- **Activity Log:** Full audit trail of all ticket changes
-- **Attachments:** File uploads on replies with configurable storage
-- **Notifications:** Webhook-based notifications with HMAC signing
-- **Admin Settings:** Runtime-configurable settings stored in the database
-- **Guest Tickets:** Anonymous ticket creation with 64-character token access
-- **Inbound Email:** Mailgun, Postmark, and SES adapters with auto-threading and attachment processing
-- **Three Role Types:** Customer, Agent, Admin with separate dashboards
-- **Bulk Actions:** Batch status/priority/assignment/tag/department changes
-- **Macros:** Multi-step automated actions (status + priority + reply in one click)
-- **Followers:** Subscribe to ticket updates
-- **CSAT Ratings:** Post-resolution satisfaction surveys (1-5 scale)
-- **Quick Filters:** Pre-built filter shortcuts (My Tickets, Unassigned, Breached SLA, etc.)
-- **Presence Indicators:** See who is viewing a ticket in real time
-- **SSO:** SAML and JWT-based single sign-on
-- **RBAC:** Role-based access control with granular permissions
-- **Automation:** Configurable automation rules with conditions and actions
-- **i18n:** Multi-language support (EN, ES, FR, DE)
-- **Plugin System:** Extensible via TypeScript SDK plugins
-- **REST API:** Token-authenticated API with rate limiting
-- **Import Framework:** Bulk data import support
-- **Ticket Splitting:** Split a reply into a new standalone ticket while preserving the original context
-- **Ticket Snooze:** Sospendi i ticket con preimpostazioni (1h, 4h, domani, prossima settimana); il comando Ace `node ace escalated:wake_snoozed_tickets` li riattiva automaticamente
-- **Saved Views / Custom Queues:** Save, name, and share filter presets as reusable ticket views
-- **Embeddable Support Widget:** Widget leggero `<script>` con ricerca KB, modulo ticket e verifica stato
-- **Email Threading:** Outbound emails include proper `In-Reply-To` and `References` headers for correct threading in mail clients
-- **Branded Email Templates:** Configurable logo, primary color, and footer text for all outbound emails
-- **Real-time Broadcasting:** Broadcasting opzionale tramite AdonisJS Transmit con fallback automatico al polling
-- **Knowledge Base Toggle:** Enable or disable the public knowledge base from admin settings
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## Architettura
+**Ticket**
+- Crea, aggiorna, chiudi e riapri
+- Risposte in thread con note fissate
+- Dividi, unisci, collega e posticipa
+- Conversazioni laterali su un ticket
+- Registro attività di ogni modifica
 
-### Models (14)
+</td>
+<td width="33%" valign="top">
 
-| Model | Table | Description |
-|-------|-------|-------------|
-| `Ticket` | `escalated_tickets` | Core ticket with status machine, guest support |
-| `Reply` | `escalated_replies` | Threaded replies with pinning and internal notes |
-| `Department` | `escalated_departments` | Team organization with agent pivot |
-| `Tag` | `escalated_tags` | Ticket categorization |
-| `SlaPolicy` | `escalated_sla_policies` | SLA time targets per priority |
-| `EscalationRule` | `escalated_escalation_rules` | Automated escalation conditions/actions |
-| `CannedResponse` | `escalated_canned_responses` | Reply templates |
-| `TicketActivity` | `escalated_ticket_activities` | Audit log entries |
-| `Attachment` | `escalated_attachments` | File attachments (polymorphic) |
-| `Macro` | `escalated_macros` | Multi-step action sequences |
-| `SatisfactionRating` | `escalated_satisfaction_ratings` | CSAT ratings |
-| `InboundEmail` | `escalated_inbound_emails` | Inbound email log |
-| `EscalatedSetting` | `escalated_settings` | Key-value runtime settings |
+**Area di lavoro dell'agente**
+- Filtri rapidi e viste salvate
+- Stato, priorità e assegnazione in blocco
+- Macro e risposte predefinite
+- Reparti, tag e follower
+- Vedi chi sta guardando un ticket
 
-### Services (8)
+</td>
+<td width="33%" valign="top">
 
-| Service | Description |
-|---------|-------------|
-| `TicketService` | Create, update, transition status, reply, add notes, manage tags/departments |
-| `AssignmentService` | Assign/unassign agents, auto-assign (least-workload strategy) |
-| `SlaService` | Attach policies, check breaches, calculate due dates with business hours |
-| `EscalationService` | Evaluate rules, find matching tickets, execute automated actions |
-| `NotificationService` | Send webhook notifications with HMAC-SHA256 signing |
-| `AttachmentService` | Store/delete file attachments via AdonisJS Drive |
-| `MacroService` | Execute multi-step macro actions on tickets |
-| `InboundEmailService` | Process inbound emails, match to tickets, create replies |
+**SLA e automazione**
+- Obiettivi di prima risposta e risoluzione
+- Rilevamento delle violazioni e avvisi
+- Regole di escalation pianificate
+- Regole di automazione con condizioni
 
-### Controllers (16)
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
 
-| Controller | Role | Description |
-|------------|------|-------------|
-| `CustomerTicketsController` | Customer | List, create, view, reply, close, reopen |
-| `AgentDashboardController` | Agent | Dashboard with stats and quick filters |
-| `AgentTicketsController` | Agent | Full ticket management with all actions |
-| `AdminTicketsController` | Admin | Same as agent plus delete capability |
-| `AdminDepartmentsController` | Admin | CRUD for departments |
-| `AdminTagsController` | Admin | CRUD for tags |
-| `AdminSlaPoliciesController` | Admin | CRUD for SLA policies |
-| `AdminEscalationRulesController` | Admin | CRUD for escalation rules |
-| `AdminCannedResponsesController` | Admin | CRUD for canned responses |
-| `AdminMacrosController` | Admin | CRUD for macros |
-| `AdminReportsController` | Admin | Reporting dashboard |
-| `AdminSettingsController` | Admin | Runtime settings management |
-| `BulkActionsController` | Agent/Admin | Batch ticket operations |
-| `SatisfactionRatingController` | Customer | Submit CSAT ratings |
-| `GuestTicketsController` | Public | Anonymous ticket creation and viewing |
-| `InboundEmailController` | Webhook | Process inbound email from adapters |
+**Clienti**
+- Portale e dashboard clienti
+- Ticket ospite con accesso tramite token
+- Accesso ospite verificato con codice via email
+- Widget incorporabile con ricerca nella knowledge base
+- Knowledge base, attivabile o no
+- Valutazioni CSAT dopo la risoluzione
 
-### Middleware (3)
+</td>
+<td width="33%" valign="top">
 
-| Middleware | Description |
-|------------|-------------|
-| `EnsureIsAgent` | Verifies user is an agent (or admin) via config callback |
-| `EnsureIsAdmin` | Verifies user is an admin via config callback |
-| `ResolveTicket` | Resolves ticket by reference or ID, attaches to context |
+**Email**
+- In entrata via Mailgun, Postmark, SES
+- Thread corretti nei client di posta
+- Template con il tuo brand
 
-## Componenti Pagina Inertia
+</td>
+<td width="33%" valign="top">
 
-All controllers render Inertia pages with the `Escalated/` prefix. Your Vue app must provide these page components:
+**Amministrazione e accesso**
+- Ruoli cliente, agente e amministratore
+- Ruoli e permessi opzionali
+- SSO opzionale: SAML, OAuth 2, OIDC, JWT
+- Impostazioni salvate nel database
+- Link privati agli allegati con scadenza
 
-### Pagine Cliente
-- `Escalated/Customer/Index` - Ticket list
-- `Escalated/Customer/Create` - New ticket form
-- `Escalated/Customer/Show` - Ticket detail with replies
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
 
-### Pagine Agente
-- `Escalated/Agent/Dashboard` - Agent dashboard
-- `Escalated/Agent/Tickets/Index` - Ticket list with filters
-- `Escalated/Agent/Tickets/Show` - Ticket detail with all actions
+**Integrazioni**
+- Webhook firmati con registro delle consegne
+- API REST con token a scope limitato
+- Plugin TypeScript nello stesso processo
+- Importazione di dati in blocco
 
-### Pagine Admin
-- `Escalated/Admin/Tickets/Index` - Admin ticket list
-- `Escalated/Admin/Tickets/Show` - Admin ticket detail
-- `Escalated/Admin/Departments/Index` - Departments list
-- `Escalated/Admin/Departments/Create` - New department
-- `Escalated/Admin/Departments/Edit` - Edit department
-- `Escalated/Admin/Tags/Index` - Tags management
-- `Escalated/Admin/SlaPolicies/Index` - SLA policies list
-- `Escalated/Admin/SlaPolicies/Create` - New SLA policy
-- `Escalated/Admin/SlaPolicies/Edit` - Edit SLA policy
-- `Escalated/Admin/EscalationRules/Index` - Escalation rules list
-- `Escalated/Admin/EscalationRules/Create` - New escalation rule
-- `Escalated/Admin/EscalationRules/Edit` - Edit escalation rule
-- `Escalated/Admin/CannedResponses/Index` - Canned responses
-- `Escalated/Admin/Macros/Index` - Macros management
-- `Escalated/Admin/Reports` - Reports dashboard
-- `Escalated/Admin/Settings` - Settings management
+</td>
+<td width="33%" valign="top">
 
-### Pagine Ospite
-- `Escalated/Guest/Create` - Guest ticket form
-- `Escalated/Guest/Show` - Guest ticket view
+**Tempo reale**
+- Broadcasting tramite Transmit
+- Polling come alternativa quando è disattivato
 
-## Nomi dei Percorsi
+</td>
+<td width="33%" valign="top">
 
-All routes are named with the `escalated.` prefix:
+**Lingue**
+- Testi dal pacchetto di traduzioni condiviso
+- Override per singolo host
 
-```
-# Customer
-escalated.customer.tickets.index
-escalated.customer.tickets.create
-escalated.customer.tickets.store
-escalated.customer.tickets.show
-escalated.customer.tickets.reply
-escalated.customer.tickets.close
-escalated.customer.tickets.reopen
-escalated.customer.tickets.rate
+</td>
+</tr>
+</table>
 
-# Agent
-escalated.agent.dashboard
-escalated.agent.tickets.index
-escalated.agent.tickets.bulk
-escalated.agent.tickets.show
-escalated.agent.tickets.update
-escalated.agent.tickets.reply
-escalated.agent.tickets.note
-escalated.agent.tickets.assign
-escalated.agent.tickets.status
-escalated.agent.tickets.priority
-escalated.agent.tickets.tags
-escalated.agent.tickets.department
-escalated.agent.tickets.macro
-escalated.agent.tickets.follow
-escalated.agent.tickets.presence
-escalated.agent.tickets.pin
+<p align="center"><sub><a href="../features.md">Ogni funzionalità nel dettaglio</a></sub></p>
 
-# Admin
-escalated.admin.reports
-escalated.admin.tickets.index
-escalated.admin.tickets.bulk
-escalated.admin.tickets.show
-escalated.admin.tickets.reply
-escalated.admin.tickets.note
-escalated.admin.tickets.assign
-escalated.admin.tickets.status
-escalated.admin.tickets.priority
-escalated.admin.tickets.tags
-escalated.admin.tickets.department
-escalated.admin.tickets.macro
-escalated.admin.tickets.follow
-escalated.admin.tickets.presence
-escalated.admin.tickets.pin
-escalated.admin.settings
-escalated.admin.settings.update
-escalated.admin.departments.index
-escalated.admin.departments.create
-escalated.admin.departments.store
-escalated.admin.departments.edit
-escalated.admin.departments.update
-escalated.admin.departments.destroy
-escalated.admin.sla-policies.index
-escalated.admin.sla-policies.create
-escalated.admin.sla-policies.store
-escalated.admin.sla-policies.edit
-escalated.admin.sla-policies.update
-escalated.admin.sla-policies.destroy
-escalated.admin.escalation-rules.index
-escalated.admin.escalation-rules.create
-escalated.admin.escalation-rules.store
-escalated.admin.escalation-rules.edit
-escalated.admin.escalation-rules.update
-escalated.admin.escalation-rules.destroy
-escalated.admin.tags.index
-escalated.admin.tags.store
-escalated.admin.tags.update
-escalated.admin.tags.destroy
-escalated.admin.canned-responses.index
-escalated.admin.canned-responses.store
-escalated.admin.canned-responses.update
-escalated.admin.canned-responses.destroy
-escalated.admin.macros.index
-escalated.admin.macros.store
-escalated.admin.macros.update
-escalated.admin.macros.destroy
+<p align="center">
+  <a href="https://adonisjs.com"><img src="https://img.shields.io/badge/AdonisJS_7-5A45FF?style=for-the-badge&logo=adonisjs&logoColor=white" alt="AdonisJS 7"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js_24+-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js 24+"></a>
+  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue_3-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
+</p>
 
-# Guest (no auth)
-escalated.guest.tickets.create
-escalated.guest.tickets.store
-escalated.guest.tickets.show
-escalated.guest.tickets.reply
-escalated.guest.tickets.rate
-
-# Inbound Email (no auth)
-escalated.inbound.webhook
-```
-
-## Macchina a Stati del Ticket
-
-Tickets follow a strict state machine:
-
-```
-open -> in_progress, waiting_on_customer, waiting_on_agent, escalated, resolved, closed
-in_progress -> waiting_on_customer, waiting_on_agent, escalated, resolved, closed
-waiting_on_customer -> open, in_progress, resolved, closed
-waiting_on_agent -> open, in_progress, escalated, resolved, closed
-escalated -> in_progress, resolved, closed
-resolved -> reopened, closed
-closed -> reopened
-reopened -> in_progress, waiting_on_customer, waiting_on_agent, escalated, resolved, closed
-```
-
-## Tabelle del Database (14)
-
-All tables use the `escalated_` prefix by default (configurable):
-
-1. `escalated_departments` + `escalated_department_agent` pivot
-2. `escalated_sla_policies`
-3. `escalated_tickets`
-4. `escalated_replies`
-5. `escalated_attachments`
-6. `escalated_tags` + `escalated_ticket_tag` pivot
-7. `escalated_ticket_activities`
-8. `escalated_escalation_rules`
-9. `escalated_canned_responses`
-10. `escalated_settings`
-11. `escalated_inbound_emails`
-12. `escalated_macros`
-13. `escalated_ticket_followers`
-14. `escalated_satisfaction_ratings`
-
-## Dati Inertia Condivisi
-
-The provider automatically shares the following data via Inertia on every request:
-
-```typescript
-{
-  escalated: {
-    prefix: 'support',           // Route prefix
-    is_agent: false,             // Whether current user is an agent
-    is_admin: false,             // Whether current user is an admin
-    guest_tickets_enabled: true, // Whether guest tickets are enabled
-  }
-}
-```
-
-## Eventi
-
-The package emits the following events that you can listen to:
-
-| Event | Description |
-|-------|-------------|
-| `escalated:ticket:created` | New ticket created |
-| `escalated:ticket:updated` | Ticket fields updated |
-| `escalated:ticket:status_changed` | Status transition |
-| `escalated:ticket:assigned` | Agent assigned |
-| `escalated:ticket:unassigned` | Agent unassigned |
-| `escalated:ticket:priority_changed` | Priority changed |
-| `escalated:ticket:department_changed` | Department changed |
-| `escalated:ticket:tags_added` | Tags added |
-| `escalated:ticket:tags_removed` | Tags removed |
-| `escalated:ticket:escalated` | Ticket escalated |
-| `escalated:ticket:resolved` | Ticket resolved |
-| `escalated:ticket:closed` | Ticket closed |
-| `escalated:ticket:reopened` | Ticket reopened |
-| `escalated:reply:created` | Reply added |
-| `escalated:note:created` | Internal note added |
-| `escalated:sla:breached` | SLA target breached |
-| `escalated:rating:created` | CSAT rating submitted |
-
-## Email in Entrata
-
-Enable inbound email processing by setting `inboundEmail.enabled: true` in your config. Point your email provider's webhook to:
-
-```
-POST /support/inbound/mailgun
-POST /support/inbound/postmark
-POST /support/inbound/ses
-```
-
-The system will:
-1. Parse incoming email from the adapter's format
-2. Match to existing tickets via subject pattern (`[ESC-00001]`) or In-Reply-To/References headers
-3. Create a reply on existing tickets or create a new ticket
-4. Process attachments (with blocked extension filtering)
-5. Log the inbound email for audit trail
-
-## Uso Diretto dei Servizi
-
-You can resolve services from the container for custom logic:
-
-```typescript
-import app from '@adonisjs/core/services/app'
-
-const ticketService = await app.container.make('escalated.ticketService')
-const ticket = await ticketService.create({
-  subject: 'Help needed',
-  description: 'I have a question...',
-  priority: 'medium',
-  channel: 'api',
-}, { id: 1, type: 'User' }) // requester
-
-const assignmentService = await app.container.make('escalated.assignmentService')
-await assignmentService.autoAssign(ticket)
-```
-
-## Pacchetto Frontend
-
-This package serves only the backend API via Inertia.js. The shared Vue 3 frontend components are provided by the `@escalated-dev/escalated` package, which is framework-agnostic and works with all Escalated backends (AdonisJS, Laravel, Rails, Django).
+## Avvio rapido
 
 ```bash
+npm install @escalated-dev/escalated-adonis
 npm install @escalated-dev/escalated
+node ace configure @escalated-dev/escalated-adonis
+node ace migration:run
 ```
 
-## SDK Plugin
+Poi visita `/support`. Richiede AdonisJS v7 e Node.js 24+. La [guida introduttiva](../getting-started.md) elenca gli altri pacchetti Adonis necessari, e la [configurazione](../configuration.md) spiega i comandi pianificati che gestiscono SLA ed escalation.
 
-Escalated supporta plugin indipendenti dal framework costruiti con il [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk). I plugin vengono scritti una volta in TypeScript e funzionano su tutti i backend Escalated.
+## Per saperne di più
 
-### Installazione dei Plugin
+- [Tutte le funzionalità](../features.md) · [Primi passi](../getting-started.md) · [Configurazione e comandi pianificati](../configuration.md)
+- [Architettura, pagine, route ed eventi](../architecture.md) · [Personalizzazione](../customization.md)
+- [Controllo degli accessi](../access-control.md) · [SSO](../sso.md) · [Accesso ai ticket e instradamento](../ticket-access-and-routing.md)
+- [Email in entrata](../inbound-email.md) · [Incorporare il widget](../embedding-the-widget.md) · [Accesso ospite](../guest-access.md) · [Allegati privati](../private-attachments.md)
+- [Pannello agente](../agent-panel.md) · [Incorporare l'amministrazione](../embedding-admin.md)
+- [SDK dei plugin](../plugin-sdk.md) · [Plugin](../plugins.md) · [Newsletter](../newsletters.md) · [Sicurezza delle dipendenze](../dependency-security.md)
 
-```bash
-npm install @escalated-dev/plugin-slack
-npm install @escalated-dev/plugin-jira
-```
-
-### Abilitazione Plugin SDK
-
-Enable the plugin system in your `EscalatedProvider` config:
-
-```typescript
-// config/escalated.ts
-const escalatedConfig: EscalatedConfig = {
-  // ...
-  plugins: {
-    enabled: true,
-    sdkEnabled: true,
-  },
-}
-```
-
-### Come Funziona
-
-Unlike other Escalated backends, AdonisJS runs SDK plugins **in-process** — no subprocess, no JSON-RPC overhead. Plugins are loaded directly into the Node.js runtime alongside your AdonisJS application, giving native performance and eliminating the need for a separate plugin runtime process.
-
-### Creare il Proprio Plugin
-
-```typescript
-import { definePlugin } from '@escalated-dev/plugin-sdk'
-
-export default definePlugin({
-  name: 'my-plugin',
-  version: '1.0.0',
-  actions: {
-    'ticket.created': async (event, ctx) => {
-      ctx.log.info('New ticket!', event)
-    },
-  },
-})
-```
-
-### Risorse
-
-- [Plugin SDK](https://github.com/escalated-dev/escalated-plugin-sdk) — SDK TypeScript per creare plugin
-- [Plugin Runtime](https://github.com/escalated-dev/escalated-plugin-runtime) — Host runtime per i plugin
-- [Plugin Development Guide](https://github.com/escalated-dev/escalated-docs) — Documentazione completa
-
-## Disponibile Anche Per
-
-- **[Escalated for Laravel](https://github.com/escalated-dev/escalated-laravel)** — Pacchetto Laravel Composer
-- **[Escalated for Rails](https://github.com/escalated-dev/escalated-rails)** — Motore Ruby on Rails
-- **[Escalated for Django](https://github.com/escalated-dev/escalated-django)** — App Django riutilizzabile
-- **[Escalated for AdonisJS](https://github.com/escalated-dev/escalated-adonis)** — Pacchetto AdonisJS v7 (sei qui)
-- **[Escalated for Filament](https://github.com/escalated-dev/escalated-filament)** — Plugin pannello admin Filament v3
-- **[Shared Frontend](https://github.com/escalated-dev/escalated)** — Componenti UI Vue 3 + Inertia.js
-
-Stessa architettura, stessa interfaccia Vue, stesse tre modalità di hosting — per ogni framework backend principale.
+Escalated è disponibile anche per [Laravel](https://github.com/escalated-dev/escalated-laravel), [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [.NET](https://github.com/escalated-dev/escalated-dotnet), [Spring](https://github.com/escalated-dev/escalated-spring), [WordPress](https://github.com/escalated-dev/escalated-wordpress) e [Filament](https://github.com/escalated-dev/escalated-filament). L'interfaccia si trova in [escalated](https://github.com/escalated-dev/escalated).
 
 ## Licenza
 
-MIT
+MIT. Copyright (c) Escalated.dev. Vedi [LICENSE](../../LICENSE).
