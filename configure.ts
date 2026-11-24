@@ -46,6 +46,16 @@ export async function configure(command: ConfigureCommand) {
 
   command.logger.success('Escalated configured successfully!')
   command.logger.info('Run "node ace migration:run" to create the escalated tables.')
+  command.logger.info(
+    'Set authorization.isAgent / isAdmin in config/escalated.ts, then run ' +
+      '"node ace escalated:doctor" to check the setup.'
+  )
+  command.logger.warning(
+    'Required: schedule the recurring jobs (cron or a process manager): ' +
+      'escalated:check-sla and escalated:wake-snoozed-tickets every minute, ' +
+      'escalated:run-escalations and escalated:run-automations every 5 minutes. ' +
+      'See docs/configuration.md.'
+  )
 }
 
 async function publishMigrations(command: ConfigureCommand): Promise<void> {

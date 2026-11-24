@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Ticket subjects on the ticket pages:** the agent and admin ticket pages send `ticket.subjects` serialized as the API ticket resource does (`{ type, id, role, title, subtitle, url, color, icon, missing }`), so the sidebar's Related card shows them. They arrived as raw link rows.
+- **Setup errors name what is missing:** a signed-in staff user without an `id` gets an `EscalatedUserContractError` naming `EscalatedAuthUser` and `config.userModel` (from the agent/admin gates and `requireAuthUser`) instead of a raw error on the first write. With no `authorization.isAgent`/`isAdmin` configured the agent and admin 403 says so, and boot logs a warning. A missing gate no longer throws a TypeError in the agent panel's staff check.
+
+### Added
+- **`widget.enabled`** (default true, `ESCALATED_WIDGET_ENABLED`): false registers no `{prefix}/widget/*` route (embed.js, widget API, widget chat).
+- **`guest.routesEnabled`** (default true, `ESCALATED_GUEST_ROUTES`): false registers no `{prefix}/guest/*` route. The `guest_tickets_enabled` setting still switches registered routes at runtime.
+- **`routes.customerMiddleware`** (default `[]`): extra middleware on the customer portal and customer knowledge base, after `routes.middleware`. With the package's `ensure_is_staff` middleware and the two switches above, an install can be staff-only (docs/access-control.md, "Staff-only installs").
+- **Scheduler heartbeat:** `escalated:check-sla` records when it ran. Admin > Settings and the admin Reports pages send `scheduler` (`{ healthy, last_run_at, message, commands }`), unhealthy while the heartbeat is missing or more than 15 minutes old, so the UI warns that the recurring jobs are not scheduled.
+- **`node ace escalated:doctor`:** checks the staff gates, the user model and the recurring jobs (`--json` for the report).
+
+### Not applicable
+- Slack inbound and cloud-to-site webhook routes: this package registers neither.
+- Auto-registering the recurring jobs: AdonisJS has no in-process scheduler for the package to register with. The README's "Required: schedule the recurring jobs" section lists them.
+
 ## [0.7.13] - 2026-11-07
 
 ### Upgrading

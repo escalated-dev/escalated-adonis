@@ -16,6 +16,7 @@ import type { UserId } from '../helpers/user_id_column.js'
 import ImportContext from '../support/import_context.js'
 import { findHostUser } from '../support/user_model.js'
 import { withTicketAccess } from '../support/ticket_access.js'
+import { passesStaffGate } from '../support/staff_gates.js'
 
 export const AGENT_STATUSES = ['online', 'away', 'offline'] as const
 export type AgentStatusValue = (typeof AGENT_STATUSES)[number]
@@ -51,9 +52,8 @@ function sqlTime(value: DateTime, model: any): string {
 
 export async function isStaff(user: any): Promise<boolean> {
   if (!user) return false
-  const authorization = getConfig().authorization
-  if (!authorization) return false
-  return Boolean((await authorization.isAgent(user)) || (await authorization.isAdmin(user)))
+  // A gate the config leaves out answers no, instead of a TypeError.
+  return (await passesStaffGate('isAgent', user)) || (await passesStaffGate('isAdmin', user))
 }
 
 // ---- 1. Unread tracking ----------------------------------------------------

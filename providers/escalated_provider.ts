@@ -123,6 +123,7 @@ export default class EscalatedProvider {
   async boot() {
     // Load config and store globally for services to access
     await this.loadConfig()
+    await this.warnAboutMissingStaffGates()
     validateTicketAccess()
     installTicketAccess()
 
@@ -183,6 +184,23 @@ export default class EscalatedProvider {
       return
     }
     await this.registerRoutes()
+  }
+
+  /**
+   * Without authorization.isAgent / isAdmin nobody is staff and every agent
+   * and admin route answers 403. Say so once at boot, naming the settings.
+   */
+  protected async warnAboutMissingStaffGates() {
+    const { missingStaffGates, missingStaffGatesMessage } =
+      await import('../src/support/staff_gates.js')
+    const missing = missingStaffGates()
+    if (missing.length === 0) return
+    try {
+      const logger = await this.app.container.make('logger')
+      logger.warn(missingStaffGatesMessage(missing))
+    } catch {
+      // No logger (a bare test container): nothing to warn through.
+    }
   }
 
   /**

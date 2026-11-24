@@ -71,6 +71,31 @@
       "filePath": "close_idle_chats_command.js"
     },
     {
+      "commandName": "escalated:doctor",
+      "description": "Check the Escalated setup: staff gates, the user model and the recurring jobs",
+      "help": [
+        "Report what is missing from the Escalated setup:",
+        "  node ace escalated:doctor",
+        "",
+        "The same report as JSON (includes the `scheduler` status):",
+        "  node ace escalated:doctor --json"
+      ],
+      "namespace": "escalated",
+      "aliases": [],
+      "flags": [
+        {
+          "name": "json",
+          "flagName": "json",
+          "required": false,
+          "type": "boolean",
+          "description": "Print the report as JSON"
+        }
+      ],
+      "args": [],
+      "options": { "startApp": true },
+      "filePath": "doctor_command.js"
+    },
+    {
       "commandName": "escalated:import",
       "description": "Run a data import from an external platform (Zendesk, Freshdesk, Intercom, Help Scout…)",
       "help": [
