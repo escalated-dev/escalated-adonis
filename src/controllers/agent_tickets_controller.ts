@@ -184,7 +184,9 @@ export default class AgentTicketsController {
     }
 
     return getRenderer().render(ctx, 'Escalated/Agent/TicketShow', {
-      ticket,
+      // The sidebar's Related card reads `ticket.subjects`, serialized as the
+      // API ticket resource does, not the raw link rows Lucid would send.
+      ticket: { ...ticket.serialize(), subjects },
       subjects,
       departments,
       tags,

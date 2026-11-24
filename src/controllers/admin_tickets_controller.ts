@@ -134,7 +134,9 @@ export default class AdminTicketsController {
     const subjects = await new TicketSubjectService().serializeForTicket(ticket)
 
     return getRenderer().render(ctx, 'Escalated/Admin/Tickets/Show', {
-      ticket,
+      // The sidebar's Related card reads `ticket.subjects`, serialized as the
+      // API ticket resource does, not the raw link rows Lucid would send.
+      ticket: { ...ticket.serialize(), subjects },
       subjects,
       departments,
       tags,

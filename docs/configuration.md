@@ -123,7 +123,7 @@ ticketSubjects: {
 
 Agent/admin routes: `POST …/tickets/:ticket/subjects` (`type`, `id`, optional `role`) and `DELETE …/tickets/:ticket/subjects/:linkId`. The API only accepts allowlisted types; programmatic `attachSubject()` allows any type when the allowlist is empty.
 
-Each subject is serialized as `{ type, id, role, title, subtitle, url, color, icon, missing }` (fallback title `type#id` when the resolver is absent or returns null).
+Each subject is serialized as `{ type, id, role, title, subtitle, url, color, icon, missing }` (fallback title `type#id` when the resolver is absent or returns null). The API ticket resource and the agent and admin ticket pages (`ticket.subjects`, shown in the sidebar's Related card) use this same shape.
 
 ## Scheduled commands
 
