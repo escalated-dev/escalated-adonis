@@ -4,11 +4,12 @@ import { configure, processCLIArgs, run } from '@japa/runner'
 processCLIArgs(process.argv.splice(2))
 
 configure({
-  // The embedded-admin specs boot an application with their own config, one
-  // process per file (scripts/run-embed-tests.mjs sets ESCALATED_TEST_SUITE).
+  // The embedded-admin specs and the other specs that boot an application with
+  // their own config run one process per file (scripts/run-embed-tests.mjs
+  // sets ESCALATED_TEST_SUITE).
   files:
     process.env.ESCALATED_TEST_SUITE === 'embed'
-      ? ['tests/embed/**/*.spec.ts']
+      ? ['tests/embed/**/*.spec.ts', 'tests/isolated/**/*.spec.ts']
       : [
           'tests/newsletter/**/*.spec.ts',
           'tests/escalation/**/*.spec.ts',

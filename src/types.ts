@@ -258,6 +258,13 @@ export interface EscalatedConfig {
      * and admin checks. Names resolve as for `middleware`.
      */
     adminMiddleware: ConfiguredMiddleware[]
+    /**
+     * Extra middleware for the customer portal and the customer knowledge
+     * base, run after `middleware`. Default `[]`. Names resolve as for
+     * `middleware`. For an install only staff use, add a staff check here
+     * (see docs/access-control.md, "Staff-only installs").
+     */
+    customerMiddleware?: ConfiguredMiddleware[]
   }
 
   tablePrefix: string
@@ -386,10 +393,26 @@ export interface EscalatedConfig {
   guestAccess?: GuestAccessConfig
 
   /**
+   * The guest portal (`{prefix}/guest/*`). `routesEnabled` defaults to true;
+   * unset, ESCALATED_GUEST_ROUTES decides. False: none of its routes exists.
+   * The `guest_tickets_enabled` admin setting still switches registered
+   * routes on and off at runtime.
+   */
+  guest?: {
+    routesEnabled?: boolean
+  }
+
+  /**
    * Embedding the widget on other sites. Nothing changes until an origin is
    * listed here or in the `widget_allowed_origins` admin setting.
    */
   widget?: {
+    /**
+     * Register the widget routes (`{prefix}/widget/*`: embed.js, the widget
+     * API and widget chat). Default true; unset, ESCALATED_WIDGET_ENABLED
+     * decides. False: none of them exists.
+     */
+    enabled?: boolean
     /**
      * Sites that may embed the widget: `scheme://host[:port]` origins, or
      * `https://*.example.com` for any subdomain. An array, or a comma

@@ -5,6 +5,11 @@ the one Escalated is installed on: a store, a marketing site or a customer
 portal loads one script from your Escalated install. Nothing changes until you
 list the sites that may do this.
 
+An install that does not use the widget at all can leave its routes
+unregistered: `widget: { enabled: false }` in `config/escalated.ts` (or
+`ESCALATED_WIDGET_ENABLED=false`). Then no `{prefix}/widget/*` route exists,
+`embed.js` and widget chat included. It defaults to true.
+
 ## 1. Allow the embedding sites
 
 Either in `config/escalated.ts`:

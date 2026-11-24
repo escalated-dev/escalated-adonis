@@ -20,7 +20,16 @@ const escalatedConfig: EscalatedConfig = {
     prefix: 'support',
     middleware: ['auth'],
     adminMiddleware: ['auth'],
+    // Extra guards on the customer portal and customer knowledge base,
+    // after `middleware` (default []). See docs/access-control.md,
+    // "Staff-only installs".
+    customerMiddleware: [],
   },
+
+  // Optional public routes, both on by default. false: the routes are not
+  // registered at all (env ESCALATED_GUEST_ROUTES / ESCALATED_WIDGET_ENABLED).
+  guest: { routesEnabled: true },
+  widget: { enabled: true },
 
   // Authorization callbacks
   authorization: {
