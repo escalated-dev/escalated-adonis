@@ -182,6 +182,19 @@ node ace migration:run
 
 Then visit `/support`. Needs AdonisJS v7 and Node.js 24+. The [getting started guide](docs/getting-started.md) lists the other Adonis packages it needs, and [configuration](docs/configuration.md) covers the scheduled commands that run SLAs and escalations.
 
+### Required: schedule the recurring jobs
+
+SLA breaches, escalation rules, automations and snooze wake-ups only happen when these Ace commands run. AdonisJS has no built-in scheduler, so add them to cron (or your process manager or scheduler package):
+
+```
+* * * * *   cd /path/to/app && node ace escalated:check-sla
+* * * * *   cd /path/to/app && node ace escalated:wake-snoozed-tickets
+*/5 * * * * cd /path/to/app && node ace escalated:run-escalations
+*/5 * * * * cd /path/to/app && node ace escalated:run-automations
+```
+
+Until `escalated:check-sla` has run in the last 15 minutes, Admin > Settings and the admin reports warn that the recurring jobs are not running. `node ace escalated:doctor` checks this, the `authorization` callbacks and the user model. The other scheduled commands are in [configuration](docs/configuration.md#scheduled-commands).
+
 ## Learn more
 
 - [All features](docs/features.md) · [Getting started](docs/getting-started.md) · [Configuration and scheduled commands](docs/configuration.md)

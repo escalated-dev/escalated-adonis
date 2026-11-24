@@ -5,6 +5,7 @@ import Ticket from '../models/ticket.js'
 import SatisfactionRating from '../models/satisfaction_rating.js'
 import { getRenderer } from '../rendering/renderer.js'
 import ReportingService from '../services/reporting_service.js'
+import { schedulerStatusProp } from '../support/scheduler_health.js'
 
 export default class AdminReportsController {
   async handle(ctx: HttpContext) {
@@ -71,6 +72,7 @@ export default class AdminReportsController {
       by_status: byStatusMap,
       by_priority: byPriorityMap,
       csat,
+      scheduler: await schedulerStatusProp(),
     })
   }
 
@@ -93,6 +95,7 @@ export default class AdminReportsController {
       sla_compliance: await reporting.slaComplianceRate(start, end),
       csat_average: await reporting.csatAverage(start, end),
       agent_performance: await reporting.agentPerformance(start, end),
+      scheduler: await schedulerStatusProp(),
     })
   }
 
