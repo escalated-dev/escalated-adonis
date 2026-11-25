@@ -69,12 +69,31 @@ const escalatedConfig: EscalatedConfig = {
   | each middleware as `router.named()` does in start/kernel.ts. A name the
   | kernel does not define stops the app from booting.
   |
+  | `customerMiddleware` adds guards to the customer portal and its knowledge
+  | base, after `middleware`. For an install only staff use, add a staff
+  | check here and turn off the guest and widget routes below
+  | (docs/access-control.md, "Staff-only installs").
+  |
   */
   routes: {
     enabled: true,
     prefix: 'support',
     middleware: ['auth'],
     adminMiddleware: ['auth'],
+    customerMiddleware: [],
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Guest portal
+  |--------------------------------------------------------------------------
+  |
+  | `routesEnabled: false` registers none of the {prefix}/guest/* routes.
+  | While on, the `guest_tickets_enabled` admin setting still switches them.
+  |
+  */
+  guest: {
+    routesEnabled: process.env.ESCALATED_GUEST_ROUTES !== 'false',
   },
 
   /*
@@ -252,6 +271,8 @@ const escalatedConfig: EscalatedConfig = {
   |
   */
   widget: {
+    // false: none of the {prefix}/widget/* routes (embed.js, API, chat) exists.
+    enabled: process.env.ESCALATED_WIDGET_ENABLED !== 'false',
     allowedOrigins: process.env.ESCALATED_WIDGET_ALLOWED_ORIGINS ?? '',
     preflightMaxAge: 600,
     serveScript: true,

@@ -10,4 +10,7 @@ export const middleware = router.named({
   // headers, for the embedded-admin specs (tests/embed).
   hostPanel: () => import('./embed/host_panel_middleware.js'),
   hostHeaders: () => import('./embed/host_headers_middleware.js'),
+  // A staff-only portal (docs/access-control.md): the package's staff check,
+  // as a host registers it from @escalated-dev/escalated-adonis/middleware/ensure_is_staff.
+  escalatedStaff: () => import('../../../src/middleware/ensure_is_staff.js'),
 })

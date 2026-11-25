@@ -6,6 +6,12 @@ then open their ticket with an expiring grant instead of a permanent link. This
 ports escalated-laravel's verified guest access (`docs/guest-access.md` there)
 and follows the same contract, so the shared frontend's flows work unchanged.
 
+An install with no guests can leave the guest portal unregistered:
+`guest: { routesEnabled: false }` in `config/escalated.ts` (or
+`ESCALATED_GUEST_ROUTES=false`). Then no `{prefix}/guest/*` route exists. It
+defaults to true; while the routes are registered, the `guest_tickets_enabled`
+admin setting still switches guest tickets on and off.
+
 ## Upgrade
 
 Run the package migrations (`0065_verified_guest_access`: a

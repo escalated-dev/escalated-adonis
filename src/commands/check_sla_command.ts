@@ -7,7 +7,8 @@
 | emitting `escalated:sla:breached` for each, then emit `escalated:sla:warning`
 | for targets due within the warning window. A target passing is not an event
 | anything else notices, so this is meant to run periodically from the host's
-| scheduler/cron, like `escalated:run-escalations`.
+| scheduler/cron, like `escalated:run-escalations`. Each run records a
+| heartbeat; the admin pages warn when it is missing or stale.
 |
 |   node ace escalated:check-sla
 |   node ace escalated:check-sla --warning-minutes=60
@@ -50,6 +51,10 @@ export default class CheckSlaCommand extends BaseCommand {
       const breached = await service.checkBreaches()
       const warned = await service.checkWarnings(this.warningMinutes)
 
+      // The admin pages warn when this heartbeat is missing or stale: the
+      // recurring jobs are not scheduled (src/support/scheduler_health.ts).
+      await this.recordHeartbeat()
+
       if (breached === 0 && warned === 0) {
         this.logger.info('No SLA targets breached or about to breach.')
       } else {
@@ -61,6 +66,11 @@ export default class CheckSlaCommand extends BaseCommand {
       this.logger.error(`SLA check failed: ${error.message}`)
       this.exitCode = 1
     }
+  }
+
+  protected async recordHeartbeat(): Promise<void> {
+    const { recordSlaCheckHeartbeat } = await import('../support/scheduler_health.js')
+    await recordSlaCheckHeartbeat()
   }
 
   /**

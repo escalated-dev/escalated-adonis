@@ -37,6 +37,50 @@ export interface EscalatedAuthUser {
 type AuthLike = HttpContext['auth'] | { user?: unknown }
 
 /**
+ * The signed-in user does not have what Escalated needs from it. Thrown where
+ * the user is resolved for staff actions, instead of the raw TypeError or
+ * database error the first write would otherwise end in.
+ */
+export class EscalatedUserContractError extends Error {
+  status = 500
+  code = 'E_ESCALATED_USER_CONTRACT'
+
+  constructor(user: unknown) {
+    const type =
+      user && typeof user === 'object'
+        ? ((user as any).constructor?.name ?? 'Object')
+        : user === null
+          ? 'null'
+          : typeof user
+    super(
+      `Escalated: the signed-in user (${type}) does not implement EscalatedAuthUser ` +
+        '(@escalated-dev/escalated-adonis/support/auth_user). Escalated needs an `id` ' +
+        '(a number, or a string for UUID users with ESCALATED_USER_KEY_TYPE=uuid|string) and a ' +
+        'model class, and stores `constructor.name` as the user type. Point config.userModel at ' +
+        'your Lucid user model (default "#models/user") and make sure `ctx.auth.user` is an ' +
+        'instance of it. Run `node ace escalated:doctor` to check the setup.'
+    )
+    this.name = 'EscalatedUserContractError'
+  }
+}
+
+/** Whether `user` has what EscalatedAuthUser needs: an object with a number or non-empty string `id`. */
+export function implementsEscalatedAuthUser(user: unknown): user is EscalatedAuthUser {
+  if (!user || typeof user !== 'object') return false
+  const id = (user as { id?: unknown }).id
+  if (typeof id === 'number') return Number.isFinite(id)
+  if (typeof id === 'bigint') return true
+  return typeof id === 'string' && id !== ''
+}
+
+/** Throws EscalatedUserContractError unless `user` implements EscalatedAuthUser. */
+export function assertEscalatedAuthUser(user: unknown): asserts user is EscalatedAuthUser {
+  if (!implementsEscalatedAuthUser(user)) {
+    throw new EscalatedUserContractError(user)
+  }
+}
+
+/**
  * Return the currently authenticated user, or `null` if anonymous.
  */
 export function getAuthUser(auth: AuthLike): EscalatedAuthUser | null {
@@ -56,5 +100,6 @@ export function requireAuthUser(auth: AuthLike): EscalatedAuthUser {
   if (!user) {
     throw new Error('Authentication required')
   }
+  assertEscalatedAuthUser(user)
   return user
 }

@@ -291,3 +291,47 @@ These are install-level: no admin screen or stored setting changes them.
    Admin > Settings > SSO and give the IdP the endpoints shown there. SAML
    needs the IdP certificate and entity ID.
 4. Decide on `sso.createUsers` and `sso.syncRoles`.
+
+## Staff-only installs
+
+By default the customer portal (`/{prefix}`, `/{prefix}/create`,
+`/{prefix}/:ticket`) and the customer knowledge base (`/{prefix}/kb`) accept
+any signed-in user, and the guest portal and the widget accept anyone. In an
+install where only staff use Escalated, a signed-in user who was never given
+Escalated access could list and raise tickets there. Close all three:
+
+1. Guard the customer portal and knowledge base with
+   `routes.customerMiddleware` (default `[]`). It runs after
+   `routes.middleware`, and names resolve the same way, through
+   `router.named()` in your `start/kernel.ts`. The package's staff check
+   (agents and admins, by `authorization.isAgent` / `isAdmin`) is a ready
+   middleware:
+
+   ```ts
+   // start/kernel.ts
+   export const middleware = router.named({
+     auth: () => import('#middleware/auth_middleware'),
+     escalatedStaff: () => import('@escalated-dev/escalated-adonis/middleware/ensure_is_staff'),
+   })
+
+   // config/escalated.ts
+   routes: {
+     enabled: true,
+     prefix: 'support',
+     middleware: ['auth'],
+     adminMiddleware: ['auth'],
+     customerMiddleware: ['escalatedStaff'],
+   },
+   ```
+
+   A signed-in user who fails it gets 403. Any middleware of your own works
+   the same way.
+2. Unregister the guest portal: `guest: { routesEnabled: false }` (or
+   `ESCALATED_GUEST_ROUTES=false`). No `{prefix}/guest/*` route exists.
+3. Unregister the widget: `widget: { enabled: false }` (or
+   `ESCALATED_WIDGET_ENABLED=false`). No `{prefix}/widget/*` route exists,
+   including `embed.js` and widget chat.
+
+All three are read when routes are registered, so restart after changing
+them. The mobile guest API (`{api.prefix}/mobile/guest/*`) is part of the
+REST API and only exists while `api.enabled` is on.

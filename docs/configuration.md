@@ -20,7 +20,16 @@ const escalatedConfig: EscalatedConfig = {
     prefix: 'support',
     middleware: ['auth'],
     adminMiddleware: ['auth'],
+    // Extra guards on the customer portal and customer knowledge base,
+    // after `middleware` (default []). See docs/access-control.md,
+    // "Staff-only installs".
+    customerMiddleware: [],
   },
+
+  // Optional public routes, both on by default. false: the routes are not
+  // registered at all (env ESCALATED_GUEST_ROUTES / ESCALATED_WIDGET_ENABLED).
+  guest: { routesEnabled: true },
+  widget: { enabled: true },
 
   // Authorization callbacks
   authorization: {
@@ -123,11 +132,31 @@ ticketSubjects: {
 
 Agent/admin routes: `POST …/tickets/:ticket/subjects` (`type`, `id`, optional `role`) and `DELETE …/tickets/:ticket/subjects/:linkId`. The API only accepts allowlisted types; programmatic `attachSubject()` allows any type when the allowlist is empty.
 
-Each subject is serialized as `{ type, id, role, title, subtitle, url, color, icon, missing }` (fallback title `type#id` when the resolver is absent or returns null).
+Each subject is serialized as `{ type, id, role, title, subtitle, url, color, icon, missing }` (fallback title `type#id` when the resolver is absent or returns null). The API ticket resource and the agent and admin ticket pages (`ticket.subjects`, shown in the sidebar's Related card) use this same shape.
 
 ## Scheduled commands
 
-Time-based features only happen when their Ace command runs, so run these from cron, a process manager or a scheduler package:
+### Required: schedule the recurring jobs
+
+Time-based features only happen when their Ace command runs. AdonisJS has no
+built-in scheduler the package could register with, so run these from cron, a
+process manager or a scheduler package. These four are required:
+
+| Command | Interval |
+| --- | --- |
+| `node ace escalated:check-sla` | every minute |
+| `node ace escalated:wake-snoozed-tickets` | every minute |
+| `node ace escalated:run-escalations` | every 5 minutes |
+| `node ace escalated:run-automations` | every 5 minutes |
+
+Each `escalated:check-sla` run records a heartbeat (the
+`scheduler_sla_check_last_run_at` setting). While it is missing or more than
+15 minutes old, Admin > Settings and the admin Reports pages get a `scheduler`
+prop with `healthy: false` (`{ healthy, last_run_at, message, commands }`) and
+the UI warns that the recurring jobs are not running, listing the commands
+above. `node ace escalated:doctor` reports the same.
+
+### All scheduled commands
 
 | Command | Suggested schedule | What it does |
 | --- | --- | --- |
@@ -156,6 +185,24 @@ commands: [
   () => import('@escalated-dev/escalated-adonis/commands'),
 ],
 ```
+
+## Checking the setup
+
+`node ace escalated:doctor` reports what is missing before staff can use
+Escalated, and exits 1 on an error:
+
+- `staff_gates`: `authorization.isAgent` and `authorization.isAdmin` are
+  functions. Without them nobody is staff, and every agent and admin route
+  answers 403 with a message naming the missing settings (also logged at boot).
+- `user_model`: `config.userModel` resolves to a model whose users have an
+  `id`. The signed-in user must implement `EscalatedAuthUser`
+  (`@escalated-dev/escalated-adonis/support/auth_user`): an `id` (a number, or
+  a string with `ESCALATED_USER_KEY_TYPE=uuid|string`) on an instance of your
+  model. A staff user without one gets an `EscalatedUserContractError` saying
+  so, instead of a raw error on the first write.
+- `recurring_jobs` (warning): the `escalated:check-sla` heartbeat is fresh.
+
+`--json` prints the report, `scheduler` status included.
 
 ## Database connection
 

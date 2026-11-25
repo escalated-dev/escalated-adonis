@@ -17,6 +17,7 @@ import {
   resolveConfiguredMiddleware,
 } from '../src/support/route_middleware.js'
 import { adminRouteMount, resolveEmbed } from '../src/support/embed.js'
+import { guestRoutesEnabled, widgetRoutesEnabled } from '../src/support/optional_routes.js'
 
 // Lazy-load controllers (UI — Inertia-powered)
 const CustomerTicketsController = () => import('../src/controllers/customer_tickets_controller.js')
@@ -181,6 +182,27 @@ function registerCoreRoutes(config: any) {
     .where('attachment', /^\d+$/)
     .use(middleware.ticketAccess())
 
+  // ---- Widget (no auth) ----
+  // Not registered at all when `widget.enabled` is false (ESCALATED_WIDGET_ENABLED).
+  if (widgetRoutesEnabled()) {
+    registerWidgetRoutes(config)
+  }
+
+  // ---- API Routes ----
+  if ((config as any).api?.enabled) {
+    registerApiRoutes(config)
+    registerMobileGuestRoutes(config)
+  }
+}
+
+/**
+ * The widget's public routes: embed.js, the widget API and widget chat.
+ * Registered only while `widget.enabled` is on (the default).
+ */
+function registerWidgetRoutes(config: any) {
+  const prefix = config.routes?.prefix ?? 'support'
+  const middleware = escalatedMiddleware(router)
+
   // ---- Widget script (any site may load it) ----
   if ((config as any).widget?.serveScript !== false) {
     router
@@ -258,12 +280,6 @@ function registerCoreRoutes(config: any) {
     })
     .prefix(`${prefix}/widget/chat`)
     .use([middleware.widgetCors(), middleware.apiRateLimit(), middleware.ticketAccess()])
-
-  // ---- API Routes ----
-  if ((config as any).api?.enabled) {
-    registerApiRoutes(config)
-    registerMobileGuestRoutes(config)
-  }
 }
 
 /**
@@ -280,6 +296,12 @@ async function registerUiRoutes(config: any) {
   const adminMiddleware = await resolveConfiguredMiddleware(
     config.routes?.adminMiddleware ?? ['auth'],
     'routes.adminMiddleware'
+  )
+  // Extra guards on the customer portal and its knowledge base, after
+  // `routes.middleware`: e.g. a staff check, for an install only staff use.
+  const customerMiddleware = await resolveConfiguredMiddleware(
+    config.routes?.customerMiddleware ?? [],
+    'routes.customerMiddleware'
   )
 
   // ---- Single sign-on (ADR 2026-10-29-configurable-access-features) ----
@@ -352,7 +374,12 @@ async function registerUiRoutes(config: any) {
     .prefix(prefix)
     // recordCustomerPresence: agent pages show the customer online (ADR
     // 2026-11-05-agent-panel-data); staff browsing the portal are skipped.
-    .use([...authMiddleware, middleware.ticketAccess(), middleware.recordCustomerPresence()])
+    .use([
+      ...authMiddleware,
+      ...customerMiddleware,
+      middleware.ticketAccess(),
+      middleware.recordCustomerPresence(),
+    ])
 
   // ---- Agent Routes ----
   router
@@ -1331,40 +1358,47 @@ async function registerUiRoutes(config: any) {
     ])
 
   // ---- Guest Routes (no auth) ----
-  // Ticket creation and replies are rate-limited per client IP (see
-  // `guestRateLimit` in the config). The reply limit runs before the token is
-  // looked up, so requests with a wrong token count too.
-  router
-    .group(() => {
-      router.get('/create', [GuestTicketsController, 'create']).as('escalated.guest.tickets.create')
-      router
-        .post('/verification', [GuestVerificationController, 'verification'])
-        .as('escalated.guest.verification')
-        .use(middleware.guestRateLimit({ scope: 'ticket' }))
-      router
-        .post('/lookup', [GuestVerificationController, 'lookup'])
-        .as('escalated.guest.lookup')
-        .use(middleware.guestRateLimit({ scope: 'reply' }))
-      router
-        .post('/', [GuestTicketsController, 'store'])
-        .as('escalated.guest.tickets.store')
-        .use(middleware.guestRateLimit({ scope: 'ticket' }))
-      router
-        .get('/:token', [GuestTicketsController, 'show'])
-        .as('escalated.guest.tickets.show')
-        .where('token', GUEST_TOKEN)
-      router
-        .post('/:token/reply', [GuestTicketsController, 'reply'])
-        .as('escalated.guest.tickets.reply')
-        .use(middleware.guestRateLimit({ scope: 'reply' }))
-        .where('token', GUEST_TOKEN)
-      router
-        .post('/:token/rate', [SatisfactionRatingController, 'storeGuest'])
-        .as('escalated.guest.tickets.rate')
-        .where('token', GUEST_TOKEN)
-    })
-    .prefix(`${prefix}/guest`)
-    .use([middleware.ticketAccess()])
+  // Not registered at all when `guest.routesEnabled` is false
+  // (ESCALATED_GUEST_ROUTES); the `guest_tickets_enabled` setting still
+  // switches them at runtime while they are registered.
+  if (guestRoutesEnabled()) {
+    // Ticket creation and replies are rate-limited per client IP (see
+    // `guestRateLimit` in the config). The reply limit runs before the token is
+    // looked up, so requests with a wrong token count too.
+    router
+      .group(() => {
+        router
+          .get('/create', [GuestTicketsController, 'create'])
+          .as('escalated.guest.tickets.create')
+        router
+          .post('/verification', [GuestVerificationController, 'verification'])
+          .as('escalated.guest.verification')
+          .use(middleware.guestRateLimit({ scope: 'ticket' }))
+        router
+          .post('/lookup', [GuestVerificationController, 'lookup'])
+          .as('escalated.guest.lookup')
+          .use(middleware.guestRateLimit({ scope: 'reply' }))
+        router
+          .post('/', [GuestTicketsController, 'store'])
+          .as('escalated.guest.tickets.store')
+          .use(middleware.guestRateLimit({ scope: 'ticket' }))
+        router
+          .get('/:token', [GuestTicketsController, 'show'])
+          .as('escalated.guest.tickets.show')
+          .where('token', GUEST_TOKEN)
+        router
+          .post('/:token/reply', [GuestTicketsController, 'reply'])
+          .as('escalated.guest.tickets.reply')
+          .use(middleware.guestRateLimit({ scope: 'reply' }))
+          .where('token', GUEST_TOKEN)
+        router
+          .post('/:token/rate', [SatisfactionRatingController, 'storeGuest'])
+          .as('escalated.guest.tickets.rate')
+          .where('token', GUEST_TOKEN)
+      })
+      .prefix(`${prefix}/guest`)
+      .use([middleware.ticketAccess()])
+  }
 }
 
 /**

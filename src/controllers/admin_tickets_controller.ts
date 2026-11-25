@@ -1,4 +1,9 @@
-import { staffUsers, staffWhoCanAccess, type StaffUser } from '../support/assignable_agents.js'
+import {
+  staffUsers,
+  staffWhoCanAccess,
+  ticketAssignee,
+  type StaffUser,
+} from '../support/assignable_agents.js'
 import { signAttachments } from '../support/attachment_access.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import Ticket from '../models/ticket.js'
@@ -134,7 +139,10 @@ export default class AdminTicketsController {
     const subjects = await new TicketSubjectService().serializeForTicket(ticket)
 
     return getRenderer().render(ctx, 'Escalated/Admin/Tickets/Show', {
-      ticket,
+      // The sidebar's Related card reads `ticket.subjects`, serialized as the
+      // API ticket resource does, not the raw link rows Lucid would send.
+      // `assignee` is the host user the ticket is assigned to, for the sidebar.
+      ticket: { ...ticket.serialize(), subjects, assignee: await ticketAssignee(ticket) },
       subjects,
       departments,
       tags,

@@ -8,11 +8,14 @@ import { getRenderer } from '../rendering/renderer.js'
 import { t } from '../support/i18n.js'
 import { invalidOriginEntries, rememberWidgetOriginSetting } from '../support/widget_origins.js'
 import { isMaskedSecret, maskSecret } from '../support/secret_mask.js'
+import { schedulerStatusProp } from '../support/scheduler_health.js'
 
 export default class AdminSettingsController {
   async index(ctx: HttpContext) {
     return getRenderer().render(ctx, 'Escalated/Admin/Settings', {
       settings: await this.getSettings(),
+      // Warns while the recurring jobs are not scheduled.
+      scheduler: await schedulerStatusProp(),
     })
   }
 
