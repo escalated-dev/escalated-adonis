@@ -1367,7 +1367,9 @@ async function registerUiRoutes(config: any) {
     // looked up, so requests with a wrong token count too.
     router
       .group(() => {
-        router.get('/create', [GuestTicketsController, 'create']).as('escalated.guest.tickets.create')
+        router
+          .get('/create', [GuestTicketsController, 'create'])
+          .as('escalated.guest.tickets.create')
         router
           .post('/verification', [GuestVerificationController, 'verification'])
           .as('escalated.guest.verification')

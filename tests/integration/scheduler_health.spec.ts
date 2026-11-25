@@ -99,7 +99,8 @@ test.group('Scheduler heartbeat', (group) => {
     const { recordSlaCheckHeartbeat } = await import('../../src/support/scheduler_health.js')
 
     await recordSlaCheckHeartbeat(DateTime.now().minus({ minutes: 10 }))
-    assert.isTrue((await page('/support/admin/settings')).healthy)
+    const fresh = await page('/support/admin/settings')
+    assert.isTrue(fresh.healthy)
 
     await recordSlaCheckHeartbeat(DateTime.now().minus({ minutes: 20 }))
     const stale = await page('/support/admin/settings')

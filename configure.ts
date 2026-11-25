@@ -50,7 +50,7 @@ export async function configure(command: ConfigureCommand) {
     'Set authorization.isAgent / isAdmin in config/escalated.ts, then run ' +
       '"node ace escalated:doctor" to check the setup.'
   )
-  command.logger.warning(
+  command.logger.info(
     'Required: schedule the recurring jobs (cron or a process manager): ' +
       'escalated:check-sla and escalated:wake-snoozed-tickets every minute, ' +
       'escalated:run-escalations and escalated:run-automations every 5 minutes. ' +

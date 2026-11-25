@@ -93,9 +93,8 @@ test.group('Setup errors', (group) => {
   test('requireAuthUser names the contract instead of returning a user without an id', async ({
     assert,
   }) => {
-    const { requireAuthUser, EscalatedUserContractError } = await import(
-      '../../src/support/auth_user.js'
-    )
+    const { requireAuthUser, EscalatedUserContractError } =
+      await import('../../src/support/auth_user.js')
     assert.throws(() => requireAuthUser({ user: { name: 'No id' } }), EscalatedUserContractError)
     assert.throws(() => requireAuthUser({ user: { id: '' } }), /EscalatedAuthUser/)
     assert.equal(requireAuthUser({ user: TEST_USERS.agent }).id, TEST_USERS.agent.id)
@@ -165,13 +164,10 @@ test.group('Setup errors', (group) => {
     assert.equal(command.exitCode, 0, logs.join('\n'))
     const report = JSON.parse(logs.join('\n'))
     assert.isTrue(report.ok)
-    assert.deepEqual(
-      report.checks.map((check: any) => [check.name, check.status]).slice(0, 2),
-      [
-        ['staff_gates', 'ok'],
-        ['user_model', 'ok'],
-      ]
-    )
+    assert.deepEqual(report.checks.map((check: any) => [check.name, check.status]).slice(0, 2), [
+      ['staff_gates', 'ok'],
+      ['user_model', 'ok'],
+    ])
     assert.equal(report.checks[2].name, 'recurring_jobs')
     assert.isArray(report.scheduler.commands)
   })

@@ -70,9 +70,8 @@ test.group('Ticket subjects on the agent and admin ticket pages', (group) => {
       await ticket.attachSubject('Order', '1001', 'order')
       await ticket.attachSubject('Shipment', '77')
 
-      const { default: TicketSubjectService } = await import(
-        '../../src/services/ticket_subject_service.js'
-      )
+      const { default: TicketSubjectService } =
+        await import('../../src/services/ticket_subject_service.js')
       const apiShape = await new TicketSubjectService().serializeForTicket(ticket)
 
       const response = await new InertiaClient(running.baseUrl, { user }).visit(
