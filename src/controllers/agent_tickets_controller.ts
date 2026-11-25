@@ -23,7 +23,7 @@ import { decorate as decorateAgentRows, markRead } from '../services/agent_panel
 import { listFilterErrors } from '../support/ticket_list_filters.js'
 import emitter from '@adonisjs/core/services/emitter'
 import { ESCALATED_EVENTS } from '../events/index.js'
-import { assignableAgents } from '../support/assignable_agents.js'
+import { assignableAgents, ticketAssignee } from '../support/assignable_agents.js'
 import type { RequesterTicketSummary } from '../models/ticket.js'
 
 export default class AgentTicketsController {
@@ -186,7 +186,8 @@ export default class AgentTicketsController {
     return getRenderer().render(ctx, 'Escalated/Agent/TicketShow', {
       // The sidebar's Related card reads `ticket.subjects`, serialized as the
       // API ticket resource does, not the raw link rows Lucid would send.
-      ticket: { ...ticket.serialize(), subjects },
+      // `assignee` is the host user the ticket is assigned to, for the sidebar.
+      ticket: { ...ticket.serialize(), subjects, assignee: await ticketAssignee(ticket) },
       subjects,
       departments,
       tags,

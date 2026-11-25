@@ -1,6 +1,6 @@
 import { getConfig } from '../helpers/config.js'
 import { agentCanAccessTicket } from './ticket_access.js'
-import { resolveUserModel } from './user_model.js'
+import { findHostUser, resolveUserModel } from './user_model.js'
 
 export type StaffUser = { id: number; name: string; email: string }
 
@@ -47,4 +47,25 @@ export async function assignableAgents(ticket: {
 }): Promise<Array<{ id: number; name: string }>> {
   const staff = await staffWhoCanAccess(ticket)
   return staff.map(({ id, name }) => ({ id, name }))
+}
+
+/**
+ * The ticket's assignee as the ticket pages send it (`ticket.assignee`, read
+ * by the shared sidebar and detail pane): `{ id, name, email }` from the host
+ * user model, or null when unassigned or the user no longer exists.
+ */
+export async function ticketAssignee(ticket: {
+  assignedTo: string | number | null
+}): Promise<StaffUser | null> {
+  if (ticket.assignedTo === null || ticket.assignedTo === undefined || ticket.assignedTo === '') {
+    return null
+  }
+  let user: any
+  try {
+    user = await findHostUser(ticket.assignedTo)
+  } catch {
+    return null
+  }
+  if (!user) return null
+  return { id: user.id, name: user.name ?? user.fullName ?? '', email: user.email ?? '' }
 }

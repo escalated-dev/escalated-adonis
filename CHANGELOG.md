@@ -4,6 +4,7 @@
 
 ### Fixed
 - **Ticket subjects on the ticket pages:** the agent and admin ticket pages send `ticket.subjects` serialized as the API ticket resource does (`{ type, id, role, title, subtitle, url, color, icon, missing }`), so the sidebar's Related card shows them. They arrived as raw link rows.
+- **Assignee on the ticket pages:** the agent and admin ticket pages send `ticket.assignee` (`{ id, name, email }` from the host user model, or null), as escalated-laravel loads it, so the sidebar shows who has the ticket.
 - **Setup errors name what is missing:** a signed-in staff user without an `id` gets an `EscalatedUserContractError` naming `EscalatedAuthUser` and `config.userModel` (from the agent/admin gates and `requireAuthUser`) instead of a raw error on the first write. With no `authorization.isAgent`/`isAdmin` configured the agent and admin 403 says so, and boot logs a warning. A missing gate no longer throws a TypeError in the agent panel's staff check.
 
 ### Added
