@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.7.14] - 2026-11-25
+
+### Upgrading
+- No migrations. All new switches default to the current behaviour: the widget and guest routes stay registered and the customer portal gets no extra middleware unless configured. Schedule `escalated:check-sla` (README, "Required: schedule the recurring jobs") or the admin pages will warn that the recurring jobs are not running.
+
 ### Fixed
 - **Ticket subjects on the ticket pages:** the agent and admin ticket pages send `ticket.subjects` serialized as the API ticket resource does (`{ type, id, role, title, subtitle, url, color, icon, missing }`), so the sidebar's Related card shows them. They arrived as raw link rows.
 - **Assignee on the ticket pages:** the agent and admin ticket pages send `ticket.assignee` (`{ id, name, email }` from the host user model, or null), as escalated-laravel loads it, so the sidebar shows who has the ticket.
